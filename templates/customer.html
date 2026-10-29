@@ -1,0 +1,2717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>{{ config.shop_name }} - Self Service Print</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/cropper.min.css">
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --primary-light: #eff6ff;
+      --success: #16a34a;
+      --text: #0f172a;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --card-bg: #ffffff;
+      --bg: #f8fafc;
+      --radius: 16px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      padding-bottom: 40px;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #1e3a8a, #2563eb);
+      color: white;
+      padding: 24px 20px 30px;
+      border-bottom-left-radius: 24px;
+      border-bottom-right-radius: 24px;
+      box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.25);
+    }
+
+    .badge {
+      display: inline-block;
+      background: rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(4px);
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .header h1 {
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+
+    .header p {
+      font-size: 13px;
+      color: #bfdbfe;
+      margin-top: 4px;
+    }
+
+    .container {
+      max-width: 500px;
+      margin: -15px auto 0;
+      padding: 0 16px;
+    }
+
+    /* 3 MODE SELECTOR TABS */
+    .mode-tabs {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      background: #e2e8f0;
+      padding: 5px;
+      border-radius: 14px;
+      margin-bottom: 14px;
+    }
+
+    .mode-tab {
+      padding: 10px 4px;
+      border: none;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 800;
+      cursor: pointer;
+      background: transparent;
+      color: #475569;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      transition: all 0.2s;
+      text-align: center;
+    }
+
+    .mode-tab.active {
+      background: white;
+      color: var(--primary);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    .card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      padding: 20px;
+      box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+      border: 1px solid var(--border);
+      margin-bottom: 16px;
+    }
+
+    .card-title {
+      font-size: 16px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .step-number {
+      background: var(--primary);
+      color: white;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    /* UPLOAD DROPZONE */
+    .upload-zone {
+      border: 2px dashed #93c5fd;
+      background: var(--primary-light);
+      border-radius: var(--radius);
+      padding: 28px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+
+    .upload-zone:active {
+      transform: scale(0.98);
+      background: #dbeafe;
+    }
+
+    .upload-icon {
+      width: 50px;
+      height: 50px;
+      background: white;
+      border-radius: 50%;
+      margin: 0 auto 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 10px rgba(37, 99, 235, 0.15);
+      color: var(--primary);
+      font-size: 24px;
+    }
+
+    .upload-zone h3 {
+      font-size: 15px;
+      font-weight: 700;
+      color: #1e3a8a;
+    }
+
+    .upload-zone p {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    /* MULTI-PANEL CARDS (ID & 2-IN-1) */
+    .half-panel {
+      border: 2px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+      background: #f8fafc;
+      margin-bottom: 12px;
+    }
+
+    .half-panel.ready {
+      border-color: #86efac;
+      background: #f0fdf4;
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+
+    .tag-status {
+      font-size: 11px;
+      font-weight: 800;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: #e2e8f0;
+      color: #475569;
+    }
+
+    .tag-status.done {
+      background: #bbf7d0;
+      color: #166534;
+    }
+
+    .upload-btn-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .action-btn {
+      padding: 10px 8px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: white;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+    }
+
+    .action-btn:active {
+      background: #f1f5f9;
+      transform: scale(0.98);
+    }
+
+    .action-btn.primary {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+
+    .item-preview-box {
+      display: none;
+      align-items: center;
+      gap: 12px;
+      background: white;
+      border-radius: 10px;
+      padding: 8px 10px;
+      border: 1px solid #cbd5e1;
+      margin-top: 8px;
+    }
+
+    .item-preview-img {
+      width: 70px;
+      height: 48px;
+      object-fit: cover;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+    }
+
+    /* FILE PREVIEW */
+    .preview-box {
+      display: none;
+      align-items: center;
+      gap: 14px;
+      background: #f1f5f9;
+      border-radius: 12px;
+      padding: 12px;
+      margin-top: 12px;
+    }
+
+    .preview-box img {
+      width: 60px;
+      height: 75px;
+      object-fit: cover;
+      border-radius: 6px;
+      border: 1px solid #cbd5e1;
+      background: white;
+    }
+
+    .preview-details {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .preview-filename {
+      font-size: 14px;
+      font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .preview-meta {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .change-btn {
+      background: white;
+      border: 1px solid var(--border);
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--primary);
+      cursor: pointer;
+    }
+
+    /* OPTIONS */
+    .option-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+
+    .option-card {
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 12px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: white;
+    }
+
+    .option-card.selected {
+      border-color: var(--primary);
+      background: var(--primary-light);
+    }
+
+    .option-card .icon {
+      font-size: 24px;
+      margin-bottom: 6px;
+    }
+
+    .option-card .title {
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .option-card .rate {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .option-card.selected .rate {
+      color: var(--primary);
+      font-weight: 600;
+    }
+
+    .counter-control {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 6px;
+      background: #f8fafc;
+    }
+
+    .counter-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      border: none;
+      background: white;
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--primary);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      cursor: pointer;
+    }
+
+    .counter-btn:active {
+      transform: scale(0.95);
+    }
+
+    .counter-val {
+      font-size: 16px;
+      font-weight: 800;
+    }
+
+    .form-group {
+      margin-bottom: 14px;
+    }
+
+    .form-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: #334155;
+      margin-bottom: 6px;
+      display: block;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-size: 14px;
+      outline: none;
+    }
+
+    .form-input:focus {
+      border-color: var(--primary);
+    }
+
+    /* Page Range Selector Styles */
+    .page-mode-tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      background: #f1f5f9;
+      padding: 4px;
+      border-radius: 10px;
+      margin-bottom: 10px;
+    }
+    .page-mode-tab {
+      padding: 8px 6px;
+      border: none;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      background: transparent;
+      color: #64748b;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: center;
+    }
+    .page-mode-tab.active {
+      background: white;
+      color: var(--primary);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+    }
+    .page-chip {
+      min-width: 38px;
+      height: 38px;
+      border-radius: 8px;
+      border: 1px solid #cbd5e1;
+      background: white;
+      color: #334155;
+      font-size: 13px;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      user-select: none;
+      padding: 0 6px;
+    }
+    .page-chip:active {
+      transform: scale(0.95);
+    }
+    .page-chip.selected {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary-dark);
+      box-shadow: 0 2px 6px rgba(37, 99, 235, 0.35);
+      font-weight: 800;
+    }
+    .quick-pill-btn {
+      background: #e2e8f0;
+      border: none;
+      border-radius: 999px;
+      padding: 3px 10px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #475569;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .quick-pill-btn:hover {
+      background: #cbd5e1;
+    }
+
+    /* BILL SUMMARY */
+    .bill-box {
+      background: #f8fafc;
+      border-radius: 12px;
+      padding: 14px;
+      border: 1px dashed var(--border);
+      margin-top: 14px;
+    }
+
+    .bill-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .bill-row.total {
+      border-top: 1px solid var(--border);
+      padding-top: 8px;
+      margin-top: 8px;
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--text);
+    }
+
+    .total-amount {
+      color: var(--success);
+      font-size: 20px;
+    }
+
+    /* BUTTONS */
+    .btn {
+      width: 100%;
+      padding: 15px;
+      border-radius: 12px;
+      border: none;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+    }
+
+    .btn-primary:active {
+      background: var(--primary-dark);
+      transform: scale(0.98);
+    }
+
+    .btn-success {
+      background: var(--success);
+      color: white;
+      box-shadow: 0 4px 12px rgba(22, 163, 74, 0.3);
+    }
+
+    /* UPI PAYMENT MODAL */
+    .qr-container {
+      text-align: center;
+      padding: 16px 0;
+    }
+
+    .qr-img {
+      width: 210px;
+      height: 210px;
+      border-radius: 12px;
+      border: 2px solid var(--border);
+      padding: 8px;
+      background: white;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    }
+
+    .upi-apps-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      background: #f1f5f9;
+      border: 1px solid var(--border);
+      color: #0f172a;
+      text-decoration: none;
+      padding: 12px 18px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 700;
+      margin-top: 14px;
+      width: 100%;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #fef08a;
+      color: #854d0e;
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 700;
+      margin-top: 10px;
+    }
+
+    .status-badge.success {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .loader {
+      display: inline-block;
+      width: 18px;
+      height: 18px;
+      border: 3px solid rgba(255,255,255,.3);
+      border-radius: 50%;
+      border-top-color: #fff;
+      animation: spin 1s ease-in-out infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* CROPPER MODAL */
+    .crop-modal-backdrop {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.92);
+      z-index: 9999;
+      display: none;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 14px;
+    }
+
+    .crop-header {
+      color: white;
+      text-align: center;
+      font-size: 15px;
+      font-weight: 800;
+      padding-bottom: 8px;
+    }
+
+    .crop-body {
+      flex: 1;
+      max-height: 68vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .crop-body img {
+      max-width: 100%;
+      max-height: 100%;
+    }
+
+    .crop-footer {
+      display: flex;
+      gap: 10px;
+      padding-top: 10px;
+    }
+
+    .crop-ratio-bar {
+      display: flex;
+      gap: 6px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+    .crop-ratio-btn {
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.3);
+      color: white;
+      padding: 5px 12px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .crop-ratio-btn:hover {
+      background: rgba(255,255,255,0.25);
+    }
+    .crop-ratio-btn.active {
+      background: #2563eb;
+      border-color: #60a5fa;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="badge">Self-Service Print Kiosk</div>
+    <h1>{{ config.shop_name }}</h1>
+    <p>Upload document &bull; Pay UPI &bull; Get instant print</p>
+  </div>
+
+  <div class="container">
+
+    <!-- 3 MODE TABS -->
+    <div class="mode-tabs">
+      <button class="mode-tab active" id="tabDoc" onclick="switchMode('doc')">
+        <span style="font-size:16px;">📄</span>
+        <span>Normal Document</span>
+      </button>
+      <button class="mode-tab" id="tabId" onclick="switchMode('id_card')">
+        <span style="font-size:16px;">🪪</span>
+        <span>ID Card (Enlarged)</span>
+      </button>
+      <button class="mode-tab" id="tab2in1" onclick="switchMode('2in1')">
+        <span style="font-size:16px;">📑</span>
+        <span>2-in-1 Print</span>
+      </button>
+    </div>
+
+    <!-- TAB 1: NORMAL DOCUMENT UPLOAD -->
+    <div class="card" id="uploadDocCard">
+      <div class="card-title">
+        <span class="step-number">1</span>
+        <span>Upload Documents (PDF / Images)</span>
+      </div>
+
+      <!-- 2 Quick Upload Source Shortcuts (Clean & Fast) -->
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:12px;">
+        <button type="button" class="action-btn" onclick="document.getElementById('fileInput').click()" style="background:#eff6ff; border-color:#bfdbfe; color:#1d4ed8; font-size:12px; padding:12px 8px; flex-direction:column; gap:4px; border-radius:12px; font-weight:800;">
+          <span style="font-size:22px;">📁</span>
+          <span>Phone Files / Gallery</span>
+        </button>
+        <button type="button" class="action-btn" onclick="document.getElementById('cameraInput').click()" style="background:#fefce8; border-color:#fde047; color:#a16207; font-size:12px; padding:12px 8px; flex-direction:column; gap:4px; border-radius:12px; font-weight:800;">
+          <span style="font-size:22px;">📸</span>
+          <span>Camera Photo Scan</span>
+        </button>
+      </div>
+      <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none;" onchange="handleMultipleFiles(event)">
+
+      <div class="upload-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+        <div class="upload-icon">📄</div>
+        <h3 id="dropZoneTitle">Tap to Upload Documents</h3>
+        <p id="dropZoneSub">Supports ALL Files: PDF, Photos, PSD, CDR, HEIC, Word, Excel & more (Multi-Files)</p>
+      </div>
+      <input type="file" id="fileInput" accept=".pdf,.png,.jpg,.jpeg,.webp,.bmp,.tiff,.tif,.heic,.heif,.psd,.cdr,.docx,.doc,.xlsx,.xls,.pptx,.ppt,.txt,.rtf,.odt,.ods,.csv,image/*,application/*" multiple style="display:none;" onchange="handleMultipleFiles(event)">
+
+
+      <!-- Upload Progress / Loading -->
+      <div id="uploadLoader" style="display:none; text-align:center; padding: 20px;">
+        <div class="loader" style="border-top-color: var(--primary); width: 30px; height: 30px;"></div>
+        <p id="uploadLoaderText" style="font-size:13px; color:var(--muted); margin-top:8px;">Uploading & Processing Pages...</p>
+      </div>
+
+      <!-- Multi-File Batch Container -->
+      <div id="batchFilesContainer" style="display:none; margin-top:14px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+          <span style="font-size:14px; font-weight:800; color:var(--text);">
+            📁 Uploaded Documents (<span id="batchCountBadge">0</span>)
+          </span>
+          <button type="button" class="action-btn" style="padding:6px 12px; font-size:12px; color:var(--primary); border-color:#93c5fd; background:#eff6ff;" onclick="document.getElementById('fileInput').click()">
+            ➕ Add More Files
+          </button>
+        </div>
+        <div id="batchFilesList" style="display:flex; flex-direction:column; gap:12px;"></div>
+      </div>
+    </div>
+
+    <!-- TAB 2: ID CARD (FRONT & BACK ENLARGED) -->
+    <div class="card" id="uploadIdCard" style="display:none;">
+      <div class="card-title">
+        <span class="step-number">1</span>
+        <span>Upload ID Card (Aadhaar / Voter / PAN)</span>
+      </div>
+      <p style="font-size: 12px; color: var(--muted); margin-top: -6px; margin-bottom: 14px;">
+        Dono side upload karein. Ek hi A4 page par <b>Upar Front</b> aur <b>Niche Back</b> (Bada & Clear Size me) print hoga (1 Page Rate).
+      </p>
+
+      <!-- FRONT PANEL -->
+      <div class="half-panel" id="panelIdFront">
+        <div class="panel-header">
+          <div style="display:flex; align-items:center; gap:6px;">
+            <span style="font-size:16px;">🪪</span>
+            <span style="font-weight:800; font-size:13px;">1. FRONT SIDE (Aage Ka Hissa)</span>
+          </div>
+          <span class="tag-status" id="tagIdFront">Not Added</span>
+        </div>
+
+        <div class="upload-btn-grid" id="btnGroupIdFront">
+          <button class="action-btn primary" onclick="startIdUpload('front', 'gallery')">
+            📁 Gallery / File Upload
+          </button>
+          <button class="action-btn" onclick="startIdUpload('front', 'camera')">
+            📷 Camera Photo
+          </button>
+        </div>
+
+        <div class="item-preview-box" id="previewBoxIdFront">
+          <img class="item-preview-img" id="imgIdFront" alt="Front Preview">
+          <div style="flex:1;">
+            <div style="font-size:12px; font-weight:700; color:#166534;">✅ Front Ready (Enlarged)</div>
+            <div style="font-size:11px; color:var(--muted);">Standard clear card frame</div>
+          </div>
+          <div style="display:flex; gap:6px;">
+            <button class="action-btn" style="padding:4px 8px; font-size:11px;" onclick="reCrop('id_front')">✂️ Re-crop</button>
+            <button class="action-btn" style="padding:4px 8px; font-size:11px; color:#dc2626;" onclick="resetIdSide('front')">✕</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- BACK PANEL -->
+      <div class="half-panel" id="panelIdBack">
+        <div class="panel-header">
+          <div style="display:flex; align-items:center; gap:6px;">
+            <span style="font-size:16px;">🔄</span>
+            <span style="font-weight:800; font-size:13px;">2. BACK SIDE (Peeche Ka Hissa)</span>
+          </div>
+          <span class="tag-status" id="tagIdBack">Not Added</span>
+        </div>
+
+        <div class="upload-btn-grid" id="btnGroupIdBack">
+          <button class="action-btn primary" onclick="startIdUpload('back', 'gallery')">
+            📁 Gallery / File Upload
+          </button>
+          <button class="action-btn" onclick="startIdUpload('back', 'camera')">
+            📷 Camera Photo
+          </button>
+        </div>
+
+        <div class="item-preview-box" id="previewBoxIdBack">
+          <img class="item-preview-img" id="imgIdBack" alt="Back Preview">
+          <div style="flex:1;">
+            <div style="font-size:12px; font-weight:700; color:#166534;">✅ Back Ready (Enlarged)</div>
+            <div style="font-size:11px; color:var(--muted);">Standard clear card frame</div>
+          </div>
+          <div style="display:flex; gap:6px;">
+            <button class="action-btn" style="padding:4px 8px; font-size:11px;" onclick="reCrop('id_back')">✂️ Re-crop</button>
+            <button class="action-btn" style="padding:4px 8px; font-size:11px; color:#dc2626;" onclick="resetIdSide('back')">✕</button>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top: 16px;">
+        <button class="btn btn-primary" id="btnMergeId" disabled onclick="submitIdCard()">
+          <span>Create 1-Page Enlarged ID Print</span> &rarr;
+        </button>
+      </div>
+    </div>
+
+    <!-- TAB 3: 2-IN-1 (AADHA-AADHA PAGE) -->
+    <div class="card" id="upload2in1Card" style="display:none;">
+      <div class="card-title">
+        <span class="step-number">1</span>
+        <span>2-in-1 Print</span>
+      </div>
+      <p style="font-size: 12px; color: var(--muted); margin-top: -6px; margin-bottom: 14px;">
+        Ek hi A4 sheet me do alag-alag documents ya photos print karein (Top & Bottom Half). Sirf <b>1 Page Rate</b> lagega!
+      </p>
+
+      <!-- TOP HALF -->
+      <div class="half-panel" id="panel2in1Top">
+        <div class="panel-header">
+          <div style="display:flex; align-items:center; gap:6px;">
+            <span style="font-size:16px;">⬆️</span>
+            <span style="font-weight:800; font-size:13px;">1. TOP HALF (Upar Ka Document)</span>
+          </div>
+          <span class="tag-status" id="tag2in1Top">Not Added</span>
+        </div>
+
+        <div class="upload-btn-grid" id="btnGroup2in1Top">
+          <button class="action-btn primary" onclick="start2in1Upload('top', 'gallery')">
+            📁 Gallery / File Upload
+          </button>
+          <button class="action-btn" onclick="start2in1Upload('top', 'camera')">
+            📷 Camera Photo
+          </button>
+        </div>
+
+        <div class="item-preview-box" id="previewBox2in1Top">
+          <img class="item-preview-img" id="img2in1Top" alt="Top Document">
+          <div style="flex:1;">
+            <div style="font-size:12px; font-weight:700; color:#166534;">✅ Top Document Ready</div>
+            <div style="font-size:11px; color:var(--muted);">Fitted for Top Half</div>
+          </div>
+          <div style="display:flex; gap:6px;">
+            <button class="action-btn" style="padding:4px 8px; font-size:11px;" onclick="reCrop('2in1_top')">✂️ Re-crop</button>
+            <button class="action-btn" style="padding:4px 8px; font-size:11px; color:#dc2626;" onclick="reset2in1Side('top')">✕</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- BOTTOM HALF -->
+      <div class="half-panel" id="panel2in1Bottom">
+        <div class="panel-header">
+          <div style="display:flex; align-items:center; gap:6px;">
+            <span style="font-size:16px;">⬇️</span>
+            <span style="font-weight:800; font-size:13px;">2. BOTTOM HALF (Niche Ka Document)</span>
+          </div>
+          <span class="tag-status" id="tag2in1Bottom">Not Added</span>
+        </div>
+
+        <div class="upload-btn-grid" id="btnGroup2in1Bottom">
+          <button class="action-btn primary" onclick="start2in1Upload('bottom', 'gallery')">
+            📁 Gallery / File Upload
+          </button>
+          <button class="action-btn" onclick="start2in1Upload('bottom', 'camera')">
+            📷 Camera Photo
+          </button>
+        </div>
+
+        <div class="item-preview-box" id="previewBox2in1Bottom">
+          <img class="item-preview-img" id="img2in1Bottom" alt="Bottom Document">
+          <div style="flex:1;">
+            <div style="font-size:12px; font-weight:700; color:#166534;">✅ Bottom Document Ready</div>
+            <div style="font-size:11px; color:var(--muted);">Fitted for Bottom Half</div>
+          </div>
+          <div style="display:flex; gap:6px;">
+            <button class="action-btn" style="padding:4px 8px; font-size:11px;" onclick="reCrop('2in1_bottom')">✂️ Re-crop</button>
+            <button class="action-btn" style="padding:4px 8px; font-size:11px; color:#dc2626;" onclick="reset2in1Side('bottom')">✕</button>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top: 16px;">
+        <button class="btn btn-primary" id="btnMerge2in1" disabled onclick="submit2in1()">
+          <span>Create 2-in-1 Print</span> &rarr;
+        </button>
+      </div>
+    </div>
+
+    <!-- Hidden Multi-use File Inputs -->
+    <input type="file" id="generalGalleryInput" accept=".pdf,.png,.jpg,.jpeg,.webp,.bmp,.tiff,.tif,.heic,.heif,.psd,.cdr,.docx,.doc,.xlsx,.xls,.pptx,.ppt,.txt,.rtf,image/*,application/*" style="display:none;">
+    <input type="file" id="generalCameraInput" accept="image/*" capture="environment" style="display:none;">
+
+    <!-- STEP 2: PRINT OPTIONS -->
+    <div class="card" id="optionsCard" style="display:none;">
+      <div class="card-title">
+        <span class="step-number">2</span>
+        <span>Choose Print Settings</span>
+      </div>
+
+      <!-- Color Selection -->
+      <label class="form-label">Color Option</label>
+      <div class="option-grid" id="colorOptionGrid">
+        <div class="option-card selected" id="optBw" onclick="selectColor('bw')">
+          <div class="icon">⬛</div>
+          <div class="title">Black & White</div>
+          <div class="rate">₹{{ config.rate_bw }}/page</div>
+        </div>
+        <div class="option-card" id="optMixed" style="display:none;" onclick="selectColor('mixed')">
+          <div class="icon">🎨</div>
+          <div class="title" style="display:flex; align-items:center; justify-content:center; gap:4px;">
+            <span>Smart Mixed</span>
+            <span style="font-size:9px; background:#16a34a; color:white; padding:1px 5px; border-radius:999px;">SAVE ₹</span>
+          </div>
+          <div class="rate" id="optMixedRate">B&W + Color</div>
+        </div>
+        <div class="option-card" id="optColor" onclick="selectColor('color')">
+          <div class="icon">🌈</div>
+          <div class="title">Full Colour</div>
+          <div class="rate">₹{{ config.rate_color }}/page</div>
+        </div>
+      </div>
+
+
+      <!-- Copies Counter -->
+      <div class="form-group">
+        <label class="form-label">Number of Copies</label>
+        <div class="counter-control">
+          <button class="counter-btn" onclick="changeCopies(-1)">-</button>
+          <span class="counter-val" id="copiesDisplay">1</span>
+          <button class="counter-btn" onclick="changeCopies(1)">+</button>
+        </div>
+      </div>
+
+      <!-- Page Range Selector (Container for single fallback if needed) -->
+      <div class="form-group" id="pageRangeGroup" style="display:none;"></div>
+
+      <!-- Customer Name -->
+      <div class="form-group">
+        <label class="form-label">Your Name (Aapka Naam)</label>
+        <input type="text" class="form-input" id="custNameInput" placeholder="Enter your name">
+      </div>
+
+      <!-- Bill Breakdown -->
+      <div class="bill-box">
+        <div id="billBatchDocsList" style="margin-bottom:10px; display:flex; flex-direction:column; gap:6px; border-bottom:1px dashed #cbd5e1; padding-bottom:8px;"></div>
+        <div class="bill-row">
+          <span>Total Pages to Print</span>
+          <span id="billPages" style="font-weight:700; color:var(--text);">0 Pages</span>
+        </div>
+        <div class="bill-row">
+          <span>Rate per Page</span>
+          <span id="billRate">₹{{ config.rate_bw }}</span>
+        </div>
+        <div class="bill-row">
+          <span>Copies</span>
+          <span id="billCopies">1</span>
+        </div>
+        <div class="bill-row total">
+          <span>Total Amount</span>
+          <span class="total-amount" id="billTotal">₹{{ config.rate_bw }}</span>
+        </div>
+      </div>
+
+      <div style="margin-top: 16px;">
+        <button class="btn btn-primary" onclick="proceedToPayment()">
+          <span>Proceed to Pay (₹<span id="btnPayAmount">{{ config.rate_bw }}</span>)</span> &rarr;
+        </button>
+      </div>
+    </div>
+
+    <!-- STEP 3: PAYMENT -->
+    <div class="card" id="paymentCard" style="display:none;">
+      <div class="card-title">
+        <span class="step-number">3</span>
+        <span>Payment &amp; Print Confirmation</span>
+      </div>
+
+      {% if config.razorpay_enabled %}
+      <!-- RAZORPAY INSTANT ONLINE PAYMENT (RECOMMENDED & AUTO-PRINT) -->
+      <div style="background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%); border: 2px solid #10b981; border-radius: 14px; padding: 18px 16px; margin-bottom: 16px; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.12);">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+          <div style="font-size: 13px; font-weight: 800; color: #065f46; display: flex; align-items: center; gap: 6px;">
+            <span style="font-size: 16px;">⚡</span> INSTANT AUTO-PRINT PAYMENT
+          </div>
+          <span style="background: #10b981; color: #fff; font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 20px; letter-spacing: 0.5px;">FASTEST</span>
+        </div>
+        
+        <p style="font-size: 12px; color: #047857; margin-bottom: 12px; line-height: 1.4;">
+          UPI (GPay, PhonePe, Paytm, Cred), Debit/Credit Card ya Netbanking se pay karein. Payment hote hi <b>turant automatically print</b> ho jayega, koi UTR number daalne ki zaroorat nahi!
+        </p>
+
+        <button class="btn" id="payRazorpayBtn" onclick="payWithRazorpay()" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #ffffff; font-size: 16px; font-weight: 800; width: 100%; padding: 14px; border: none; border-radius: 12px; cursor: pointer; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4); display: flex; align-items: center; justify-content: center; gap: 8px;">
+          <span>⚡ Pay ₹<span id="rzpPayAmount">0</span> Online (Auto-Print)</span> &rarr;
+        </button>
+
+        <div style="text-align: center; margin-top: 8px; font-size: 11px; color: #059669; font-weight: 600;">
+          🔒 100% RBI Authorized &amp; Encrypted via Razorpay Gateway
+        </div>
+      </div>
+
+      <div style="text-align: center; margin: 16px 0 12px; position: relative;">
+        <hr style="border: none; border-top: 1px dashed #cbd5e1; margin: 0;">
+        <span style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #fff; padding: 0 10px; font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase;">
+          Ya Phir Manual Options
+        </span>
+      </div>
+      {% endif %}
+
+      <!-- MANUAL UPI QR & CASH OPTIONS -->
+      <div style="border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px;">
+        <div style="font-size: 12px; font-weight: 700; color: #475569; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+          <span>📱</span> Direct UPI Scan &amp; Pay (Manual UTR)
+        </div>
+
+        <div class="qr-container" style="padding: 10px 0;">
+          <p style="font-size: 13px; font-weight: 700; color: #1e3a8a;">Pay exact ₹<span id="payAmountQr">0</span></p>
+          <p style="font-size: 11px; color: var(--muted); margin-bottom: 8px;">UPI ID: <b>{{ config.upi_id }}</b> ({{ config.upi_name }})</p>
+          
+          <img class="qr-img" id="upiQrImg" src="" alt="UPI QR Code" style="max-width: 180px; margin: 0 auto 8px;">
+
+          <button type="button" id="copyUpiBtn" class="btn" style="background:#e0e7ff; color:#3730a3; font-weight:700; width:100%; margin-top:6px; padding:8px; font-size:12px;" onclick="copyUpiId()">
+            📋 Copy UPI ID: <b>{{ config.upi_id }}</b>
+          </button>
+
+          <a class="upi-apps-btn" id="upiIntentLink" href="#" style="margin-top:6px; font-size:12px; padding:8px;">
+            ⚡ Open UPI App (GPay/PhonePe)
+          </a>
+
+          <div style="background:#fef3c7; border:1px solid #fde047; border-radius:10px; padding:8px 10px; margin-top:8px; font-size:11px; color:#854d0e; text-align:left; line-height:1.4;">
+            💡 <b>PhonePe security issue?</b> Upar <b>Copy UPI ID</b> dabakar PhonePe me paste karein ya QR ka screenshot lekar scan karein.
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-top: 10px;">
+          <label class="form-label" style="font-size: 12px;">UPI Reference / UTR Number (Optional)</label>
+          <input type="text" class="form-input" id="utrInput" placeholder="Enter last 4 digits or UTR" style="padding: 8px 12px; font-size: 13px;">
+        </div>
+
+        <button class="btn btn-success" id="confirmPayBtn" onclick="confirmPayment('upi')" style="padding: 10px; font-size: 14px;">
+          ✅ I Have Paid via QR (Submit)
+        </button>
+      </div>
+
+      <div style="margin-top:14px; text-align:center;">
+        <div style="font-size:11px; color:#64748b; margin-bottom:6px;">— YA PHIR DUKAN PAR CASH DEIN —</div>
+        <button type="button" class="btn" style="background:#f8fafc; border:1px dashed #cbd5e1; color:#0f172a; font-weight:700; width:100%; padding:10px; font-size:13px;" onclick="confirmPayment('cash')">
+          💵 Pay Cash at Counter (Dukan par Cash dein)
+        </button>
+      </div>
+
+      <button style="background:none; border:none; color:var(--muted); font-size:13px; width:100%; margin-top:14px; cursor:pointer;" onclick="backToOptions()">
+        &larr; Back to Options
+      </button>
+    </div>
+
+    <!-- STEP 4: PRINT STATUS SCREEN -->
+    <div class="card" id="statusCard" style="display:none; text-align: center; padding: 30px 20px;">
+      <div style="font-size: 54px; margin-bottom: 10px;" id="statusIcon">⏳</div>
+      <h2 style="font-size: 20px; font-weight: 800;" id="statusTitle">Order Sent to Shopkeeper!</h2>
+      <p style="font-size: 14px; color: var(--muted); margin-top: 6px;" id="statusDesc">
+        Aapka print request shopkeeper ke computer par bhej diya gaya hai. Kripya counter par thoda sa intazar karein.
+      </p>
+
+      <div class="status-badge" id="orderStatusBadge">
+        <span class="loader" style="border-top-color: #854d0e; width: 14px; height: 14px;"></span>
+        <span id="orderStatusText">Waiting for Print...</span>
+      </div>
+
+      <div style="margin-top: 24px; padding: 12px; background: #f8fafc; border-radius: 10px; font-size: 13px;">
+        Order ID: <b id="displayJobId">JOB-0000</b> &bull; Total Amount: <b id="displayPaidAmount">₹0</b>
+      </div>
+
+      <button class="btn btn-primary" style="margin-top: 20px;" onclick="location.reload()">
+        ➕ Print Another Document
+      </button>
+    </div>
+
+  </div>
+
+  <!-- DOCUMENT PREVIEW MODAL -->
+  <div class="crop-modal-backdrop" id="docPreviewModal" style="display:none; z-index:9999; background:rgba(15,23,42,0.85); align-items:center; justify-content:center; padding:12px;">
+    <div style="background:white; width:100%; max-width:480px; max-height:90vh; border-radius:16px; overflow:hidden; display:flex; flex-direction:column; box-shadow:0 20px 25px -5px rgba(0,0,0,0.4);">
+      
+      <!-- Modal Header -->
+      <div style="padding:12px 16px; background:#0f172a; color:white; display:flex; justify-content:space-between; align-items:center;">
+        <div style="min-width:0; padding-right:10px;">
+          <div id="previewDocTitle" style="font-weight:700; font-size:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Document Preview</div>
+          <div id="previewPageIndicator" style="font-size:12px; color:#94a3b8; margin-top:2px;">Page 1 of 1</div>
+        </div>
+        <button type="button" onclick="closeDocPreview()" style="background:#334155; border:none; color:white; border-radius:50%; width:32px; height:32px; font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center;">✕</button>
+      </div>
+
+      <!-- Preview Canvas -->
+      <div style="flex:1; overflow-y:auto; background:#f1f5f9; padding:14px; text-align:center; display:flex; align-items:center; justify-content:center; min-height:260px; max-height:60vh;">
+        <div id="previewLoading" style="display:none; color:#64748b; font-weight:600; font-size:13px;">
+          <span class="loader" style="border-top-color:#0284c7; width:22px; height:22px; display:inline-block; vertical-align:middle; margin-right:8px;"></span> Loading page...
+        </div>
+        <img id="previewDocImg" src="" alt="Page Preview" style="max-width:100%; max-height:55vh; object-fit:contain; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.12); background:white;">
+      </div>
+
+      <!-- Modal Footer -->
+      <div style="padding:10px 14px; background:white; border-top:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center; gap:8px;">
+        <button type="button" id="prevPageBtn" class="action-btn" style="padding:8px 14px; font-size:13px; font-weight:700;" onclick="changePreviewPage(-1)">◀ Prev</button>
+        
+        <a id="openFullPdfLink" href="#" target="_blank" class="action-btn" style="padding:8px 12px; font-size:12px; text-decoration:none; color:#0284c7; border-color:#bae6fd; background:#f0f9ff; font-weight:600;">
+          📄 Open Full PDF
+        </a>
+
+        <button type="button" id="nextPageBtn" class="action-btn" style="padding:8px 14px; font-size:13px; font-weight:700;" onclick="changePreviewPage(1)">Next ▶</button>
+      </div>
+
+    </div>
+
+    <!-- Compliance Footer for Razorpay / RBI Approval -->
+    <footer style="margin-top: 25px; margin-bottom: 25px; padding: 18px 12px; border-top: 1px solid #e2e8f0; text-align: center; font-size: 11px; color: #64748b; background: #ffffff; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+      <div style="font-weight: 700; color: #1e293b; margin-bottom: 6px; font-size: 12px;">
+        &copy; {{ config.shop_name }} &bull; Smart Self-Service Printing Kiosk
+      </div>
+      <div style="display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; margin: 8px 0; font-weight: 600;">
+        <a href="javascript:void(0)" onclick="showPolicy('terms')" style="color: #2563eb; text-decoration: underline;">Terms & Conditions</a>
+        <span style="color: #cbd5e1;">|</span>
+        <a href="javascript:void(0)" onclick="showPolicy('privacy')" style="color: #2563eb; text-decoration: underline;">Privacy Policy</a>
+        <span style="color: #cbd5e1;">|</span>
+        <a href="javascript:void(0)" onclick="showPolicy('refund')" style="color: #2563eb; text-decoration: underline;">Refund & Cancellation</a>
+        <span style="color: #cbd5e1;">|</span>
+        <a href="javascript:void(0)" onclick="showPolicy('contact')" style="color: #2563eb; text-decoration: underline;">Contact Us</a>
+      </div>
+      <div style="color: #94a3b8; font-size: 10px; margin-top: 4px;">
+        &bull; 100% Secure Payments via UPI &amp; Razorpay Gateway
+      </div>
+    </footer>
+
+  </div>
+
+  <!-- POLICY MODAL -->
+  <div id="policyModal" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.7); z-index:99999; justify-content:center; align-items:center; padding:16px;">
+    <div style="background:white; border-radius:16px; width:100%; max-width:480px; max-height:85vh; display:flex; flex-direction:column; overflow:hidden; box-shadow:0 20px 25px -5px rgba(0,0,0,0.2);">
+      <div style="padding:16px 20px; border-bottom:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center;">
+        <h3 id="policyModalTitle" style="margin:0; font-size:16px; font-weight:800; color:#1e293b;">Policy</h3>
+        <button type="button" onclick="closePolicyModal()" style="background:none; border:none; font-size:24px; cursor:pointer; color:#64748b; line-height:1;">&times;</button>
+      </div>
+      <div id="policyModalBody" style="padding:20px; overflow-y:auto; font-size:13px; line-height:1.6; color:#334155;">
+      </div>
+      <div style="padding:12px 20px; border-top:1px solid #e2e8f0; text-align:right;">
+        <button type="button" onclick="closePolicyModal()" class="action-btn" style="background:#2563eb; color:white; border:none; padding:8px 20px; border-radius:8px; font-weight:700;">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CROPPER MODAL -->
+  <div class="crop-modal-backdrop" id="cropModal">
+    <div class="crop-header">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <span id="cropTitle" style="font-size:16px; font-weight:800;">✂️ Free-Style Crop</span>
+        <button type="button" onclick="closeCropperModal()" style="background:none; border:none; color:white; font-size:24px; cursor:pointer; line-height:1; padding:0 8px;">&times;</button>
+      </div>
+      <div style="font-size:12px; font-weight:400; color:#cbd5e1; margin-top:2px;">Kone ya border kheench kar frame marzi se adjust karein</div>
+      
+      <!-- Ratio Selector Bar -->
+      <div class="crop-ratio-bar" id="cropRatioBar">
+        <button type="button" class="crop-ratio-btn active" id="btnRatioFree" onclick="setCropRatio(NaN, this)">🎯 Free Style (Manchaaha)</button>
+        <button type="button" class="crop-ratio-btn" id="btnRatioA4" onclick="setCropRatio(0.707, this)">📄 A4 Document</button>
+        <button type="button" class="crop-ratio-btn" id="btnRatioSquare" onclick="setCropRatio(1, this)">🔲 1:1 Square</button>
+        <button type="button" class="crop-ratio-btn" onclick="rotateCrop()">🔄 Rotate 90°</button>
+      </div>
+    </div>
+    <div class="crop-body">
+      <img id="cropperImage" src="" alt="Crop image">
+    </div>
+    <div class="crop-footer">
+      <button type="button" class="btn btn-outline-white" style="background:#334155; color:white; flex:1;" onclick="closeCropperModal()">✕ Cancel</button>
+      <button type="button" class="btn btn-success" id="btnFinishCrop" style="flex:2;" onclick="finishCrop()">✅ Done Cropping</button>
+    </div>
+  </div>
+
+  <script src="/static/js/cropper.min.js"></script>
+  <script>
+    let currentMode = 'doc';
+    let currentJobId = null;
+    let uploadedBatch = []; // [{ job_id, filename, page_count, thumbnail_url, page_mode: 'all'|'custom', selected_pages: [], page_range: 'all', active_pages: 5 }]
+    let selectedColor = 'bw';
+    let copies = 1;
+    let currentTotal = 0;
+    const rateBw = {{ config.rate_bw }};
+    const rateColor = {{ config.rate_color }};
+    const upiId = "{{ config.upi_id }}";
+    const upiName = "{{ config.upi_name }}";
+
+    // Storage for ID Card and 2in1
+    let idFrontBlob = null, idBackBlob = null;
+    let idRawFrontUrl = null, idRawBackUrl = null;
+
+    let twoInOneTopBlob = null, twoInOneBottomBlob = null;
+    let twoInOneRawTopUrl = null, twoInOneRawBottomUrl = null;
+
+    let activeTarget = null; // 'id_front', 'id_back', '2in1_top', '2in1_bottom'
+    let cropper = null;
+
+    function escapeHtml(str) {
+      return (str || '').replace(/[&<>"']/g, m => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[m]));
+    }
+
+    function switchMode(mode) {
+      currentMode = mode;
+      ['tabDoc', 'tabId', 'tab2in1'].forEach(id => document.getElementById(id).classList.remove('active'));
+      ['uploadDocCard', 'uploadIdCard', 'upload2in1Card'].forEach(id => document.getElementById(id).style.display = 'none');
+
+      if (mode === 'doc') {
+        document.getElementById('tabDoc').classList.add('active');
+        document.getElementById('uploadDocCard').style.display = 'block';
+        if (uploadedBatch.length > 0) {
+          document.getElementById('optionsCard').style.display = 'block';
+        }
+      } else if (mode === 'id_card') {
+        document.getElementById('tabId').classList.add('active');
+        document.getElementById('uploadIdCard').style.display = 'block';
+        document.getElementById('optionsCard').style.display = 'none';
+      } else if (mode === '2in1') {
+        document.getElementById('tab2in1').classList.add('active');
+        document.getElementById('upload2in1Card').style.display = 'block';
+        document.getElementById('optionsCard').style.display = 'none';
+      }
+      calculateTotal();
+    }
+
+    // Normal Document Multi-File Upload
+    function handleMultipleFiles(e) {
+      const files = Array.from(e.target.files || []);
+      if (files.length === 0) return;
+
+      const formData = new FormData();
+      files.forEach(f => {
+        formData.append('files', f);
+      });
+
+      document.getElementById('dropZone').style.display = 'none';
+      document.getElementById('uploadLoader').style.display = 'block';
+      const loaderText = document.getElementById('uploadLoaderText');
+      if (loaderText) {
+        loaderText.innerText = `Uploading & Processing ${files.length} Document${files.length > 1 ? 's' : ''}...`;
+      }
+
+      fetch('/api/upload', { method: 'POST', body: formData })
+      .then(async (res) => {
+        if (!res.ok) {
+          let msg = `Server error (${res.status})`;
+          try {
+            const errData = await res.json();
+            if (errData && errData.error) msg = errData.error;
+          } catch(e) {}
+          throw new Error(msg);
+        }
+        return res.json();
+      })
+      .then(data => {
+        document.getElementById('uploadLoader').style.display = 'none';
+        if (data.error) {
+          alert('Upload Error: ' + data.error);
+          if (uploadedBatch.length === 0) {
+            document.getElementById('dropZone').style.display = 'block';
+          }
+          return;
+        }
+
+        const newItems = data.files || [data];
+        newItems.forEach(item => {
+          if (!uploadedBatch.some(b => b.job_id === item.job_id)) {
+            uploadedBatch.push({
+              job_id: item.job_id,
+              filename: item.filename,
+              original_type: item.original_type || 'jpg',
+              page_count: item.page_count,
+              thumbnail_url: item.thumbnail_url,
+              raw_url: item.raw_url || item.thumbnail_url,
+              is_locked: item.is_locked || false,
+              is_image: item.is_image || false,
+              bw_count: item.bw_count !== undefined ? item.bw_count : item.page_count,
+              color_count: item.color_count || 0,
+              color_pages: item.color_pages || [],
+              is_magic_filtered: false,
+              page_mode: 'all',
+              selected_pages: Array.from({ length: item.page_count }, (_, i) => i + 1),
+              page_range: 'all',
+              active_pages: item.page_count
+            });
+          }
+        });
+
+        renderUploadedBatch();
+        document.getElementById('optionsCard').style.display = 'block';
+        calculateTotal();
+      })
+      .catch((err) => {
+        document.getElementById('uploadLoader').style.display = 'none';
+        if (uploadedBatch.length === 0) {
+          document.getElementById('dropZone').style.display = 'block';
+        }
+        alert('Upload Error: ' + (err.message || 'Network disconnected. Please retry.'));
+      })
+      .finally(() => {
+        document.getElementById('fileInput').value = '';
+        const camIn = document.getElementById('cameraInput');
+        if (camIn) camIn.value = '';
+      });
+    }
+
+    // Generic Multi-panel upload dispatcher
+    const generalGalleryInput = document.getElementById('generalGalleryInput');
+    const generalCameraInput = document.getElementById('generalCameraInput');
+
+    function startIdUpload(side, method) {
+      activeTarget = side === 'front' ? 'id_front' : 'id_back';
+      if (method === 'camera') generalCameraInput.click();
+      else generalGalleryInput.click();
+    }
+
+    function start2in1Upload(side, method) {
+      activeTarget = side === 'top' ? '2in1_top' : '2in1_bottom';
+      if (method === 'camera') generalCameraInput.click();
+      else generalGalleryInput.click();
+    }
+
+    generalGalleryInput.addEventListener('change', (e) => {
+      if (e.target.files.length > 0) handleGeneralFile(e.target.files[0]);
+      generalGalleryInput.value = '';
+    });
+
+    generalCameraInput.addEventListener('change', (e) => {
+      if (e.target.files.length > 0) handleGeneralFile(e.target.files[0]);
+      generalCameraInput.value = '';
+    });
+
+    function handleGeneralFile(file) {
+      const ext = file.name.split('.').pop().toLowerCase();
+      if (ext === 'pdf') {
+        const fd = new FormData();
+        fd.append('file', file);
+        const pageIdx = (activeTarget === 'id_back' || activeTarget === '2in1_bottom') ? 1 : 0;
+        fd.append('page', pageIdx);
+
+        fetch('/api/render_pdf_page', { method: 'POST', body: fd })
+          .then(res => res.json())
+          .then(data => {
+            if (data.data_url) {
+              cacheRawUrl(data.data_url);
+              openCropperModal(data.data_url);
+            } else {
+              alert('Could not render PDF: ' + (data.error || 'Unknown error'));
+            }
+          })
+          .catch(() => alert('Network error processing PDF.'));
+      } else {
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+          cacheRawUrl(evt.target.result);
+          openCropperModal(evt.target.result);
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+
+    function cacheRawUrl(url) {
+      if (activeTarget === 'id_front') idRawFrontUrl = url;
+      else if (activeTarget === 'id_back') idRawBackUrl = url;
+      else if (activeTarget === '2in1_top') twoInOneRawTopUrl = url;
+      else if (activeTarget === '2in1_bottom') twoInOneRawBottomUrl = url;
+    }
+
+    function reCrop(target) {
+      activeTarget = target;
+      let url = null;
+      if (target === 'id_front') url = idRawFrontUrl;
+      else if (target === 'id_back') url = idRawBackUrl;
+      else if (target === '2in1_top') url = twoInOneRawTopUrl;
+      else if (target === '2in1_bottom') url = twoInOneRawBottomUrl;
+
+      if (url) openCropperModal(url);
+    }
+
+    function openCropperModal(dataUrl) {
+      let title = 'Crop Document';
+      let ratio = NaN; // free ratio by default
+
+      const ratioBar = document.getElementById('cropRatioBar');
+      if (activeTarget === 'id_front') {
+        title = 'Crop ID Front (Aage Ka Hissa)';
+        ratio = 1.585; // Standard ID Card aspect ratio
+        if (ratioBar) ratioBar.style.display = 'none';
+      } else if (activeTarget === 'id_back') {
+        title = 'Crop ID Back (Peeche Ka Hissa)';
+        ratio = 1.585;
+        if (ratioBar) ratioBar.style.display = 'none';
+      } else if (activeTarget === '2in1_top') {
+        title = 'Crop Top Half (2-in-1 Print)';
+        ratio = 2200 / 1550; // Balanced 2-in-1 aspect ratio
+        if (ratioBar) ratioBar.style.display = 'none';
+      } else if (activeTarget === '2in1_bottom') {
+        title = 'Crop Bottom Half (2-in-1 Print)';
+        ratio = 2200 / 1550; // Balanced 2-in-1 aspect ratio
+        if (ratioBar) ratioBar.style.display = 'none';
+      } else if (activeTarget && activeTarget.startsWith('doc_image_')) {
+        title = '✂️ Free-Style Document Crop';
+        ratio = NaN; // 100% Free Style
+        if (ratioBar) {
+          ratioBar.style.display = 'flex';
+          document.querySelectorAll('.crop-ratio-btn').forEach(b => b.classList.remove('active'));
+          const freeBtn = document.getElementById('btnRatioFree');
+          if (freeBtn) freeBtn.classList.add('active');
+        }
+      }
+
+      document.getElementById('cropTitle').innerText = title;
+      const img = document.getElementById('cropperImage');
+      img.src = dataUrl;
+      document.getElementById('cropModal').style.display = 'flex';
+
+      if (cropper) cropper.destroy();
+      cropper = new Cropper(img, {
+        aspectRatio: ratio,
+        viewMode: 1,
+        autoCropArea: 0.95,
+        responsive: true
+      });
+    }
+
+    function rotateCrop() {
+      if (cropper) cropper.rotate(90);
+    }
+
+    function closeCropperModal() {
+      document.getElementById('cropModal').style.display = 'none';
+      if (cropper) {
+        cropper.destroy();
+        cropper = null;
+      }
+    }
+
+    function setCropRatio(ratio, btnEl) {
+      if (!cropper) return;
+      cropper.setAspectRatio(ratio);
+      document.querySelectorAll('.crop-ratio-btn').forEach(b => b.classList.remove('active'));
+      if (btnEl) btnEl.classList.add('active');
+    }
+
+    function openDocImageCropper(jobId) {
+      const file = uploadedBatch.find(f => f.job_id === jobId);
+      if (!file) return;
+
+      activeTarget = 'doc_image_' + jobId;
+      const targetUrl = file.raw_url || file.thumbnail_url || `/uploads/${file.job_id}_raw.${file.original_type}`;
+      openCropperModal(targetUrl);
+    }
+
+    function finishCrop() {
+      if (!cropper) return;
+
+      if (activeTarget && activeTarget.startsWith('doc_image_')) {
+        const jobId = activeTarget.replace('doc_image_', '');
+        const canvas = cropper.getCroppedCanvas({
+          imageSmoothingQuality: 'high'
+        });
+        if (!canvas) {
+          alert('Crop failed. Please try again.');
+          return;
+        }
+
+        const doneBtn = document.getElementById('btnFinishCrop');
+        if (doneBtn) {
+          doneBtn.disabled = true;
+          doneBtn.innerText = '⏳ Saving Crop...';
+        }
+
+        canvas.toBlob((blob) => {
+          const fd = new FormData();
+          fd.append('job_id', jobId);
+          fd.append('image', blob, 'cropped.png');
+
+          fetch('/api/image/crop', { method: 'POST', body: fd })
+            .then(res => res.json())
+            .then(data => {
+              if (doneBtn) {
+                doneBtn.disabled = false;
+                doneBtn.innerText = '✅ Done Cropping';
+              }
+              if (data.success) {
+                const file = uploadedBatch.find(f => f.job_id === jobId);
+                if (file) {
+                  file.thumbnail_url = data.thumbnail_url;
+                  file.raw_url = data.thumbnail_url;
+                }
+                closeCropperModal();
+                renderUploadedBatch();
+              } else {
+                alert('Crop error: ' + (data.error || 'Unknown error'));
+              }
+            })
+            .catch(() => {
+              if (doneBtn) {
+                doneBtn.disabled = false;
+                doneBtn.innerText = '✅ Done Cropping';
+              }
+              alert('Network error while saving cropped image.');
+            });
+        }, 'image/png');
+        return;
+      }
+
+      const isId = activeTarget.startsWith('id_');
+      const canvasOpts = { imageSmoothingQuality: 'high' };
+      if (isId) {
+        canvasOpts.width = 1550;
+      } else {
+        canvasOpts.width = 2200;
+        canvasOpts.height = 1550;
+      }
+      const canvas = cropper.getCroppedCanvas(canvasOpts);
+
+      canvas.toBlob((blob) => {
+        const previewUrl = URL.createObjectURL(blob);
+
+        if (activeTarget === 'id_front') {
+          idFrontBlob = blob;
+          document.getElementById('btnGroupIdFront').style.display = 'none';
+          document.getElementById('previewBoxIdFront').style.display = 'flex';
+          document.getElementById('imgIdFront').src = previewUrl;
+          document.getElementById('panelIdFront').classList.add('ready');
+          document.getElementById('tagIdFront').innerText = '✅ Ready';
+          document.getElementById('tagIdFront').className = 'tag-status done';
+        } else if (activeTarget === 'id_back') {
+          idBackBlob = blob;
+          document.getElementById('btnGroupIdBack').style.display = 'none';
+          document.getElementById('previewBoxIdBack').style.display = 'flex';
+          document.getElementById('imgIdBack').src = previewUrl;
+          document.getElementById('panelIdBack').classList.add('ready');
+          document.getElementById('tagIdBack').innerText = '✅ Ready';
+          document.getElementById('tagIdBack').className = 'tag-status done';
+        } else if (activeTarget === '2in1_top') {
+          twoInOneTopBlob = blob;
+          document.getElementById('btnGroup2in1Top').style.display = 'none';
+          document.getElementById('previewBox2in1Top').style.display = 'flex';
+          document.getElementById('img2in1Top').src = previewUrl;
+          document.getElementById('panel2in1Top').classList.add('ready');
+          document.getElementById('tag2in1Top').innerText = '✅ Ready';
+          document.getElementById('tag2in1Top').className = 'tag-status done';
+        } else if (activeTarget === '2in1_bottom') {
+          twoInOneBottomBlob = blob;
+          document.getElementById('btnGroup2in1Bottom').style.display = 'none';
+          document.getElementById('previewBox2in1Bottom').style.display = 'flex';
+          document.getElementById('img2in1Bottom').src = previewUrl;
+          document.getElementById('panel2in1Bottom').classList.add('ready');
+          document.getElementById('tag2in1Bottom').innerText = '✅ Ready';
+          document.getElementById('tag2in1Bottom').className = 'tag-status done';
+        }
+
+        closeCropperModal();
+
+        // Check if merge buttons can be enabled
+        if (idFrontBlob && idBackBlob) document.getElementById('btnMergeId').disabled = false;
+        if (twoInOneTopBlob && twoInOneBottomBlob) document.getElementById('btnMerge2in1').disabled = false;
+      }, 'image/png');
+    }
+
+    function resetIdSide(side) {
+      if (side === 'front') {
+        idFrontBlob = null; idRawFrontUrl = null;
+        document.getElementById('btnGroupIdFront').style.display = 'grid';
+        document.getElementById('previewBoxIdFront').style.display = 'none';
+        document.getElementById('panelIdFront').classList.remove('ready');
+        document.getElementById('tagIdFront').innerText = 'Not Added';
+        document.getElementById('tagIdFront').className = 'tag-status';
+      } else {
+        idBackBlob = null; idRawBackUrl = null;
+        document.getElementById('btnGroupIdBack').style.display = 'grid';
+        document.getElementById('previewBoxIdBack').style.display = 'none';
+        document.getElementById('panelIdBack').classList.remove('ready');
+        document.getElementById('tagIdBack').innerText = 'Not Added';
+        document.getElementById('tagIdBack').className = 'tag-status';
+      }
+      document.getElementById('btnMergeId').disabled = true;
+    }
+
+    function reset2in1Side(side) {
+      if (side === 'top') {
+        twoInOneTopBlob = null; twoInOneRawTopUrl = null;
+        document.getElementById('btnGroup2in1Top').style.display = 'grid';
+        document.getElementById('previewBox2in1Top').style.display = 'none';
+        document.getElementById('panel2in1Top').classList.remove('ready');
+        document.getElementById('tag2in1Top').innerText = 'Not Added';
+        document.getElementById('tag2in1Top').className = 'tag-status';
+      } else {
+        twoInOneBottomBlob = null; twoInOneRawBottomUrl = null;
+        document.getElementById('btnGroup2in1Bottom').style.display = 'grid';
+        document.getElementById('previewBox2in1Bottom').style.display = 'none';
+        document.getElementById('panel2in1Bottom').classList.remove('ready');
+        document.getElementById('tag2in1Bottom').innerText = 'Not Added';
+        document.getElementById('tag2in1Bottom').className = 'tag-status';
+      }
+      document.getElementById('btnMerge2in1').disabled = true;
+    }
+
+    // Submit ID Card
+    function submitIdCard() {
+      if (!idFrontBlob || !idBackBlob) return;
+
+      const btn = document.getElementById('btnMergeId');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="loader"></span> Generating Enlarged ID Layout...';
+
+      const formData = new FormData();
+      formData.append('front', idFrontBlob, 'front.png');
+      formData.append('back', idBackBlob, 'back.png');
+
+      fetch('/api/upload_id_card', { method: 'POST', body: formData })
+      .then(res => res.json())
+      .then(data => {
+        if (data.error) {
+          alert('Error: ' + data.error);
+          btn.disabled = false;
+          btn.innerHTML = '<span>Create 1-Page Enlarged ID Print</span> &rarr;';
+          return;
+        }
+
+        currentJobId = data.job_id;
+        totalPdfPages = 1;
+
+        document.getElementById('uploadIdCard').style.display = 'none';
+        document.querySelector('.mode-tabs').style.display = 'none';
+        document.getElementById('optionsCard').style.display = 'block';
+        document.getElementById('pageRangeGroup').style.display = 'none';
+
+        calculateTotal();
+      })
+      .catch(() => {
+        btn.disabled = false;
+        btn.innerHTML = '<span>Create 1-Page Enlarged ID Print</span> &rarr;';
+        alert('Network error while processing ID card.');
+      });
+    }
+
+    // Submit 2-in-1
+    function submit2in1() {
+      if (!twoInOneTopBlob || !twoInOneBottomBlob) return;
+
+      const btn = document.getElementById('btnMerge2in1');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="loader"></span> Merging 2-in-1 Print...';
+
+      const formData = new FormData();
+      formData.append('doc1', twoInOneTopBlob, 'top.png');
+      formData.append('doc2', twoInOneBottomBlob, 'bottom.png');
+
+      fetch('/api/upload_2in1', { method: 'POST', body: formData })
+      .then(res => res.json())
+      .then(data => {
+        if (data.error) {
+          alert('Error: ' + data.error);
+          btn.disabled = false;
+          btn.innerHTML = '<span>Create 2-in-1 Print</span> &rarr;';
+          return;
+        }
+
+        currentJobId = data.job_id;
+        totalPdfPages = 1; // 2-in-1 is on 1 page
+
+        document.getElementById('upload2in1Card').style.display = 'none';
+        document.querySelector('.mode-tabs').style.display = 'none';
+        document.getElementById('optionsCard').style.display = 'block';
+        document.getElementById('pageRangeGroup').style.display = 'none';
+
+        calculateTotal();
+      })
+      .catch(() => {
+        btn.disabled = false;
+        btn.innerHTML = '<span>Create 2-in-1 Print</span> &rarr;';
+        alert('Network error while processing 2-in-1 layout.');
+      });
+    }
+
+    function selectColor(type) {
+      selectedColor = type;
+      ['optBw', 'optMixed', 'optColor'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.remove('selected');
+      });
+      const selId = type === 'bw' ? 'optBw' : (type === 'mixed' ? 'optMixed' : 'optColor');
+      const selEl = document.getElementById(selId);
+      if (selEl) selEl.classList.add('selected');
+      calculateTotal();
+    }
+
+    function changeCopies(delta) {
+      copies = Math.max(1, copies + delta);
+      document.getElementById('copiesDisplay').innerText = copies;
+      calculateTotal();
+    }
+
+    // --- Multi-File Batch Rendering & Per-Document Page Selector ---
+    function renderUploadedBatch() {
+      const container = document.getElementById('batchFilesContainer');
+      const list = document.getElementById('batchFilesList');
+      const badge = document.getElementById('batchCountBadge');
+      const dropZone = document.getElementById('dropZone');
+
+      if (!uploadedBatch || uploadedBatch.length === 0) {
+        if (container) container.style.display = 'none';
+        if (dropZone) dropZone.style.display = 'block';
+        document.getElementById('optionsCard').style.display = 'none';
+        return;
+      }
+
+      if (dropZone) dropZone.style.display = 'none';
+      if (container) container.style.display = 'block';
+      if (badge) badge.innerText = uploadedBatch.length;
+
+      list.innerHTML = uploadedBatch.map((f, idx) => {
+        if (f.is_locked) {
+          return `
+            <div style="background:white; border:2px solid #fde68a; border-radius:12px; padding:12px; box-shadow:0 2px 8px rgba(245,158,11,0.08);">
+              <div style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+                <div style="display:flex; align-items:center; gap:10px; min-width:0;">
+                  <img src="${f.thumbnail_url || '/static/locked_pdf.png'}" style="width:44px; height:56px; object-fit:contain; border-radius:6px; border:1px solid #fde68a; background:#fefce8;">
+                  <div style="min-width:0;">
+                    <div style="font-weight:700; font-size:14px; color:#0f172a; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${escapeHtml(f.filename)}">
+                      ${idx + 1}. ${escapeHtml(f.filename)}
+                    </div>
+                    <span style="display:inline-block; margin-top:2px; font-size:11px; background:#fef3c7; color:#92400e; font-weight:800; padding:2px 8px; border-radius:999px;">
+                      🔒 Password Protected PDF
+                    </span>
+                  </div>
+                </div>
+                <button type="button" class="action-btn" style="color:#dc2626; border-color:#fca5a5; padding:6px 10px; font-size:12px;" onclick="removeBatchFile('${f.job_id}')" title="Remove this document">✕</button>
+              </div>
+
+              <!-- Password Prompt Box -->
+              <div style="margin-top:10px; background:#fffbeb; border:1px solid #fde68a; border-radius:10px; padding:10px;">
+                <div style="font-size:11px; color:#92400e; margin-bottom:6px; line-height:1.4;">
+                  💡 <b>Aadhaar / Bank PDF Password:</b><br>
+                  Aadhaar ke liye: Naam ke shuru ke <b>4 CAPITAL letters</b> + Janm saal (Jaise: <b>ROHI1998</b>)
+                </div>
+                <div style="display:flex; gap:6px;">
+                  <input type="password" id="pdfPass_${f.job_id}" placeholder="Enter Password" class="form-input" style="padding:8px 12px; font-size:13px; background:white; font-weight:700;" onkeydown="if(event.key==='Enter') unlockPdfFile('${f.job_id}')">
+                  <button type="button" class="action-btn" id="btnUnlock_${f.job_id}" onclick="unlockPdfFile('${f.job_id}')" style="background:#2563eb; color:white; border-color:#1d4ed8; font-weight:700; padding:8px 16px; white-space:nowrap;">
+                    🔓 Unlock
+                  </button>
+                </div>
+                <div id="unlockMsg_${f.job_id}" style="display:none; font-size:11px; font-weight:700; margin-top:6px;"></div>
+              </div>
+            </div>
+          `;
+        }
+
+        const isCustom = f.page_mode === 'custom';
+        const pageLabel = isCustom
+          ? `${f.active_pages} Page${f.active_pages > 1 ? 's' : ''} (Pg: ${f.page_range || 'None'})`
+          : `All ${f.page_count} Pages`;
+
+        // Render chips for this file
+        let chipsHtml = '';
+        const limit = Math.min(f.page_count, 100);
+        for (let i = 1; i <= limit; i++) {
+          const isSel = (f.selected_pages || []).includes(i);
+          const isCol = (f.color_pages || []).includes(i);
+          const colIndicator = isCol ? '<span style="font-size:9px; color:#ea580c; vertical-align:top;">●</span>' : '';
+          chipsHtml += `<div class="page-chip ${isSel ? 'selected' : ''}" style="min-width:32px; height:32px; font-size:12px; position:relative;" onclick="toggleBatchFileChip('${f.job_id}', ${i})">${i}${colIndicator}</div>`;
+        }
+
+        return `
+          <div style="background:white; border:1px solid #cbd5e1; border-radius:12px; padding:12px; box-shadow:0 2px 6px rgba(0,0,0,0.03);">
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+              <div style="display:flex; align-items:center; gap:10px; min-width:0; cursor:pointer;" onclick="openDocPreview('${f.job_id}', '${escapeHtml(f.filename)}', ${f.page_count})">
+                <img src="${f.thumbnail_url}?t=${Date.now()}" style="width:44px; height:56px; object-fit:cover; border-radius:6px; border:1px solid #cbd5e1; background:#f8fafc;" onerror="this.style.display='none'">
+                <div style="min-width:0;">
+                  <div style="font-weight:700; font-size:14px; color:#0f172a; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${escapeHtml(f.filename)}">
+                    ${idx + 1}. ${escapeHtml(f.filename)}
+                  </div>
+                  <div style="font-size:12px; color:var(--muted); font-weight:600; margin-top:2px; display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                    <span>Total: ${f.page_count} Page${f.page_count > 1 ? 's' : ''}</span>
+                    ${f.color_count > 0 ? `<span style="font-size:10px; background:#fef3c7; color:#b45309; padding:1px 6px; border-radius:999px; font-weight:800;">🎨 ${f.color_count} Color, ${f.bw_count} B&W</span>` : ''}
+                  </div>
+                </div>
+              </div>
+              <div style="display:flex; align-items:center; gap:6px;">
+                ${f.is_image ? `
+                  <button type="button" class="action-btn" style="color:#2563eb; border-color:#bfdbfe; background:#eff6ff; padding:6px 10px; font-size:12px; font-weight:700;" onclick="openDocImageCropper('${f.job_id}')" title="Free Style Crop">✂️ Crop</button>
+                ` : ''}
+                <button type="button" class="action-btn" style="color:#0284c7; border-color:#bae6fd; background:#f0f9ff; padding:6px 10px; font-size:12px; font-weight:700;" onclick="openDocPreview('${f.job_id}', '${escapeHtml(f.filename)}', ${f.page_count})" title="Document Preview">👁️ View</button>
+                <button type="button" class="action-btn" style="color:#dc2626; border-color:#fca5a5; padding:6px 10px; font-size:12px;" onclick="removeBatchFile('${f.job_id}')" title="Remove this document">✕</button>
+              </div>
+            </div>
+
+            <!-- CamScanner Magic Filter & Free-Style Crop for Images -->
+            ${f.is_image ? `
+              <div style="margin-top:8px; padding-top:8px; border-top:1px dashed #e2e8f0; background:#f8fafc; border-radius:8px; padding:6px 10px; display:flex; flex-direction:column; gap:6px;">
+                <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
+                  <div style="display:flex; align-items:center; gap:6px;">
+                    <span style="font-size:14px;">✂️</span>
+                    <div>
+                      <div style="font-size:12px; font-weight:700; color:#1e293b;">Free-Style Image Crop</div>
+                      <div style="font-size:10px; color:#64748b;">Kone kheench kar manchaaha frame adjust karein</div>
+                    </div>
+                  </div>
+                  <button type="button" class="action-btn" onclick="openDocImageCropper('${f.job_id}')" style="background:#eff6ff; color:#2563eb; border-color:#93c5fd; padding:4px 10px; font-size:11px; font-weight:700;">
+                    ✂️ Crop Image
+                  </button>
+                </div>
+                <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; padding-top:6px; border-top:1px solid #f1f5f9;">
+                  <div style="display:flex; align-items:center; gap:6px;">
+                    <span style="font-size:14px;">✨</span>
+                    <div>
+                      <div style="font-size:12px; font-weight:700; color:#1e293b;">Magic CamScanner Filter</div>
+                      <div style="font-size:10px; color:#64748b;">Shadow hataye, white paper & ink bachaye</div>
+                    </div>
+                  </div>
+                  <button type="button" class="action-btn" id="btnMagic_${f.job_id}" onclick="toggleMagicFilter('${f.job_id}')" style="padding:4px 10px; font-size:11px; font-weight:700; ${f.is_magic_filtered ? 'background:#16a34a; color:white; border-color:#15803d;' : 'background:#e2e8f0; color:#334155;'}">
+                    ${f.is_magic_filtered ? '✅ Magic ON' : 'Magic OFF'}
+                  </button>
+                </div>
+              </div>
+            ` : ''}
+
+            ${f.page_count > 1 ? `
+              <div style="margin-top:10px; padding-top:10px; border-top:1px dashed #e2e8f0;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                  <span style="font-size:12px; font-weight:700; color:#334155;">Kaunse Page Nikalne Hain:</span>
+                  <span style="background:${isCustom ? '#dbeafe' : '#f1f5f9'}; color:${isCustom ? '#1d4ed8' : '#475569'}; font-size:11px; font-weight:800; padding:2px 8px; border-radius:999px;">
+                    ${pageLabel}
+                  </span>
+                </div>
+
+                <div class="page-mode-tabs" style="margin-bottom:8px;">
+                  <button type="button" class="page-mode-tab ${!isCustom ? 'active' : ''}" onclick="setBatchFilePageMode('${f.job_id}', 'all')">
+                    📄 All Pages (${f.page_count})
+                  </button>
+                  <button type="button" class="page-mode-tab ${isCustom ? 'active' : ''}" onclick="setBatchFilePageMode('${f.job_id}', 'custom')">
+                    🎯 Select Pages (e.g. 1, 8)
+                  </button>
+                </div>
+
+                <div id="customBox_${f.job_id}" style="display:${isCustom ? 'block' : 'none'}; background:#f8fafc; border:1px solid #cbd5e1; border-radius:10px; padding:10px;">
+                  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                    <span style="font-size:11px; font-weight:700; color:#475569;">Enter Pages (jaise: <b>1, 8</b> ya <b>1-3, 5</b>):</span>
+                    <button type="button" class="quick-pill-btn" onclick="clearBatchFileCustom('${f.job_id}')" style="color:#dc2626;">Clear</button>
+                  </div>
+                  <input type="text" class="form-input" id="rangeInput_${f.job_id}" value="${isCustom && f.page_range !== 'all' ? f.page_range : ''}" placeholder="e.g. 1, 8 or 1-3, 5" style="font-weight:700; font-size:13px; background:white; margin-bottom:8px;" oninput="onBatchFileRangeInput('${f.job_id}', this.value)">
+
+                  <div style="display:flex; gap:6px; margin-bottom:8px; flex-wrap:wrap;">
+                    <button type="button" class="quick-pill-btn" onclick="quickSelectBatchFile('${f.job_id}', 'all')">All</button>
+                    <button type="button" class="quick-pill-btn" onclick="quickSelectBatchFile('${f.job_id}', 'odd')">Odd (1, 3..)</button>
+                    <button type="button" class="quick-pill-btn" onclick="quickSelectBatchFile('${f.job_id}', 'even')">Even (2, 4..)</button>
+                  </div>
+
+                  <div style="font-size:11px; font-weight:600; color:#64748b; margin-bottom:4px;">Tap page number:</div>
+                  <div style="display:flex; flex-wrap:wrap; gap:5px; max-height:100px; overflow-y:auto; padding:2px;">
+                    ${chipsHtml}
+                  </div>
+                </div>
+              </div>
+            ` : (f.page_count === 1 ? `
+              <div style="margin-top:6px; font-size:11px; color:#166534; font-weight:700;">
+                ✅ Single Page Document (1 Page)
+              </div>
+            ` : '')}
+          </div>
+        `;
+      }).join('');
+    }
+
+    function setBatchFilePageMode(jobId, mode) {
+      const file = uploadedBatch.find(f => f.job_id === jobId);
+      if (!file) return;
+      file.page_mode = mode;
+      if (mode === 'all') {
+        file.page_range = 'all';
+        file.selected_pages = Array.from({ length: file.page_count }, (_, i) => i + 1);
+        file.active_pages = file.page_count;
+      } else {
+        if (!file.selected_pages || file.selected_pages.length === 0) {
+          file.selected_pages = [1];
+          file.page_range = '1';
+        } else {
+          file.page_range = formatPageRanges(file.selected_pages);
+        }
+        file.active_pages = file.selected_pages.length;
+      }
+      renderUploadedBatch();
+      calculateTotal();
+    }
+
+    function toggleBatchFileChip(jobId, pg) {
+      const file = uploadedBatch.find(f => f.job_id === jobId);
+      if (!file) return;
+      if (!file.selected_pages) file.selected_pages = [];
+      const idx = file.selected_pages.indexOf(pg);
+      if (idx > -1) {
+        file.selected_pages.splice(idx, 1);
+      } else {
+        file.selected_pages.push(pg);
+      }
+      file.selected_pages.sort((a, b) => a - b);
+      file.page_range = file.selected_pages.length > 0 ? formatPageRanges(file.selected_pages) : '';
+      file.active_pages = file.selected_pages.length;
+      renderUploadedBatch();
+      calculateTotal();
+    }
+
+    function onBatchFileRangeInput(jobId, val) {
+      const file = uploadedBatch.find(f => f.job_id === jobId);
+      if (!file) return;
+      file.selected_pages = parseRangeStringToPages(val, file.page_count);
+      file.page_range = val.trim();
+      file.active_pages = file.selected_pages.length;
+      renderUploadedBatch();
+      calculateTotal();
+    }
+
+    function clearBatchFileCustom(jobId) {
+      const file = uploadedBatch.find(f => f.job_id === jobId);
+      if (!file) return;
+      file.selected_pages = [];
+      file.page_range = '';
+      file.active_pages = 0;
+      renderUploadedBatch();
+      calculateTotal();
+    }
+
+    function quickSelectBatchFile(jobId, type) {
+      const file = uploadedBatch.find(f => f.job_id === jobId);
+      if (!file) return;
+      if (type === 'all') {
+        file.selected_pages = Array.from({ length: file.page_count }, (_, i) => i + 1);
+      } else if (type === 'odd') {
+        file.selected_pages = Array.from({ length: file.page_count }, (_, i) => i + 1).filter(p => p % 2 !== 0);
+      } else if (type === 'even') {
+        file.selected_pages = Array.from({ length: file.page_count }, (_, i) => i + 1).filter(p => p % 2 === 0);
+      }
+      file.page_range = formatPageRanges(file.selected_pages);
+      file.active_pages = file.selected_pages.length;
+      renderUploadedBatch();
+      calculateTotal();
+    }
+
+    function removeBatchFile(jobId) {
+      uploadedBatch = uploadedBatch.filter(f => f.job_id !== jobId);
+      renderUploadedBatch();
+      calculateTotal();
+    }
+
+    function formatPageRanges(pages) {
+      if (!pages || !pages.length) return '';
+      let ranges = [];
+      let start = pages[0], end = pages[0];
+      for (let i = 1; i < pages.length; i++) {
+        if (pages[i] === end + 1) {
+          end = pages[i];
+        } else {
+          ranges.push(start === end ? `${start}` : `${start}-${end}`);
+          start = pages[i];
+          end = pages[i];
+        }
+      }
+      ranges.push(start === end ? `${start}` : `${start}-${end}`);
+      return ranges.join(', ');
+    }
+
+    function parseRangeStringToPages(str, maxPages) {
+      if (!str || !str.trim()) return [];
+      let pages = new Set();
+      const parts = str.replace(/;/g, ',').split(',');
+      for (let part of parts) {
+        part = part.trim();
+        if (!part) continue;
+        if (part.includes('-')) {
+          const sub = part.split('-');
+          if (sub.length === 2) {
+            const s = parseInt(sub[0].trim());
+            const e = parseInt(sub[1].trim());
+            if (!isNaN(s) && !isNaN(e)) {
+              for (let p = Math.min(s, e); p <= Math.max(s, e); p++) {
+                if (p >= 1 && p <= maxPages) pages.add(p);
+              }
+            }
+          }
+        } else {
+          const p = parseInt(part);
+          if (!isNaN(p) && p >= 1 && p <= maxPages) pages.add(p);
+        }
+      }
+      return Array.from(pages).sort((a, b) => a - b);
+    }
+
+    function calculateTotal() {
+      let totalPages = 0;
+      let totalBwPages = 0;
+      let totalColorPages = 0;
+      let breakdownHtml = '';
+
+      if (currentMode === 'doc') {
+        if (!uploadedBatch || uploadedBatch.length === 0) {
+          totalPages = 0;
+        } else {
+          uploadedBatch.forEach((f, i) => {
+            if (f.is_locked) return;
+            totalPages += f.active_pages;
+
+            const cp = f.color_pages || [];
+            const sel = f.selected_pages || [];
+            const fileColorCount = sel.filter(p => cp.includes(p)).length;
+            const fileBwCount = sel.length - fileColorCount;
+            totalColorPages += fileColorCount;
+            totalBwPages += fileBwCount;
+
+            const pDesc = f.page_mode === 'custom'
+              ? `${f.active_pages} Pgs (Pg: ${f.page_range || 'None'})`
+              : `${f.page_count} Pgs (All)`;
+            breakdownHtml += `
+              <div style="display:flex; justify-content:space-between; font-size:12px; color:#475569;">
+                <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:240px;">📄 ${i+1}. ${escapeHtml(f.filename)}</span>
+                <span style="font-weight:700; color:#1e293b;">${pDesc}</span>
+              </div>
+            `;
+          });
+        }
+
+        // Check if Smart Mixed option should be shown
+        const optMixed = document.getElementById('optMixed');
+        if (optMixed) {
+          if (totalBwPages > 0 && totalColorPages > 0) {
+            optMixed.style.display = 'block';
+            const mixedRateEl = document.getElementById('optMixedRate');
+            if (mixedRateEl) {
+              mixedRateEl.innerText = `${totalBwPages} B&W (₹${rateBw}) + ${totalColorPages} Col (₹${rateColor})`;
+            }
+          } else {
+            optMixed.style.display = 'none';
+            if (selectedColor === 'mixed') {
+              selectedColor = totalColorPages > 0 ? 'color' : 'bw';
+              selectColor(selectedColor);
+            }
+          }
+        }
+      } else {
+        totalPages = 1;
+        totalBwPages = (selectedColor === 'color' ? 0 : 1);
+        totalColorPages = (selectedColor === 'color' ? 1 : 0);
+        breakdownHtml = `
+          <div style="display:flex; justify-content:space-between; font-size:12px; color:#475569;">
+            <span>${currentMode === 'id_card' ? '🪪 ID Card Enlarged' : '📑 2-in-1 Print'}</span>
+            <span style="font-weight:700; color:#1e293b;">1 Page</span>
+          </div>
+        `;
+        const optMixed = document.getElementById('optMixed');
+        if (optMixed) optMixed.style.display = 'none';
+        if (selectedColor === 'mixed') {
+          selectedColor = 'bw';
+          selectColor('bw');
+        }
+      }
+
+      if (selectedColor === 'mixed') {
+        const itemTotal = (totalBwPages * rateBw) + (totalColorPages * rateColor);
+        currentTotal = Math.round(itemTotal * copies * 100) / 100;
+        document.getElementById('billRate').innerText = `Smart Mixed (${totalBwPages} B&W + ${totalColorPages} Color)`;
+      } else {
+        const rate = selectedColor === 'bw' ? rateBw : rateColor;
+        currentTotal = Math.round(totalPages * rate * copies * 100) / 100;
+        document.getElementById('billRate').innerText = `₹${rate}`;
+      }
+
+      const docsListEl = document.getElementById('billBatchDocsList');
+      if (docsListEl) docsListEl.innerHTML = breakdownHtml;
+
+      document.getElementById('billPages').innerText = `${totalPages} Page${totalPages > 1 ? 's' : ''}`;
+      document.getElementById('billCopies').innerText = `${copies}`;
+      document.getElementById('billTotal').innerText = `₹${currentTotal}`;
+      document.getElementById('btnPayAmount').innerText = `${currentTotal}`;
+    }
+
+    function proceedToPayment() {
+      if (currentMode === 'doc') {
+        if (!uploadedBatch || uploadedBatch.length === 0) {
+          alert('Kripya kam se kam ek document upload karein.');
+          return;
+        }
+        for (let f of uploadedBatch) {
+          if (f.is_locked) {
+            alert(`"${f.filename}" password protected hai. Kripya pehle iska password daal kar unlock karein.`);
+            return;
+          }
+          if (f.page_mode === 'custom' && f.active_pages === 0) {
+            alert(`Kripya "${f.filename}" ke liye kam se kam ek page number select karein.`);
+            return;
+          }
+        }
+      }
+
+      document.getElementById('optionsCard').style.display = 'none';
+      document.getElementById('paymentCard').style.display = 'block';
+      document.getElementById('payAmountQr').innerText = currentTotal;
+      const rzpAmtSpan = document.getElementById('rzpPayAmount');
+      if (rzpAmtSpan) {
+        rzpAmtSpan.innerText = currentTotal;
+      }
+
+      const cleanNote = encodeURIComponent('KarnatakaOne');
+      const upiString = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(upiName)}&am=${currentTotal}&cu=INR&tn=${cleanNote}`;
+      const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(upiString)}`;
+      document.getElementById('upiQrImg').src = qrApiUrl;
+      document.getElementById('upiIntentLink').href = upiString;
+    }
+
+    // Helper: Unlock PDF File
+    function unlockPdfFile(jobId) {
+      const input = document.getElementById('pdfPass_' + jobId);
+      const msg = document.getElementById('unlockMsg_' + jobId);
+      const btn = document.getElementById('btnUnlock_' + jobId);
+      const password = input ? input.value.trim() : '';
+
+      if (!password) {
+        if (msg) {
+          msg.style.display = 'block';
+          msg.style.color = '#dc2626';
+          msg.innerText = 'Kripya password daalein!';
+        }
+        return;
+      }
+
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="loader" style="width:12px; height:12px;"></span>';
+      }
+
+      fetch('/api/pdf/unlock', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ job_id: jobId, password: password })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = '🔓 Unlock';
+        }
+        if (!data.success) {
+          if (msg) {
+            msg.style.display = 'block';
+            msg.style.color = '#dc2626';
+            msg.innerText = data.error || 'Galat Password!';
+          }
+          return;
+        }
+
+        const file = uploadedBatch.find(f => f.job_id === jobId);
+        if (file) {
+          file.is_locked = false;
+          file.page_count = data.page_count;
+          file.thumbnail_url = data.thumbnail_url;
+          file.bw_count = data.bw_count;
+          file.color_count = data.color_count;
+          file.color_pages = data.color_pages || [];
+          file.selected_pages = Array.from({ length: data.page_count }, (_, i) => i + 1);
+          file.page_range = 'all';
+          file.active_pages = data.page_count;
+        }
+
+        renderUploadedBatch();
+        calculateTotal();
+      })
+      .catch(() => {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = '🔓 Unlock';
+        }
+        if (msg) {
+          msg.style.display = 'block';
+          msg.style.color = '#dc2626';
+          msg.innerText = 'Network error while unlocking.';
+        }
+      });
+    }
+
+    // Helper: Toggle CamScanner Magic Filter
+    function toggleMagicFilter(jobId) {
+      const file = uploadedBatch.find(f => f.job_id === jobId);
+      if (!file) return;
+
+      const newApply = !file.is_magic_filtered;
+      const btn = document.getElementById('btnMagic_' + jobId);
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="loader" style="width:10px; height:10px;"></span>';
+      }
+
+      fetch('/api/image/magic_filter', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ job_id: jobId, apply: newApply })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          file.is_magic_filtered = data.is_magic_filtered;
+          file.thumbnail_url = data.thumbnail_url;
+        }
+        renderUploadedBatch();
+      })
+      .catch(() => {
+        alert('Could not toggle magic filter.');
+        renderUploadedBatch();
+      });
+    }
+
+
+
+    function copyUpiId() {
+      const upiText = '{{ config.upi_id }}';
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(upiText).then(() => {
+          showCopySuccess();
+        }).catch(() => fallbackCopy(upiText));
+      } else {
+        fallbackCopy(upiText);
+      }
+    }
+
+    function fallbackCopy(text) {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      showCopySuccess();
+    }
+
+    function showCopySuccess() {
+      const btn = document.getElementById('copyUpiBtn');
+      if (btn) {
+        const orig = btn.innerHTML;
+        btn.innerHTML = '✅ Copied! Open PhonePe/GPay & Paste';
+        btn.style.background = '#dcfce7';
+        btn.style.color = '#15803d';
+        setTimeout(() => {
+          btn.innerHTML = orig;
+          btn.style.background = '#e0e7ff';
+          btn.style.color = '#3730a3';
+        }, 3000);
+      }
+    }
+
+    // Document Preview Controller
+    let previewState = { jobId: null, filename: '', currentPage: 1, totalPages: 1 };
+
+    function openDocPreview(jobId, filename, totalPages) {
+      previewState.jobId = jobId;
+      previewState.filename = filename || 'Document Preview';
+      previewState.totalPages = totalPages || 1;
+      previewState.currentPage = 1;
+
+      document.getElementById('previewDocTitle').innerText = previewState.filename;
+      document.getElementById('openFullPdfLink').href = `/uploads/${jobId}.pdf`;
+      
+      updatePreviewPageDisplay();
+      document.getElementById('docPreviewModal').style.display = 'flex';
+    }
+
+    function closeDocPreview() {
+      document.getElementById('docPreviewModal').style.display = 'none';
+    }
+
+    function changePreviewPage(delta) {
+      const newPage = previewState.currentPage + delta;
+      if (newPage >= 1 && newPage <= previewState.totalPages) {
+        previewState.currentPage = newPage;
+        updatePreviewPageDisplay();
+      }
+    }
+
+    function updatePreviewPageDisplay() {
+      const img = document.getElementById('previewDocImg');
+      const loader = document.getElementById('previewLoading');
+      const indicator = document.getElementById('previewPageIndicator');
+      const prevBtn = document.getElementById('prevPageBtn');
+      const nextBtn = document.getElementById('nextPageBtn');
+
+      indicator.innerText = `Page ${previewState.currentPage} of ${previewState.totalPages}`;
+      
+      if (previewState.totalPages <= 1) {
+        prevBtn.style.display = 'none';
+        nextBtn.style.display = 'none';
+      } else {
+        prevBtn.style.display = 'inline-block';
+        nextBtn.style.display = 'inline-block';
+        prevBtn.disabled = previewState.currentPage <= 1;
+        nextBtn.disabled = previewState.currentPage >= previewState.totalPages;
+        prevBtn.style.opacity = previewBtn.disabled ? '0.4' : '1';
+        nextBtn.style.opacity = nextBtn.disabled ? '0.4' : '1';
+      }
+
+      loader.style.display = 'block';
+      img.style.display = 'none';
+
+      img.onload = () => {
+        loader.style.display = 'none';
+        img.style.display = 'block';
+      };
+      img.onerror = () => {
+        loader.style.display = 'none';
+        img.style.display = 'block';
+        img.src = `/thumbnails/${previewState.jobId}.png`;
+      };
+
+      img.src = `/api/preview/${previewState.jobId}/${previewState.currentPage}?t=${Date.now()}`;
+    }
+
+    function backToOptions() {
+      document.getElementById('paymentCard').style.display = 'none';
+      document.getElementById('optionsCard').style.display = 'block';
+    }
+
+    function confirmPayment(paymentMode = 'upi') {
+      const btn = document.getElementById('confirmPayBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="loader"></span> Confirming...';
+
+      let defaultName = 'Customer';
+      if (currentMode === 'id_card') defaultName = 'ID Card Customer';
+      else if (currentMode === '2in1') defaultName = '2-in-1 Customer';
+      const custName = document.getElementById('custNameInput').value.trim() || defaultName;
+      const utr = paymentMode === 'cash' ? 'CASH AT COUNTER' : document.getElementById('utrInput').value.trim();
+
+      if (currentMode === 'doc') {
+        const payload = {
+          customer_name: custName,
+          print_type: selectedColor,
+          copies: copies,
+          payment_mode: paymentMode,
+          utr: utr,
+          items: uploadedBatch.map(f => ({
+            job_id: f.job_id,
+            page_range: f.page_mode === 'custom' ? (f.selected_pages.length > 0 ? formatPageRanges(f.selected_pages) : 'all') : 'all'
+          }))
+        };
+
+        fetch('/api/order/submit_batch', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        })
+        .then(res => res.json())
+        .then(data => {
+          document.getElementById('uploadDocCard').style.display = 'none';
+          document.getElementById('paymentCard').style.display = 'none';
+          document.getElementById('statusCard').style.display = 'block';
+
+          document.getElementById('displayJobId').innerText = data.batch_id || 'BATCH';
+          document.getElementById('displayPaidAmount').innerText = '₹' + data.total_price;
+
+          if (paymentMode === 'cash') {
+            document.getElementById('statusIcon').innerText = '💵';
+            document.getElementById('statusTitle').innerText = 'Order Placed (Cash Payment)';
+            document.getElementById('statusDesc').innerText = `Aapka order shopkeeper ko bhej diya gaya hai. Kripya counter par ₹${data.total_price} cash jama karein.`;
+            const badge = document.getElementById('orderStatusBadge');
+            badge.className = 'status-badge';
+            badge.style.background = '#fef3c7';
+            badge.style.borderColor = '#f59e0b';
+            badge.innerHTML = `<span style="color:#92400e; font-weight:700;">💵 Please Pay ₹${data.total_price} Cash at Counter</span>`;
+          } else if (data.status === 'printed') {
+            setPrintedStatus();
+          } else {
+            pollBatchStatus(data.batch_id);
+          }
+        })
+        .catch(err => {
+          btn.disabled = false;
+          btn.innerHTML = '✅ I Have Paid (Print Now)';
+          alert('Could not submit payment confirmation. Please check network.');
+        });
+      } else {
+        const payload = {
+          job_id: currentJobId,
+          customer_name: custName,
+          print_type: selectedColor,
+          copies: copies,
+          page_range: 'all',
+          payment_mode: paymentMode,
+          utr: utr
+        };
+
+        fetch('/api/order/submit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        })
+        .then(res => res.json())
+        .then(data => {
+          document.getElementById('uploadIdCard').style.display = 'none';
+          document.getElementById('upload2in1Card').style.display = 'none';
+          document.getElementById('paymentCard').style.display = 'none';
+          document.getElementById('statusCard').style.display = 'block';
+
+          document.getElementById('displayJobId').innerText = currentJobId;
+          document.getElementById('displayPaidAmount').innerText = '₹' + data.total_price;
+
+          if (paymentMode === 'cash') {
+            document.getElementById('statusIcon').innerText = '💵';
+            document.getElementById('statusTitle').innerText = 'Order Placed (Cash Payment)';
+            document.getElementById('statusDesc').innerText = `Aapka order shopkeeper ko bhej diya gaya hai. Kripya counter par ₹${data.total_price} cash jama karein.`;
+            const badge = document.getElementById('orderStatusBadge');
+            badge.className = 'status-badge';
+            badge.style.background = '#fef3c7';
+            badge.style.borderColor = '#f59e0b';
+            badge.innerHTML = `<span style="color:#92400e; font-weight:700;">💵 Please Pay ₹${data.total_price} Cash at Counter</span>`;
+          } else if (data.status === 'printed') {
+            setPrintedStatus();
+          } else {
+            pollStatus();
+          }
+        })
+        .catch(() => {
+          btn.disabled = false;
+          btn.innerHTML = '✅ I Have Paid (Print Now)';
+          alert('Could not submit payment confirmation. Please check network.');
+        });
+      }
+    }
+
+    // Razorpay Seamless Payment Gateway Flow
+    function payWithRazorpay() {
+      const rzpBtn = document.getElementById('payRazorpayBtn');
+      if (!rzpBtn) return;
+      const origBtnContent = rzpBtn.innerHTML;
+      rzpBtn.disabled = true;
+      rzpBtn.innerHTML = '<span class="loader" style="width:16px; height:16px; border:2px solid #fff; border-top-color:transparent; display:inline-block; border-radius:50%; animation:spin 0.8s linear infinite; margin-right:8px; vertical-align:middle;"></span> Opening Gateway...';
+
+      let defaultName = 'Customer';
+      if (currentMode === 'id_card') defaultName = 'ID Card Customer';
+      else if (currentMode === '2in1') defaultName = '2-in-1 Customer';
+      const custName = document.getElementById('custNameInput').value.trim() || defaultName;
+
+      const orderType = (currentMode === 'doc') ? 'batch' : 'single';
+      const payload = {
+        amount: currentTotal,
+        customer_name: custName,
+        order_type: orderType,
+        job_id: currentJobId || ''
+      };
+
+      fetch('/api/razorpay/create_order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+      .then(res => res.json())
+      .then(orderData => {
+        if (!orderData.success || !orderData.order_id) {
+          throw new Error(orderData.error || 'Failed to initialize payment gateway.');
+        }
+
+        const options = {
+          key: orderData.key_id,
+          amount: orderData.amount,
+          currency: orderData.currency || 'INR',
+          name: orderData.shop_name || 'QuickPrint Kiosk',
+          description: 'Print Order Payment',
+          order_id: orderData.order_id,
+          prefill: {
+            name: custName,
+            contact: ''
+          },
+          notes: {
+            customer_name: custName,
+            order_type: orderType,
+            job_id: currentJobId || ''
+          },
+          theme: {
+            color: '#10b981'
+          },
+          handler: function (response) {
+            rzpBtn.innerHTML = '<span class="loader" style="width:16px; height:16px; border:2px solid #fff; border-top-color:transparent; display:inline-block; border-radius:50%; animation:spin 0.8s linear infinite; margin-right:8px; vertical-align:middle;"></span> Verifying & Printing...';
+
+            let verifyPayload = {
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+              order_type: orderType,
+              customer_name: custName,
+              print_type: selectedColor,
+              copies: copies
+            };
+
+            if (currentMode === 'doc') {
+              verifyPayload.items = uploadedBatch.map(f => ({
+                job_id: f.job_id,
+                page_range: f.page_mode === 'custom' ? (f.selected_pages.length > 0 ? formatPageRanges(f.selected_pages) : 'all') : 'all'
+              }));
+            } else {
+              verifyPayload.job_id = currentJobId;
+              verifyPayload.page_range = 'all';
+            }
+
+            fetch('/api/razorpay/verify_payment', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(verifyPayload)
+            })
+            .then(res => res.json())
+            .then(result => {
+              if (!result.success) {
+                throw new Error(result.error || 'Payment signature verification failed.');
+              }
+
+              // Success! Immediate direct transition to Step 4 status card
+              if (currentMode === 'doc') {
+                document.getElementById('uploadDocCard').style.display = 'none';
+              } else {
+                document.getElementById('uploadIdCard').style.display = 'none';
+                document.getElementById('upload2in1Card').style.display = 'none';
+              }
+              document.getElementById('paymentCard').style.display = 'none';
+              document.getElementById('statusCard').style.display = 'block';
+
+              document.getElementById('displayJobId').innerText = result.batch_id || result.job_id || 'RZP-PAID';
+              document.getElementById('displayPaidAmount').innerText = '₹' + result.total_price;
+
+              document.getElementById('statusIcon').innerText = '⚡';
+              document.getElementById('statusTitle').innerText = 'Online Payment Confirmed!';
+
+              if (result.status === 'printed' || result.auto_printed) {
+                document.getElementById('statusDesc').innerText = `Payment successful! ID: ${result.payment_id}. Document automatically printer par bhej diya gaya hai!`;
+                setPrintedStatus();
+              } else {
+                document.getElementById('statusDesc').innerText = `Payment successful! ID: ${result.payment_id}. Shopkeeper approval pending.`;
+                if (currentMode === 'doc') {
+                  pollBatchStatus(result.batch_id);
+                } else {
+                  pollStatus();
+                }
+              }
+            })
+            .catch(err => {
+              rzpBtn.disabled = false;
+              rzpBtn.innerHTML = origBtnContent;
+              alert('Payment verification error: ' + err.message);
+            });
+          },
+          modal: {
+            ondismiss: function () {
+              rzpBtn.disabled = false;
+              rzpBtn.innerHTML = origBtnContent;
+            }
+          }
+        };
+
+        const rzp = new Razorpay(options);
+        rzp.on('payment.failed', function (resp) {
+          rzpBtn.disabled = false;
+          rzpBtn.innerHTML = origBtnContent;
+          alert('Payment Failed: ' + (resp.error ? resp.error.description : 'Transaction cancelled or declined.'));
+        });
+        rzp.open();
+      })
+      .catch(err => {
+        rzpBtn.disabled = false;
+        rzpBtn.innerHTML = origBtnContent;
+        alert('Could not start payment gateway: ' + err.message);
+      });
+    }
+
+    function setPrintedStatus() {
+      document.getElementById('statusIcon').innerText = '🖨️✨';
+      document.getElementById('statusTitle').innerText = 'Document Printed Successfully!';
+      document.getElementById('statusDesc').innerText = 'Aapka print printer se nikal chuka hai. Kripya counter se le lijiye.';
+      const badge = document.getElementById('orderStatusBadge');
+      badge.className = 'status-badge success';
+      badge.innerHTML = '✅ Completed';
+    }
+
+    function pollStatus() {
+      const interval = setInterval(() => {
+        fetch('/api/jobs')
+          .then(res => res.json())
+          .then(data => {
+            const job = (data.jobs || []).find(j => j.id === currentJobId);
+            if (job && job.status === 'printed') {
+              clearInterval(interval);
+              setPrintedStatus();
+            }
+          })
+          .catch(() => {});
+      }, 3000);
+    }
+
+    function pollBatchStatus(batchId) {
+      const interval = setInterval(() => {
+        fetch('/api/jobs')
+          .then(res => res.json())
+          .then(data => {
+            const batchJobs = (data.jobs || []).filter(j => j.batch_id === batchId);
+            if (batchJobs.length > 0 && batchJobs.every(j => j.status === 'printed')) {
+              clearInterval(interval);
+              setPrintedStatus();
+            }
+          })
+          .catch(() => {});
+      }, 3000);
+    }
+
+    // Razorpay Compliance Policy Viewer
+    function showPolicy(type) {
+      const modal = document.getElementById('policyModal');
+      const title = document.getElementById('policyModalTitle');
+      const body = document.getElementById('policyModalBody');
+      const shopName = "{{ config.shop_name }}" || 'QuickPrint Kiosk';
+      const upiName = "{{ config.upi_name }}" || 'Store Owner';
+
+      if (type === 'terms') {
+        title.innerText = 'Terms & Conditions';
+        body.innerHTML = `
+          <h4 style="margin-top:0; color:#1e293b;">1. Services Offered</h4>
+          <p>This kiosk provides on-demand self-service document printing, photocopies, and photo printing. Customers are responsible for the files they submit for printing.</p>
+          <h4 style="color:#1e293b;">2. Accepted Files & Compliance</h4>
+          <p>Users must only upload legally permitted documents. Unlawful, restricted, or prohibited documents must not be submitted.</p>
+          <h4 style="color:#1e293b;">3. Automatic File Purging</h4>
+          <p>Customer files are used strictly for fulfilling print requests and are permanently deleted from local storage within 7 days.</p>
+          <h4 style="color:#1e293b;">4. Pricing & Payments</h4>
+          <p>Rates are clearly displayed prior to printing based on pages, color mode (B&W/Color), and copies. Payments are processed securely via UPI and Razorpay.</p>
+        `;
+      } else if (type === 'privacy') {
+        title.innerText = 'Privacy Policy';
+        body.innerHTML = `
+          <h4 style="margin-top:0; color:#1e293b;">1. Privacy Assurance</h4>
+          <p>We respect customer confidentiality. Uploaded files, ID cards, and photos are never shared, sold, or accessible to unauthorized third parties.</p>
+          <h4 style="color:#1e293b;">2. Data Minimization</h4>
+          <p>We collect only the file and print specifications needed to complete the requested print operation.</p>
+          <h4 style="color:#1e293b;">3. Security & Automatic Deletion</h4>
+          <p>All uploaded files and rendered print data are automatically and permanently purged within 7 days by our background cleanup engine.</p>
+          <h4 style="color:#1e293b;">4. Payment Security</h4>
+          <p>All online transactions are protected with end-to-end encryption via UPI and RBI-regulated payment gateways (Razorpay). No banking passwords or PINs are captured.</p>
+        `;
+      } else if (type === 'refund') {
+        title.innerText = 'Refund & Cancellation Policy';
+        body.innerHTML = `
+          <h4 style="margin-top:0; color:#1e293b;">1. Defective or Failed Prints</h4>
+          <p>If a print job fails due to printer hardware errors, paper jams, power outages, or ink/toner streaks, customers are entitled to an immediate reprint free of charge or a 100% refund.</p>
+          <h4 style="color:#1e293b;">2. Refund Modes & Timeline</h4>
+          <p>Refunds can be collected immediately in cash at the counter or reversed back to the source UPI account within 24 to 48 hours upon verification.</p>
+          <h4 style="color:#1e293b;">3. Order Cancellation</h4>
+          <p>Print requests can be cancelled at the counter before the printer begins printing. Once physical printing has completed, cancellations cannot be honored.</p>
+        `;
+      } else if (type === 'contact') {
+        title.innerText = 'Contact Us';
+        body.innerHTML = `
+          <h4 style="margin-top:0; color:#1e293b;">Merchant Information</h4>
+          <p><strong>Business / Store Name:</strong> ${shopName}</p>
+          <p><strong>Owner / Payee:</strong> ${upiName}</p>
+          <p><strong>Service Category:</strong> Document Printing, Photocopy & Cyber Services</p>
+          <p><strong>Physical Support:</strong> Available at the shop service counter during business hours.</p>
+          <p><strong>Online Portal:</strong> https://print.fruitsgenerator.co.in</p>
+        `;
+      }
+      modal.style.display = 'flex';
+    }
+
+    function closePolicyModal() {
+      document.getElementById('policyModal').style.display = 'none';
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+{
+  "shop_name": "Karnataka One",
+  "upi_id": "k1afzalpur@ybl",
+  "upi_name": "Ameer Solapur",
+  "rate_bw": 5.0,
+  "rate_color": 10.0,
+  "counter_name": "Counter 1",
+  "razorpay_enabled": true,
+  "razorpay_key_id": "rzp_live_TtMiUNzNPJvQ0W",
+  "razorpay_key_secret": "1Ktgu63RiXsb2gGH8iTPaHKK",
+  "kiosk_api_key": "k1_quickprint_secret_2026",
+  "auto_print": true
+}
