@@ -747,7 +747,7 @@
         <h3 id="dropZoneTitle">Tap to Upload Documents</h3>
         <p id="dropZoneSub">Supports ALL Files: PDF, Photos, PSD, CDR, HEIC, Word, Excel & more (Multi-Files)</p>
       </div>
-      <input type="file" id="fileInput" accept=".pdf,.png,.jpg,.jpeg,.webp,.bmp,.tiff,.tif,.heic,.heif,.psd,.cdr,.docx,.doc,.xlsx,.xls,.pptx,.ppt,.txt,.rtf,.odt,.ods,.csv,image/*,application/*" multiple style="display:none;" onchange="handleMultipleFiles(event)">
+      <input type="file" id="fileInput" accept="*/*" multiple style="display:none;" onchange="handleMultipleFiles(event)">
 
 
       <!-- Upload Progress / Loading -->
@@ -933,7 +933,7 @@
     </div>
 
     <!-- Hidden Multi-use File Inputs -->
-    <input type="file" id="generalGalleryInput" accept=".pdf,.png,.jpg,.jpeg,.webp,.bmp,.tiff,.tif,.heic,.heif,.psd,.cdr,.docx,.doc,.xlsx,.xls,.pptx,.ppt,.txt,.rtf,image/*,application/*" style="display:none;">
+    <input type="file" id="generalGalleryInput" accept="*/*" style="display:none;">
     <input type="file" id="generalCameraInput" accept="image/*" capture="environment" style="display:none;">
 
     <!-- STEP 2: PRINT OPTIONS -->
