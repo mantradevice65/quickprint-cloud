@@ -59,7 +59,8 @@ DEFAULT_CONFIG = {
     "razorpay_key_id": "rzp_live_TtMiUNzNPJvQ0W",
     "razorpay_key_secret": "1Ktgu63RiXsb2gGH8iTPaHKK",
     "kiosk_api_key": "k1_quickprint_secret_2026",
-    "auto_print": True
+    "auto_print": True,
+    "enable_cash_payment": True
 }
 
 def load_config():
@@ -391,7 +392,8 @@ def customer_page():
         rate_color=cfg.get("rate_color", 10.0),
         counter_name=cfg.get("counter_name", "Counter 1"),
         razorpay_enabled=cfg.get("razorpay_enabled", True),
-        razorpay_key_id=cfg.get("razorpay_key_id", "rzp_live_TtMiUNzNPJvQ0W")
+        razorpay_key_id=cfg.get("razorpay_key_id", "rzp_live_TtMiUNzNPJvQ0W"),
+        enable_cash_payment=cfg.get("enable_cash_payment", True)
     )
 
 @app.route("/api/config", methods=["GET"])
@@ -405,7 +407,8 @@ def api_get_config():
         "rate_color": cfg.get("rate_color", 10.0),
         "counter_name": cfg.get("counter_name", "Counter 1"),
         "razorpay_enabled": cfg.get("razorpay_enabled", True),
-        "razorpay_key_id": cfg.get("razorpay_key_id", "rzp_live_TtMiUNzNPJvQ0W")
+        "razorpay_key_id": cfg.get("razorpay_key_id", "rzp_live_TtMiUNzNPJvQ0W"),
+        "enable_cash_payment": cfg.get("enable_cash_payment", True)
     })
 
 @app.route("/api/qr")
@@ -925,7 +928,14 @@ def submit_order():
     conn.commit()
     conn.close()
     
-    return jsonify({"success": True, "job_id": job_id, "total_price": total_price, "status": "pending_kiosk_sync"})
+    tracking_id = f"QP-{job_id.replace('JOB-', '')}"
+    return jsonify({
+        "success": True,
+        "job_id": job_id,
+        "tracking_id": tracking_id,
+        "total_price": total_price,
+        "status": "pending_kiosk_sync"
+    })
 
 @app.route("/api/order/submit_batch", methods=["POST"])
 def submit_batch_order():
@@ -966,7 +976,14 @@ def submit_batch_order():
         
     conn.commit()
     conn.close()
-    return jsonify({"success": True, "batch_id": batch_id, "total_price": round(total_price, 2), "status": "pending_kiosk_sync"})
+    tracking_id = f"QP-{batch_id.replace('BATCH-', '')}"
+    return jsonify({
+        "success": True,
+        "batch_id": batch_id,
+        "tracking_id": tracking_id,
+        "total_price": round(total_price, 2),
+        "status": "pending_kiosk_sync"
+    })
 
 # ==================== Razorpay Routes ====================
 
@@ -1099,15 +1116,62 @@ def api_razorpay_verify_payment():
     conn.commit()
     conn.close()
     
+    tracking_id = f"QP-{batch_id.replace('BATCH-', '')}" if order_type == "batch" else f"QP-{target_job_id.replace('JOB-', '')}"
     return jsonify({
         "success": True,
         "payment_id": payment_id,
         "batch_id": batch_id,
         "job_id": target_job_id,
+        "tracking_id": tracking_id,
         "total_price": round(total_cost, 2),
         "status": "pending_kiosk_sync",
         "message": "Payment verified! Your order is queued and will print at the counter."
     })
+
+# ==================== Live Order Tracking API ====================
+
+@app.route("/api/order/track/<path:query_id>", methods=["GET"])
+def api_track_order(query_id):
+    query_id = query_id.strip()
+    clean_id = query_id.upper()
+    if clean_id.startswith("QP-"):
+        clean_suffix = clean_id[3:]
+    elif clean_id.startswith("JOB-"):
+        clean_suffix = clean_id[4:]
+    elif clean_id.startswith("BATCH-"):
+        clean_suffix = clean_id[6:]
+    else:
+        clean_suffix = clean_id
+
+    conn = sqlite3.connect(DB_FILE)
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    c.execute("""
+        SELECT id, batch_id, customer_name, filename, original_type, page_count, print_type, copies, page_range, total_price, status, utr, created_at
+        FROM jobs
+        WHERE id = ? 
+           OR id LIKE ?
+           OR batch_id = ?
+           OR batch_id LIKE ?
+           OR utr = ?
+           OR utr LIKE ?
+        ORDER BY created_at DESC LIMIT 1
+    """, (
+        query_id, f"%{clean_suffix}%",
+        query_id, f"%{clean_suffix}%",
+        query_id, f"%{clean_suffix}%"
+    ))
+    row = c.fetchone()
+    conn.close()
+    
+    if not row:
+        return jsonify({"found": False, "error": "Order not found. Please verify your Tracking ID."}), 404
+        
+    data = dict(row)
+    tracking_id = f"QP-{data['batch_id'].replace('BATCH-', '')}" if data.get('batch_id') else f"QP-{data['id'].replace('JOB-', '')}"
+    data["tracking_id"] = tracking_id
+    data["found"] = True
+    return jsonify(data)
 
 # ==================== Kiosk Sync API (For Shop PC) ====================
 

@@ -699,9 +699,15 @@
 
   <!-- HEADER -->
   <div class="header">
-    <div class="badge">Self-Service Print Kiosk</div>
+    <div style="display: flex; justify-content: space-between; align-items: center; max-width: 500px; margin: 0 auto 10px;">
+      <div class="badge">Self-Service Print Kiosk</div>
+      <button type="button" onclick="openTrackModal()" style="background: rgba(255,255,255,0.22); border: 1px solid rgba(255,255,255,0.45); color: white; padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 6px; backdrop-filter: blur(6px); box-shadow: 0 2px 6px rgba(0,0,0,0.15); transition: all 0.2s;">
+        <span>🔍</span>
+        <span>Track Order Status</span>
+      </button>
+    </div>
     <h1>{{ config.shop_name }}</h1>
-    <p>Upload document &bull; Pay UPI &bull; Get instant print</p>
+    <p>Upload document &bull; Pay Online or Cash &bull; Instant Print</p>
   </div>
 
   <div class="container">
@@ -777,7 +783,7 @@
         <span>Upload ID Card (Aadhaar / Voter / PAN)</span>
       </div>
       <p style="font-size: 12px; color: var(--muted); margin-top: -6px; margin-bottom: 14px;">
-        Dono side upload karein. Ek hi A4 page par <b>Upar Front</b> aur <b>Niche Back</b> (Bada & Clear Size me) print hoga (1 Page Rate).
+        Upload both front and back. Both sides print enlarged and sharp on a single A4 page (1-page rate).
       </p>
 
       <!-- FRONT PANEL -->
@@ -785,7 +791,7 @@
         <div class="panel-header">
           <div style="display:flex; align-items:center; gap:6px;">
             <span style="font-size:16px;">🪪</span>
-            <span style="font-weight:800; font-size:13px;">1. FRONT SIDE (Aage Ka Hissa)</span>
+            <span style="font-weight:800; font-size:13px;">1. FRONT SIDE</span>
           </div>
           <span class="tag-status" id="tagIdFront">Not Added</span>
         </div>
@@ -817,7 +823,7 @@
         <div class="panel-header">
           <div style="display:flex; align-items:center; gap:6px;">
             <span style="font-size:16px;">🔄</span>
-            <span style="font-weight:800; font-size:13px;">2. BACK SIDE (Peeche Ka Hissa)</span>
+            <span style="font-weight:800; font-size:13px;">2. BACK SIDE</span>
           </div>
           <span class="tag-status" id="tagIdBack">Not Added</span>
         </div>
@@ -858,7 +864,7 @@
         <span>2-in-1 Print</span>
       </div>
       <p style="font-size: 12px; color: var(--muted); margin-top: -6px; margin-bottom: 14px;">
-        Ek hi A4 sheet me do alag-alag documents ya photos print karein (Top & Bottom Half). Sirf <b>1 Page Rate</b> lagega!
+        Print two separate documents on a single A4 page (top and bottom half). Pay only for 1 page!
       </p>
 
       <!-- TOP HALF -->
@@ -866,7 +872,7 @@
         <div class="panel-header">
           <div style="display:flex; align-items:center; gap:6px;">
             <span style="font-size:16px;">⬆️</span>
-            <span style="font-weight:800; font-size:13px;">1. TOP HALF (Upar Ka Document)</span>
+            <span style="font-weight:800; font-size:13px;">1. TOP HALF DOCUMENT</span>
           </div>
           <span class="tag-status" id="tag2in1Top">Not Added</span>
         </div>
@@ -898,7 +904,7 @@
         <div class="panel-header">
           <div style="display:flex; align-items:center; gap:6px;">
             <span style="font-size:16px;">⬇️</span>
-            <span style="font-weight:800; font-size:13px;">2. BOTTOM HALF (Niche Ka Document)</span>
+            <span style="font-weight:800; font-size:13px;">2. BOTTOM HALF DOCUMENT</span>
           </div>
           <span class="tag-status" id="tag2in1Bottom">Not Added</span>
         </div>
@@ -982,7 +988,7 @@
 
       <!-- Customer Name -->
       <div class="form-group">
-        <label class="form-label">Your Name (Aapka Naam)</label>
+        <label class="form-label">Your Name (Optional)</label>
         <input type="text" class="form-input" id="custNameInput" placeholder="Enter your name">
       </div>
 
@@ -1022,101 +1028,75 @@
       </div>
 
       {% if config.razorpay_enabled %}
-      <!-- RAZORPAY INSTANT ONLINE PAYMENT (RECOMMENDED & AUTO-PRINT) -->
+      <!-- RAZORPAY INSTANT ONLINE PAYMENT (FAST & AUTO-PRINT) -->
       <div style="background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%); border: 2px solid #10b981; border-radius: 14px; padding: 18px 16px; margin-bottom: 16px; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.12);">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
           <div style="font-size: 13px; font-weight: 800; color: #065f46; display: flex; align-items: center; gap: 6px;">
-            <span style="font-size: 16px;">⚡</span> INSTANT AUTO-PRINT PAYMENT
+            <span style="font-size: 16px;">⚡</span> INSTANT ONLINE PAYMENT
           </div>
-          <span style="background: #10b981; color: #fff; font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 20px; letter-spacing: 0.5px;">FASTEST</span>
+          <span style="background: #10b981; color: #fff; font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 20px; letter-spacing: 0.5px;">FASTEST &bull; AUTO-PRINT</span>
         </div>
         
         <p style="font-size: 12px; color: #047857; margin-bottom: 12px; line-height: 1.4;">
-          UPI (GPay, PhonePe, Paytm, Cred), Debit/Credit Card ya Netbanking se pay karein. Payment hote hi <b>turant automatically print</b> ho jayega, koi UTR number daalne ki zaroorat nahi!
+          Pay securely using <b>UPI (Google Pay, PhonePe, Paytm, Cred), Debit/Credit Cards, or NetBanking</b>. Your document prints automatically upon payment confirmation!
         </p>
 
         <button class="btn" id="payRazorpayBtn" onclick="payWithRazorpay()" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #ffffff; font-size: 16px; font-weight: 800; width: 100%; padding: 14px; border: none; border-radius: 12px; cursor: pointer; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4); display: flex; align-items: center; justify-content: center; gap: 8px;">
-          <span>⚡ Pay ₹<span id="rzpPayAmount">0</span> Online (Auto-Print)</span> &rarr;
+          <span>⚡ Pay ₹<span id="rzpPayAmount">0</span> Online (Instant Print)</span> &rarr;
         </button>
 
         <div style="text-align: center; margin-top: 8px; font-size: 11px; color: #059669; font-weight: 600;">
-          🔒 100% RBI Authorized &amp; Encrypted via Razorpay Gateway
+          🔒 100% Encrypted &amp; Authorized via Razorpay Gateway
         </div>
-      </div>
-
-      <div style="text-align: center; margin: 16px 0 12px; position: relative;">
-        <hr style="border: none; border-top: 1px dashed #cbd5e1; margin: 0;">
-        <span style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #fff; padding: 0 10px; font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase;">
-          Ya Phir Manual Options
-        </span>
       </div>
       {% endif %}
 
-      <!-- MANUAL UPI QR & CASH OPTIONS -->
-      <div style="border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px;">
-        <div style="font-size: 12px; font-weight: 700; color: #475569; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
-          <span>📱</span> Direct UPI Scan &amp; Pay (Manual UTR)
-        </div>
-
-        <div class="qr-container" style="padding: 10px 0;">
-          <p style="font-size: 13px; font-weight: 700; color: #1e3a8a;">Pay exact ₹<span id="payAmountQr">0</span></p>
-          <p style="font-size: 11px; color: var(--muted); margin-bottom: 8px;">UPI ID: <b>{{ config.upi_id }}</b> ({{ config.upi_name }})</p>
-          
-          <img class="qr-img" id="upiQrImg" src="" alt="UPI QR Code" style="max-width: 180px; margin: 0 auto 8px;">
-
-          <button type="button" id="copyUpiBtn" class="btn" style="background:#e0e7ff; color:#3730a3; font-weight:700; width:100%; margin-top:6px; padding:8px; font-size:12px;" onclick="copyUpiId()">
-            📋 Copy UPI ID: <b>{{ config.upi_id }}</b>
-          </button>
-
-          <a class="upi-apps-btn" id="upiIntentLink" href="#" style="margin-top:6px; font-size:12px; padding:8px;">
-            ⚡ Open UPI App (GPay/PhonePe)
-          </a>
-
-          <div style="background:#fef3c7; border:1px solid #fde047; border-radius:10px; padding:8px 10px; margin-top:8px; font-size:11px; color:#854d0e; text-align:left; line-height:1.4;">
-            💡 <b>PhonePe security issue?</b> Upar <b>Copy UPI ID</b> dabakar PhonePe me paste karein ya QR ka screenshot lekar scan karein.
-          </div>
-        </div>
-
-        <div class="form-group" style="margin-top: 10px;">
-          <label class="form-label" style="font-size: 12px;">UPI Reference / UTR Number (Optional)</label>
-          <input type="text" class="form-input" id="utrInput" placeholder="Enter last 4 digits or UTR" style="padding: 8px 12px; font-size: 13px;">
-        </div>
-
-        <button class="btn btn-success" id="confirmPayBtn" onclick="confirmPayment('upi')" style="padding: 10px; font-size: 14px;">
-          ✅ I Have Paid via QR (Submit)
+      {% if config.enable_cash_payment %}
+      <!-- CASH AT COUNTER OPTION -->
+      <div style="margin-top: 14px; text-align: center;">
+        <div style="font-size: 11px; color: #64748b; margin-bottom: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">— OR PAY IN CASH —</div>
+        <button type="button" class="btn" style="background: #ffffff; border: 2px dashed #94a3b8; color: #1e293b; font-weight: 700; width: 100%; padding: 12px; font-size: 14px; border-radius: 12px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px;" onclick="confirmPayment('cash')">
+          <span>💵</span> Pay Cash at Counter
         </button>
+        <div style="font-size: 11px; color: #64748b; margin-top: 6px;">
+          Submit your order and pay in cash to the store assistant.
+        </div>
       </div>
+      {% endif %}
 
-      <div style="margin-top:14px; text-align:center;">
-        <div style="font-size:11px; color:#64748b; margin-bottom:6px;">— YA PHIR DUKAN PAR CASH DEIN —</div>
-        <button type="button" class="btn" style="background:#f8fafc; border:1px dashed #cbd5e1; color:#0f172a; font-weight:700; width:100%; padding:10px; font-size:13px;" onclick="confirmPayment('cash')">
-          💵 Pay Cash at Counter (Dukan par Cash dein)
-        </button>
-      </div>
-
-      <button style="background:none; border:none; color:var(--muted); font-size:13px; width:100%; margin-top:14px; cursor:pointer;" onclick="backToOptions()">
-        &larr; Back to Options
+      <button style="background:none; border:none; color:var(--muted); font-size:13px; width:100%; margin-top:16px; cursor:pointer;" onclick="backToOptions()">
+        &larr; Back to Print Options
       </button>
     </div>
 
     <!-- STEP 4: PRINT STATUS SCREEN -->
-    <div class="card" id="statusCard" style="display:none; text-align: center; padding: 30px 20px;">
-      <div style="font-size: 54px; margin-bottom: 10px;" id="statusIcon">⏳</div>
-      <h2 style="font-size: 20px; font-weight: 800;" id="statusTitle">Order Sent to Shopkeeper!</h2>
-      <p style="font-size: 14px; color: var(--muted); margin-top: 6px;" id="statusDesc">
-        Aapka print request shopkeeper ke computer par bhej diya gaya hai. Kripya counter par thoda sa intazar karein.
+    <div class="card" id="statusCard" style="display:none; text-align: center; padding: 26px 18px;">
+      <div style="font-size: 52px; margin-bottom: 8px;" id="statusIcon">⚡</div>
+      <h2 style="font-size: 20px; font-weight: 800;" id="statusTitle">Order Confirmed!</h2>
+      <p style="font-size: 13px; color: var(--muted); margin-top: 6px;" id="statusDesc">
+        Your document has been sent to the printer. Please wait a moment.
       </p>
 
-      <div class="status-badge" id="orderStatusBadge">
+      <div class="status-badge" id="orderStatusBadge" style="margin-top: 12px;">
         <span class="loader" style="border-top-color: #854d0e; width: 14px; height: 14px;"></span>
-        <span id="orderStatusText">Waiting for Print...</span>
+        <span id="orderStatusText">Processing Print Job...</span>
       </div>
 
-      <div style="margin-top: 24px; padding: 12px; background: #f8fafc; border-radius: 10px; font-size: 13px;">
-        Order ID: <b id="displayJobId">JOB-0000</b> &bull; Total Amount: <b id="displayPaidAmount">₹0</b>
+      <!-- Tracking ID Highlight Box -->
+      <div style="margin-top: 18px; padding: 16px; background: #f0fdf4; border: 2px solid #86efac; border-radius: 14px; text-align: center;">
+        <div style="font-size: 11px; font-weight: 800; color: #166534; text-transform: uppercase; letter-spacing: 0.5px;">Order Tracking ID</div>
+        <div style="font-size: 26px; font-weight: 900; color: #15803d; letter-spacing: 2px; margin: 4px 0;" id="displayTrackingId">QP-0000</div>
+        <button type="button" onclick="copyTrackingId()" style="background: white; border: 1px solid #bbf7d0; color: #166534; font-size: 11px; font-weight: 700; padding: 4px 12px; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">
+          <span>📋</span> <span id="copyTrackingText">Copy Tracking ID</span>
+        </button>
+        <div style="font-size: 11px; color: #15803d; margin-top: 6px;">Note down this Tracking ID to check status anytime!</div>
       </div>
 
-      <button class="btn btn-primary" style="margin-top: 20px;" onclick="location.reload()">
+      <div style="margin-top: 14px; padding: 10px 14px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; font-size: 12px; color: #475569;">
+        Total Amount: <b style="color: #0f172a;" id="displayPaidAmount">₹0</b> &bull; Payment ID: <b style="color: #0f172a;" id="displayPaymentId">-</b>
+      </div>
+
+      <button class="btn btn-primary" style="margin-top: 18px;" onclick="location.reload()">
         ➕ Print Another Document
       </button>
     </div>
@@ -1193,18 +1173,51 @@
     </div>
   </div>
 
+  <!-- TRACK ORDER STATUS MODAL -->
+  <div class="crop-modal-backdrop" id="trackOrderModal" style="display:none; z-index:99999; background:rgba(15,23,42,0.85); align-items:center; justify-content:center; padding:16px;">
+    <div style="background:white; width:100%; max-width:440px; border-radius:18px; overflow:hidden; box-shadow:0 25px 30px -5px rgba(0,0,0,0.4); display:flex; flex-direction:column;">
+      
+      <!-- Modal Header -->
+      <div style="padding:16px 20px; background:linear-gradient(135deg, #1e3a8a, #2563eb); color:white; display:flex; justify-content:space-between; align-items:center;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="font-size:18px;">🔍</span>
+          <span style="font-weight:800; font-size:16px;">Track Your Print Order</span>
+        </div>
+        <button type="button" onclick="closeTrackModal()" style="background:rgba(255,255,255,0.2); border:none; color:white; border-radius:50%; width:30px; height:30px; font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center;">✕</button>
+      </div>
+
+      <!-- Modal Body -->
+      <div style="padding:20px;">
+        <p style="font-size:13px; color:#64748b; margin-bottom:14px; line-height:1.4;">
+          Enter your Order Tracking ID (e.g. <b>QP-8421</b> or <b>JOB-C306D9</b>) to view live print status:
+        </p>
+
+        <div style="display:flex; gap:8px;">
+          <input type="text" id="trackIdInput" placeholder="Enter Tracking ID (e.g. QP-XXXX)" style="flex:1; padding:12px; border:2px solid #cbd5e1; border-radius:10px; font-size:14px; font-weight:700; text-transform:uppercase; outline:none; text-align:center; letter-spacing:1px;" onkeypress="if(event.key==='Enter') executeTrackOrder()">
+          <button type="button" onclick="executeTrackOrder()" style="background:#2563eb; color:white; border:none; padding:12px 18px; border-radius:10px; font-weight:800; font-size:14px; cursor:pointer; display:flex; align-items:center; gap:6px;">
+            <span>Check</span>
+          </button>
+        </div>
+
+        <!-- Track Result Container -->
+        <div id="trackResultBox" style="margin-top:16px; display:none;"></div>
+      </div>
+
+    </div>
+  </div>
+
   <!-- CROPPER MODAL -->
   <div class="crop-modal-backdrop" id="cropModal">
     <div class="crop-header">
       <div style="display:flex; justify-content:space-between; align-items:center;">
-        <span id="cropTitle" style="font-size:16px; font-weight:800;">✂️ Free-Style Crop</span>
+        <span id="cropTitle" style="font-size:16px; font-weight:800;">✂️ Crop Image</span>
         <button type="button" onclick="closeCropperModal()" style="background:none; border:none; color:white; font-size:24px; cursor:pointer; line-height:1; padding:0 8px;">&times;</button>
       </div>
-      <div style="font-size:12px; font-weight:400; color:#cbd5e1; margin-top:2px;">Kone ya border kheench kar frame marzi se adjust karein</div>
+      <div style="font-size:12px; font-weight:400; color:#cbd5e1; margin-top:2px;">Drag corners or borders to freely adjust the frame</div>
       
       <!-- Ratio Selector Bar -->
       <div class="crop-ratio-bar" id="cropRatioBar">
-        <button type="button" class="crop-ratio-btn active" id="btnRatioFree" onclick="setCropRatio(NaN, this)">🎯 Free Style (Manchaaha)</button>
+        <button type="button" class="crop-ratio-btn active" id="btnRatioFree" onclick="setCropRatio(NaN, this)">🎯 Free-form</button>
         <button type="button" class="crop-ratio-btn" id="btnRatioA4" onclick="setCropRatio(0.707, this)">📄 A4 Document</button>
         <button type="button" class="crop-ratio-btn" id="btnRatioSquare" onclick="setCropRatio(1, this)">🔲 1:1 Square</button>
         <button type="button" class="crop-ratio-btn" onclick="rotateCrop()">🔄 Rotate 90°</button>
@@ -1431,11 +1444,11 @@
 
       const ratioBar = document.getElementById('cropRatioBar');
       if (activeTarget === 'id_front') {
-        title = 'Crop ID Front (Aage Ka Hissa)';
+        title = 'Crop ID Front';
         ratio = 1.585; // Standard ID Card aspect ratio
         if (ratioBar) ratioBar.style.display = 'none';
       } else if (activeTarget === 'id_back') {
-        title = 'Crop ID Back (Peeche Ka Hissa)';
+        title = 'Crop ID Back';
         ratio = 1.585;
         if (ratioBar) ratioBar.style.display = 'none';
       } else if (activeTarget === '2in1_top') {
@@ -1783,7 +1796,7 @@
               <div style="margin-top:10px; background:#fffbeb; border:1px solid #fde68a; border-radius:10px; padding:10px;">
                 <div style="font-size:11px; color:#92400e; margin-bottom:6px; line-height:1.4;">
                   💡 <b>Aadhaar / Bank PDF Password:</b><br>
-                  Aadhaar ke liye: Naam ke shuru ke <b>4 CAPITAL letters</b> + Janm saal (Jaise: <b>ROHI1998</b>)
+                  For Aadhaar: First <b>4 CAPITAL letters</b> of name + Year of birth (e.g. <b>ROHI1998</b>)
                 </div>
                 <div style="display:flex; gap:6px;">
                   <input type="password" id="pdfPass_${f.job_id}" placeholder="Enter Password" class="form-input" style="padding:8px 12px; font-size:13px; background:white; font-weight:700;" onkeydown="if(event.key==='Enter') unlockPdfFile('${f.job_id}')">
@@ -1844,7 +1857,7 @@
                     <span style="font-size:14px;">✂️</span>
                     <div>
                       <div style="font-size:12px; font-weight:700; color:#1e293b;">Free-Style Image Crop</div>
-                      <div style="font-size:10px; color:#64748b;">Kone kheench kar manchaaha frame adjust karein</div>
+                      <div style="font-size:10px; color:#64748b;">Drag corners to freely crop image</div>
                     </div>
                   </div>
                   <button type="button" class="action-btn" onclick="openDocImageCropper('${f.job_id}')" style="background:#eff6ff; color:#2563eb; border-color:#93c5fd; padding:4px 10px; font-size:11px; font-weight:700;">
@@ -1869,7 +1882,7 @@
             ${f.page_count > 1 ? `
               <div style="margin-top:10px; padding-top:10px; border-top:1px dashed #e2e8f0;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                  <span style="font-size:12px; font-weight:700; color:#334155;">Kaunse Page Nikalne Hain:</span>
+                  <span style="font-size:12px; font-weight:700; color:#334155;">Select Pages to Print:</span>
                   <span style="background:${isCustom ? '#dbeafe' : '#f1f5f9'}; color:${isCustom ? '#1d4ed8' : '#475569'}; font-size:11px; font-weight:800; padding:2px 8px; border-radius:999px;">
                     ${pageLabel}
                   </span>
@@ -1886,7 +1899,7 @@
 
                 <div id="customBox_${f.job_id}" style="display:${isCustom ? 'block' : 'none'}; background:#f8fafc; border:1px solid #cbd5e1; border-radius:10px; padding:10px;">
                   <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                    <span style="font-size:11px; font-weight:700; color:#475569;">Enter Pages (jaise: <b>1, 8</b> ya <b>1-3, 5</b>):</span>
+                    <span style="font-size:11px; font-weight:700; color:#475569;">Enter Pages (e.g. <b>1, 8</b> or <b>1-3, 5</b>):</span>
                     <button type="button" class="quick-pill-btn" onclick="clearBatchFileCustom('${f.job_id}')" style="color:#dc2626;">Clear</button>
                   </div>
                   <input type="text" class="form-input" id="rangeInput_${f.job_id}" value="${isCustom && f.page_range !== 'all' ? f.page_range : ''}" placeholder="e.g. 1, 8 or 1-3, 5" style="font-weight:700; font-size:13px; background:white; margin-bottom:8px;" oninput="onBatchFileRangeInput('${f.job_id}', this.value)">
@@ -2126,16 +2139,16 @@
     function proceedToPayment() {
       if (currentMode === 'doc') {
         if (!uploadedBatch || uploadedBatch.length === 0) {
-          alert('Kripya kam se kam ek document upload karein.');
+          alert('Please upload at least one document.');
           return;
         }
         for (let f of uploadedBatch) {
           if (f.is_locked) {
-            alert(`"${f.filename}" password protected hai. Kripya pehle iska password daal kar unlock karein.`);
+            alert(`"${f.filename}" is password protected. Please unlock it with the password first.`);
             return;
           }
           if (f.page_mode === 'custom' && f.active_pages === 0) {
-            alert(`Kripya "${f.filename}" ke liye kam se kam ek page number select karein.`);
+            alert(`Please select at least one page for "${f.filename}".`);
             return;
           }
         }
@@ -2143,17 +2156,10 @@
 
       document.getElementById('optionsCard').style.display = 'none';
       document.getElementById('paymentCard').style.display = 'block';
-      document.getElementById('payAmountQr').innerText = currentTotal;
       const rzpAmtSpan = document.getElementById('rzpPayAmount');
       if (rzpAmtSpan) {
         rzpAmtSpan.innerText = currentTotal;
       }
-
-      const cleanNote = encodeURIComponent('KarnatakaOne');
-      const upiString = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(upiName)}&am=${currentTotal}&cu=INR&tn=${cleanNote}`;
-      const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(upiString)}`;
-      document.getElementById('upiQrImg').src = qrApiUrl;
-      document.getElementById('upiIntentLink').href = upiString;
     }
 
     // Helper: Unlock PDF File
@@ -2167,7 +2173,7 @@
         if (msg) {
           msg.style.display = 'block';
           msg.style.color = '#dc2626';
-          msg.innerText = 'Kripya password daalein!';
+          msg.innerText = 'Please enter the password!';
         }
         return;
       }
@@ -2367,14 +2373,16 @@
 
     function confirmPayment(paymentMode = 'upi') {
       const btn = document.getElementById('confirmPayBtn');
-      btn.disabled = true;
-      btn.innerHTML = '<span class="loader"></span> Confirming...';
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="loader"></span> Submitting Order...';
+      }
 
       let defaultName = 'Customer';
       if (currentMode === 'id_card') defaultName = 'ID Card Customer';
       else if (currentMode === '2in1') defaultName = '2-in-1 Customer';
       const custName = document.getElementById('custNameInput').value.trim() || defaultName;
-      const utr = paymentMode === 'cash' ? 'CASH AT COUNTER' : document.getElementById('utrInput').value.trim();
+      const utr = paymentMode === 'cash' ? 'CASH AT COUNTER' : (document.getElementById('utrInput') ? document.getElementById('utrInput').value.trim() : 'DIRECT');
 
       if (currentMode === 'doc') {
         const payload = {
@@ -2400,13 +2408,15 @@
           document.getElementById('paymentCard').style.display = 'none';
           document.getElementById('statusCard').style.display = 'block';
 
-          document.getElementById('displayJobId').innerText = data.batch_id || 'BATCH';
-          document.getElementById('displayPaidAmount').innerText = '₹' + data.total_price;
+          const finalTrackingId = data.tracking_id || (data.batch_id ? `QP-${data.batch_id.replace('BATCH-', '')}` : 'QP-CASH');
+          document.getElementById('displayTrackingId').innerText = finalTrackingId;
+          document.getElementById('displayPaidAmount').innerText = '₹' + (data.total_price !== undefined ? data.total_price : currentTotal);
+          document.getElementById('displayPaymentId').innerText = (paymentMode === 'cash') ? 'Cash at Counter' : 'Online Payment';
 
           if (paymentMode === 'cash') {
             document.getElementById('statusIcon').innerText = '💵';
-            document.getElementById('statusTitle').innerText = 'Order Placed (Cash Payment)';
-            document.getElementById('statusDesc').innerText = `Aapka order shopkeeper ko bhej diya gaya hai. Kripya counter par ₹${data.total_price} cash jama karein.`;
+            document.getElementById('statusTitle').innerText = 'Order Placed (Pay at Counter)';
+            document.getElementById('statusDesc').innerText = `Your order has been sent to the store counter. Please pay ₹${data.total_price} in cash to the store assistant.`;
             const badge = document.getElementById('orderStatusBadge');
             badge.className = 'status-badge';
             badge.style.background = '#fef3c7';
@@ -2419,9 +2429,11 @@
           }
         })
         .catch(err => {
-          btn.disabled = false;
-          btn.innerHTML = '✅ I Have Paid (Print Now)';
-          alert('Could not submit payment confirmation. Please check network.');
+          if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '✅ Submit Order';
+          }
+          alert('Could not submit order. Please check network connection.');
         });
       } else {
         const payload = {
@@ -2446,13 +2458,15 @@
           document.getElementById('paymentCard').style.display = 'none';
           document.getElementById('statusCard').style.display = 'block';
 
-          document.getElementById('displayJobId').innerText = currentJobId;
-          document.getElementById('displayPaidAmount').innerText = '₹' + data.total_price;
+          const finalTrackingId = data.tracking_id || (currentJobId ? `QP-${currentJobId.replace('JOB-', '')}` : 'QP-CASH');
+          document.getElementById('displayTrackingId').innerText = finalTrackingId;
+          document.getElementById('displayPaidAmount').innerText = '₹' + (data.total_price !== undefined ? data.total_price : currentTotal);
+          document.getElementById('displayPaymentId').innerText = (paymentMode === 'cash') ? 'Cash at Counter' : 'Online Payment';
 
           if (paymentMode === 'cash') {
             document.getElementById('statusIcon').innerText = '💵';
-            document.getElementById('statusTitle').innerText = 'Order Placed (Cash Payment)';
-            document.getElementById('statusDesc').innerText = `Aapka order shopkeeper ko bhej diya gaya hai. Kripya counter par ₹${data.total_price} cash jama karein.`;
+            document.getElementById('statusTitle').innerText = 'Order Placed (Pay at Counter)';
+            document.getElementById('statusDesc').innerText = `Your order has been sent to the store counter. Please pay ₹${data.total_price} in cash to the store assistant.`;
             const badge = document.getElementById('orderStatusBadge');
             badge.className = 'status-badge';
             badge.style.background = '#fef3c7';
@@ -2465,9 +2479,11 @@
           }
         })
         .catch(() => {
-          btn.disabled = false;
-          btn.innerHTML = '✅ I Have Paid (Print Now)';
-          alert('Could not submit payment confirmation. Please check network.');
+          if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '✅ Submit Order';
+          }
+          alert('Could not submit order. Please check network connection.');
         });
       }
     }
@@ -2567,17 +2583,19 @@
               document.getElementById('paymentCard').style.display = 'none';
               document.getElementById('statusCard').style.display = 'block';
 
-              document.getElementById('displayJobId').innerText = result.batch_id || result.job_id || 'RZP-PAID';
-              document.getElementById('displayPaidAmount').innerText = '₹' + (result.total_price !== undefined ? result.total_price : '');
+              const finalTrackingId = result.tracking_id || (result.batch_id ? `QP-${result.batch_id.replace('BATCH-', '')}` : (result.job_id ? `QP-${result.job_id.replace('JOB-', '')}` : 'QP-PAID'));
+              document.getElementById('displayTrackingId').innerText = finalTrackingId;
+              document.getElementById('displayPaidAmount').innerText = '₹' + (result.total_price !== undefined ? result.total_price : currentTotal);
+              document.getElementById('displayPaymentId').innerText = result.payment_id || 'Online Payment';
 
               document.getElementById('statusIcon').innerText = '⚡';
               document.getElementById('statusTitle').innerText = 'Online Payment Confirmed!';
 
               if (result.status === 'printed' || result.status === 'completed' || result.auto_printed) {
-                document.getElementById('statusDesc').innerText = `Payment successful! ID: ${result.payment_id}. Document printer par bhej diya gaya hai!`;
+                document.getElementById('statusDesc').innerText = `Payment successful! Payment ID: ${result.payment_id}. Your document has been sent to the printer.`;
                 setPrintedStatus();
               } else {
-                document.getElementById('statusDesc').innerText = `Payment successful! ID: ${result.payment_id}. Counter printer par print ho raha hai...`;
+                document.getElementById('statusDesc').innerText = `Payment successful! Payment ID: ${result.payment_id}. Printing in progress at the counter...`;
                 if (result.batch_id) {
                   pollBatchStatus(result.batch_id);
                 } else if (result.job_id) {
@@ -2620,10 +2638,134 @@
     function setPrintedStatus() {
       document.getElementById('statusIcon').innerText = '🖨️✨';
       document.getElementById('statusTitle').innerText = 'Document Printed Successfully!';
-      document.getElementById('statusDesc').innerText = 'Aapka print printer se nikal chuka hai. Kripya counter se le lijiye.';
+      document.getElementById('statusDesc').innerText = 'Your document has finished printing. Please collect it from the counter.';
       const badge = document.getElementById('orderStatusBadge');
       badge.className = 'status-badge success';
       badge.innerHTML = '✅ Completed';
+    }
+
+    function copyTrackingId() {
+      const el = document.getElementById('displayTrackingId');
+      const text = el ? el.innerText.trim() : '';
+      if (!text) return;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => {
+          const btnText = document.getElementById('copyTrackingText');
+          if (btnText) {
+            btnText.innerText = 'Copied!';
+            setTimeout(() => { btnText.innerText = 'Copy Tracking ID'; }, 2500);
+          }
+        }).catch(() => fallbackCopy(text));
+      } else {
+        fallbackCopy(text);
+      }
+    }
+
+    function openTrackModal() {
+      const modal = document.getElementById('trackOrderModal');
+      if (modal) {
+        modal.style.display = 'flex';
+        const input = document.getElementById('trackQueryInput');
+        if (input) input.focus();
+      }
+    }
+
+    function closeTrackModal() {
+      const modal = document.getElementById('trackOrderModal');
+      if (modal) modal.style.display = 'none';
+    }
+
+    function executeTrackOrder() {
+      const input = document.getElementById('trackQueryInput');
+      const raw = input ? input.value.trim() : '';
+      if (!raw) {
+        alert('Please enter your Tracking ID or Order ID.');
+        return;
+      }
+
+      const resultBox = document.getElementById('trackResultBox');
+      resultBox.style.display = 'block';
+      resultBox.innerHTML = '<div style="text-align:center; padding:18px; color:#64748b;"><span class="loader" style="width:16px; height:16px; border:2px solid #2563eb; border-top-color:transparent; display:inline-block; border-radius:50%; animation:spin 0.8s linear infinite; margin-right:8px; vertical-align:middle;"></span> Checking order status...</div>';
+
+      fetch('/api/order/track/' + encodeURIComponent(raw))
+        .then(res => res.json())
+        .then(data => {
+          if (!data.found) {
+            resultBox.innerHTML = `
+              <div style="background:#fef2f2; border:1px solid #fecaca; border-radius:12px; padding:14px; text-align:center; color:#991b1b; font-size:13px;">
+                <div style="font-size:24px; margin-bottom:4px;">❌</div>
+                <b>Order Not Found</b>
+                <p style="margin:4px 0 0; font-size:12px; color:#b91c1c;">No print order found matching "${raw}". Please check your Tracking ID and try again.</p>
+              </div>
+            `;
+            return;
+          }
+
+          let statusColor = '#3b82f6';
+          let statusBg = '#eff6ff';
+          let statusIcon = '⏳';
+          let statusLabel = 'In Queue';
+          let statusHelp = 'Your document is queued and will print shortly at the counter.';
+
+          const st = (data.status || '').toLowerCase();
+          if (st === 'printed' || st === 'completed') {
+            statusColor = '#16a34a';
+            statusBg = '#f0fdf4';
+            statusIcon = '✅';
+            statusLabel = 'Printed Successfully';
+            statusHelp = 'Your document has finished printing! Please collect it from the counter.';
+          } else if (st === 'pending_kiosk_sync') {
+            statusColor = '#2563eb';
+            statusBg = '#eff6ff';
+            statusIcon = '🖨️';
+            statusLabel = 'Sending to Printer';
+            statusHelp = 'Payment verified! Order is being transmitted to the printer right now.';
+          } else if (st === 'awaiting_payment' || st === 'pending_payment') {
+            statusColor = '#d97706';
+            statusBg = '#fffbeb';
+            statusIcon = '💵';
+            statusLabel = 'Awaiting Payment / Cash at Counter';
+            statusHelp = 'Please complete your online payment or pay cash at the counter to start printing.';
+          } else if (st === 'cancelled') {
+            statusColor = '#dc2626';
+            statusBg = '#fef2f2';
+            statusIcon = '❌';
+            statusLabel = 'Order Cancelled';
+            statusHelp = 'This print job was cancelled. If you need assistance, please consult the store counter.';
+          }
+
+          resultBox.innerHTML = `
+            <div style="background:${statusBg}; border:2px solid ${statusColor}; border-radius:14px; padding:16px; text-align:left;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <div>
+                  <span style="font-size:11px; font-weight:800; color:#64748b; text-transform:uppercase;">Tracking ID</span>
+                  <div style="font-size:18px; font-weight:900; color:#0f172a; letter-spacing:0.5px;">${data.tracking_id}</div>
+                </div>
+                <div style="background:${statusColor}; color:white; padding:4px 12px; border-radius:20px; font-size:12px; font-weight:800; display:flex; align-items:center; gap:4px;">
+                  <span>${statusIcon}</span> ${statusLabel}
+                </div>
+              </div>
+
+              <p style="font-size:12px; color:#334155; margin:0 0 12px; font-weight:600;">${statusHelp}</p>
+
+              <div style="background:rgba(255,255,255,0.7); border-radius:10px; padding:10px 12px; font-size:12px; display:grid; grid-template-columns:1fr 1fr; gap:6px; color:#475569;">
+                <div><b>Customer:</b> ${data.customer_name || 'Customer'}</div>
+                <div><b>Total:</b> ₹${data.total_price || 0}</div>
+                <div><b>Document:</b> ${data.filename || 'Document'}</div>
+                <div><b>Pages:</b> ${data.page_count || 1} (${(data.print_type || 'B&W').toUpperCase()})</div>
+                <div><b>Copies:</b> ${data.copies || 1}</div>
+                <div><b>Time:</b> ${data.created_at || '-'}</div>
+              </div>
+            </div>
+          `;
+        })
+        .catch(() => {
+          resultBox.innerHTML = `
+            <div style="background:#fef2f2; border:1px solid #fecaca; border-radius:12px; padding:12px; text-align:center; color:#991b1b; font-size:12px;">
+              Network error while fetching order status. Please try again.
+            </div>
+          `;
+        });
     }
 
     function pollStatus() {
