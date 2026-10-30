@@ -1058,6 +1058,9 @@ def api_razorpay_verify_payment():
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
     
+    total_cost = 0.0
+    batch_id = None
+    target_job_id = None
     if order_type == "batch":
         items = data.get("items", [])
         batch_id = f"BATCH-{uuid.uuid4().hex[:6].upper()}"
@@ -1071,25 +1074,27 @@ def api_razorpay_verify_payment():
             orig_p_cnt, pdf_path = row
             sel_pages = parse_page_selection(page_range, orig_p_cnt)
             cost = round(len(sel_pages) * rate * copies, 2)
+            total_cost += cost
             c.execute("""
                 UPDATE jobs
                 SET batch_id = ?, customer_name = ?, print_type = ?, copies = ?, page_range = ?, total_price = ?, status = 'pending_kiosk_sync', utr = ?
                 WHERE id = ?
             """, (batch_id, customer_name, print_type, copies, page_range, cost, utr_string, job_id))
     else:
-        job_id = data.get("job_id")
+        target_job_id = data.get("job_id")
         page_range = str(data.get("page_range", "all")).strip() or "all"
-        c.execute("SELECT page_count, pdf_path FROM jobs WHERE id = ?", (job_id,))
+        c.execute("SELECT page_count, pdf_path FROM jobs WHERE id = ?", (target_job_id,))
         row = c.fetchone()
         if row:
             orig_p_cnt, pdf_path = row
             sel_pages = parse_page_selection(page_range, orig_p_cnt)
             cost = round(len(sel_pages) * rate * copies, 2)
+            total_cost = cost
             c.execute("""
                 UPDATE jobs
                 SET customer_name = ?, print_type = ?, copies = ?, page_range = ?, total_price = ?, status = 'pending_kiosk_sync', utr = ?
                 WHERE id = ?
-            """, (customer_name, print_type, copies, page_range, cost, utr_string, job_id))
+            """, (customer_name, print_type, copies, page_range, cost, utr_string, target_job_id))
             
     conn.commit()
     conn.close()
@@ -1097,6 +1102,10 @@ def api_razorpay_verify_payment():
     return jsonify({
         "success": True,
         "payment_id": payment_id,
+        "batch_id": batch_id,
+        "job_id": target_job_id,
+        "total_price": round(total_cost, 2),
+        "status": "pending_kiosk_sync",
         "message": "Payment verified! Your order is queued and will print at the counter."
     })
 
@@ -1157,6 +1166,8 @@ def kiosk_ack_job(job_id):
         
     data = request.json or {}
     new_status = data.get("status", "printed")
+    if new_status == "completed":
+        new_status = "printed"
     
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()

@@ -2568,19 +2568,22 @@
               document.getElementById('statusCard').style.display = 'block';
 
               document.getElementById('displayJobId').innerText = result.batch_id || result.job_id || 'RZP-PAID';
-              document.getElementById('displayPaidAmount').innerText = '₹' + result.total_price;
+              document.getElementById('displayPaidAmount').innerText = '₹' + (result.total_price !== undefined ? result.total_price : '');
 
               document.getElementById('statusIcon').innerText = '⚡';
               document.getElementById('statusTitle').innerText = 'Online Payment Confirmed!';
 
-              if (result.status === 'printed' || result.auto_printed) {
-                document.getElementById('statusDesc').innerText = `Payment successful! ID: ${result.payment_id}. Document automatically printer par bhej diya gaya hai!`;
+              if (result.status === 'printed' || result.status === 'completed' || result.auto_printed) {
+                document.getElementById('statusDesc').innerText = `Payment successful! ID: ${result.payment_id}. Document printer par bhej diya gaya hai!`;
                 setPrintedStatus();
               } else {
-                document.getElementById('statusDesc').innerText = `Payment successful! ID: ${result.payment_id}. Shopkeeper approval pending.`;
-                if (currentMode === 'doc') {
+                document.getElementById('statusDesc').innerText = `Payment successful! ID: ${result.payment_id}. Counter printer par print ho raha hai...`;
+                if (result.batch_id) {
                   pollBatchStatus(result.batch_id);
-                } else {
+                } else if (result.job_id) {
+                  currentJobId = result.job_id;
+                  pollStatus();
+                } else if (currentJobId) {
                   pollStatus();
                 }
               }
@@ -2629,7 +2632,7 @@
           .then(res => res.json())
           .then(data => {
             const job = (data.jobs || []).find(j => j.id === currentJobId);
-            if (job && job.status === 'printed') {
+            if (job && (job.status === 'printed' || job.status === 'completed')) {
               clearInterval(interval);
               setPrintedStatus();
             }
@@ -2644,7 +2647,7 @@
           .then(res => res.json())
           .then(data => {
             const batchJobs = (data.jobs || []).filter(j => j.batch_id === batchId);
-            if (batchJobs.length > 0 && batchJobs.every(j => j.status === 'printed')) {
+            if (batchJobs.length > 0 && batchJobs.every(j => j.status === 'printed' || j.status === 'completed')) {
               clearInterval(interval);
               setPrintedStatus();
             }
