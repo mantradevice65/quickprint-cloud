@@ -2427,6 +2427,7 @@
             badge.style.background = '#fef3c7';
             badge.style.borderColor = '#f59e0b';
             badge.innerHTML = `<span style="color:#92400e; font-weight:700;">💵 Please Pay ₹${data.total_price} Cash at Counter</span>`;
+            pollBatchStatus(data.batch_id);
           } else if (data.status === 'printed') {
             setPrintedStatus();
           } else {
@@ -2478,6 +2479,7 @@
             badge.style.background = '#fef3c7';
             badge.style.borderColor = '#f59e0b';
             badge.innerHTML = `<span style="color:#92400e; font-weight:700;">💵 Please Pay ₹${data.total_price} Cash at Counter</span>`;
+            pollStatus();
           } else if (data.status === 'printed') {
             setPrintedStatus();
           } else {
@@ -2777,6 +2779,19 @@
         });
     }
 
+    function setCancelledStatus() {
+      document.getElementById('statusIcon').innerText = '❌';
+      document.getElementById('statusTitle').innerText = 'Order Cancelled';
+      document.getElementById('statusDesc').innerText = 'This print request was cancelled by the store assistant.';
+      const badge = document.getElementById('orderStatusBadge');
+      if (badge) {
+        badge.className = 'status-badge';
+        badge.style.background = '#fef2f2';
+        badge.style.borderColor = '#ef4444';
+        badge.innerHTML = '<span style="color:#dc2626; font-weight:700;">❌ Order Cancelled</span>';
+      }
+    }
+
     function pollStatus() {
       const interval = setInterval(() => {
         fetch('/api/jobs?shop_slug=' + encodeURIComponent(CURRENT_SHOP_SLUG))
@@ -2786,6 +2801,9 @@
             if (job && (job.status === 'printed' || job.status === 'completed')) {
               clearInterval(interval);
               setPrintedStatus();
+            } else if (job && job.status === 'cancelled') {
+              clearInterval(interval);
+              setCancelledStatus();
             }
           })
           .catch(() => {});
@@ -2801,6 +2819,9 @@
             if (batchJobs.length > 0 && batchJobs.every(j => j.status === 'printed' || j.status === 'completed')) {
               clearInterval(interval);
               setPrintedStatus();
+            } else if (batchJobs.length > 0 && batchJobs.some(j => j.status === 'cancelled')) {
+              clearInterval(interval);
+              setCancelledStatus();
             }
           })
           .catch(() => {});

@@ -1100,12 +1100,19 @@ def submit_order():
     rate = rate_bw if print_type == "bw" else rate_color
     total_price = round(active_pages * rate * copies, 2)
     
-    # Mark as pending_kiosk_sync so PC picks it up immediately
+    payment_mode = data.get("payment_mode", "upi")
+    if payment_mode == "cash" or utr == "CASH AT COUNTER":
+        order_status = "pending_cash"
+        utr = "CASH AT COUNTER"
+    else:
+        order_status = "pending_kiosk_sync"
+    
+    # Update job with customer details and appropriate status
     c.execute("""
         UPDATE jobs
-        SET customer_name = ?, print_type = ?, copies = ?, page_range = ?, total_price = ?, status = 'pending_kiosk_sync', utr = ?, shop_slug = ?
+        SET customer_name = ?, print_type = ?, copies = ?, page_range = ?, total_price = ?, status = ?, utr = ?, shop_slug = ?
         WHERE id = ?
-    """, (customer_name, print_type, copies, page_range, total_price, utr, shop_slug, job_id))
+    """, (customer_name, print_type, copies, page_range, total_price, order_status, utr, shop_slug, job_id))
     conn.commit()
     conn.close()
     
@@ -1115,7 +1122,7 @@ def submit_order():
         "job_id": job_id,
         "tracking_id": tracking_id,
         "total_price": total_price,
-        "status": "pending_kiosk_sync"
+        "status": order_status
     })
 
 @app.route("/api/order/submit_batch", methods=["POST"])
@@ -1138,6 +1145,13 @@ def submit_batch_order():
         rate_color = float(cfg.get("rate_color", 10.0))
     rate = rate_bw if print_type == "bw" else rate_color
     
+    payment_mode = data.get("payment_mode", "upi")
+    if payment_mode == "cash" or utr == "CASH AT COUNTER":
+        batch_status = "pending_cash"
+        utr = "CASH AT COUNTER"
+    else:
+        batch_status = "pending_kiosk_sync"
+
     batch_id = f"BATCH-{uuid.uuid4().hex[:6].upper()}"
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
@@ -1157,9 +1171,9 @@ def submit_batch_order():
         
         c.execute("""
             UPDATE jobs
-            SET batch_id = ?, customer_name = ?, print_type = ?, copies = ?, page_range = ?, total_price = ?, status = 'pending_kiosk_sync', utr = ?, shop_slug = ?
+            SET batch_id = ?, customer_name = ?, print_type = ?, copies = ?, page_range = ?, total_price = ?, status = ?, utr = ?, shop_slug = ?
             WHERE id = ?
-        """, (batch_id, customer_name, print_type, copies, page_range, item_cost, utr, shop_slug, job_id))
+        """, (batch_id, customer_name, print_type, copies, page_range, item_cost, batch_status, utr, shop_slug, job_id))
         
     conn.commit()
     conn.close()
@@ -1592,7 +1606,7 @@ def kiosk_pending_jobs():
     c.execute("""
         SELECT id, batch_id, customer_name, filename, original_type, page_count, print_type, copies, page_range, total_price, status, utr, created_at, color_pages
         FROM jobs
-        WHERE status IN ('pending_kiosk_sync', 'paid') AND shop_slug = ?
+        WHERE status IN ('pending_kiosk_sync', 'pending_cash', 'paid') AND shop_slug = ?
         ORDER BY created_at ASC
     """, (shop["slug"],))
     rows = [dict(r) for r in c.fetchall()]
