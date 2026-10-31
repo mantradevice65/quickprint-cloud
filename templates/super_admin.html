@@ -394,11 +394,20 @@
     </div>
 
     <!-- Action Bar -->
-    <div class="action-bar">
-      <input type="text" id="searchInput" class="search-input" placeholder="🔍 Search by shop name, owner, or phone..." oninput="filterShops()">
-      <button class="btn-primary" onclick="openAddShopModal()">
-        <span>➕</span> Add New Print Kiosk
-      </button>
+    <div class="action-bar" style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+      <input type="text" id="searchInput" class="search-input" placeholder="🔍 Search by shop name, owner, or phone..." oninput="filterShops()" style="flex: 1; min-width: 240px;">
+      <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+        <a href="/api/super/shops/backup" class="action-btn" title="Download JSON backup of all registered kiosks" style="text-decoration:none; display:inline-flex; align-items:center; gap:6px; background:#1e293b; color:#38bdf8; border:1px solid #334155; font-weight:700;">
+          <span>📥</span> Backup Kiosks (.json)
+        </a>
+        <button type="button" class="action-btn" onclick="triggerRestoreJson()" title="Upload backup file to restore kiosks" style="display:inline-flex; align-items:center; gap:6px; background:#1e293b; color:#34d399; border:1px solid #334155; font-weight:700;">
+          <span>📤</span> Restore Backup
+        </button>
+        <input type="file" id="restoreJsonInput" accept=".json" style="display:none;" onchange="handleRestoreJsonFile(event)">
+        <button class="btn-primary" onclick="openAddShopModal()">
+          <span>➕</span> Add New Print Kiosk
+        </button>
+      </div>
     </div>
 
     <!-- Shops Table -->
@@ -680,11 +689,79 @@
     let allShops = [];
     let activeRenewSlug = null;
 
+    // ================= Triple-Lock Persistence Vault =================
+    function getVaultShops() {
+      try {
+        return JSON.parse(localStorage.getItem('qp_super_admin_shops_vault') || '[]');
+      } catch (e) { return []; }
+    }
+
+    function saveVaultShops(shops) {
+      try {
+        localStorage.setItem('qp_super_admin_shops_vault', JSON.stringify(shops));
+      } catch (e) {}
+    }
+
+    function getDeletedSlugs() {
+      try {
+        return JSON.parse(localStorage.getItem('qp_super_admin_deleted_slugs') || '[]');
+      } catch (e) { return []; }
+    }
+
+    function markSlugDeleted(slug) {
+      const deleted = getDeletedSlugs();
+      if (!deleted.includes(slug)) {
+        deleted.push(slug);
+        localStorage.setItem('qp_super_admin_deleted_slugs', JSON.stringify(deleted));
+      }
+      const vault = getVaultShops().filter(s => s.slug !== slug);
+      saveVaultShops(vault);
+    }
+
+    let isAutoHealing = false;
+
     function loadShops() {
       fetch('/api/super/shops')
         .then(res => res.json())
         .then(data => {
           allShops = data.shops || [];
+          
+          // Auto-Heal: Check if any previously registered kiosk is missing from the server
+          const vault = getVaultShops();
+          const deleted = getDeletedSlugs();
+          const serverSlugs = new Set(allShops.map(s => s.slug));
+          const missing = vault.filter(s => s.slug && !serverSlugs.has(s.slug) && !deleted.includes(s.slug));
+
+          if (missing.length > 0 && !isAutoHealing) {
+            console.log(`[🛡️ VAULT HEAL] Detected ${missing.length} missing kiosks after server redeploy. Auto-restoring...`);
+            isAutoHealing = true;
+            fetch('/api/super/shops/sync_vault', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ shops: missing })
+            })
+            .then(r => r.json())
+            .then(res => {
+              isAutoHealing = false;
+              if (res.success && res.restored > 0) {
+                // Re-fetch to display restored shops
+                fetch('/api/super/shops')
+                  .then(r => r.json())
+                  .then(d2 => {
+                    allShops = d2.shops || [];
+                    saveVaultShops(allShops);
+                    renderShops(allShops);
+                    updateSummaryStats(allShops);
+                  });
+                return;
+              }
+            })
+            .catch(() => { isAutoHealing = false; });
+          } else {
+            // Save current server state to browser vault
+            saveVaultShops(allShops);
+          }
+
           renderShops(allShops);
           updateSummaryStats(allShops);
         })
@@ -782,6 +859,11 @@
                 <button type="button" class="action-btn" onclick="toggleShopActive('${s.slug}')" style="${s.is_active ? 'color:#f87171;' : 'color:#34d399;'}" title="Toggle Active/Pause">
                   ${s.is_active ? '⏸️ Pause' : '▶️ Resume'}
                 </button>
+                ${s.slug !== 'karnataka-one' ? `
+                  <button type="button" class="action-btn" onclick="deleteShop('${s.slug}', '${escapeHtml(s.shop_name)}')" style="color:#ef4444;" title="Delete Kiosk">
+                    🗑️ Delete
+                  </button>
+                ` : ''}
               </div>
             </td>
           </tr>
@@ -1002,6 +1084,60 @@
 
     function escapeHtml(text) {
       return (text || '').replace(/'/g, "\\'");
+    }
+
+    function deleteShop(slug, name) {
+      if (!confirm(`Are you sure you want to permanently delete kiosk "${name}" (${slug})?\n\nThis will remove the shop and its print history.`)) return;
+      markSlugDeleted(slug);
+      fetch(`/api/super/shops/${slug}`, { method: 'DELETE' })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            loadShops();
+            alert(`Kiosk "${name}" deleted.`);
+          } else {
+            alert('Error: ' + (data.error || 'Failed to delete shop.'));
+          }
+        })
+        .catch(() => alert('Network error while deleting kiosk.'));
+    }
+
+    function triggerRestoreJson() {
+      document.getElementById('restoreJsonInput').click();
+    }
+
+    function handleRestoreJsonFile(e) {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        try {
+          const parsed = JSON.parse(evt.target.result);
+          const list = Array.isArray(parsed) ? parsed : (parsed.shops || []);
+          if (!list || !list.length) {
+            alert('No valid kiosks found in the backup file.');
+            return;
+          }
+          fetch('/api/super/shops/sync_vault', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ shops: list })
+          })
+          .then(res => res.json())
+          .then(resp => {
+            if (resp.success) {
+              alert(`Restoration complete! ${resp.restored} kiosks restored/synchronized.`);
+              loadShops();
+            } else {
+              alert('Restore error: ' + (resp.error || 'Failed to restore.'));
+            }
+          });
+        } catch (err) {
+          alert('Invalid backup JSON file.');
+        }
+      };
+      reader.readAsText(file);
+      e.target.value = '';
     }
 
     // Initial Load

@@ -78,6 +78,85 @@ def load_config():
             pass
     return DEFAULT_CONFIG.copy()
 
+SHOPS_REGISTRY_FILE = BASE_DIR / "shops_registry.json"
+
+def save_shops_registry():
+    """
+    Permanent Kiosk Registry Persistence:
+    Syncs the active shops from database into shops_registry.json.
+    Ensures that newly registered kiosks are backed up to disk.
+    """
+    try:
+        conn = sqlite3.connect(DB_FILE)
+        conn.row_factory = sqlite3.Row
+        c = conn.cursor()
+        c.execute("SELECT * FROM shops ORDER BY id ASC")
+        data = [dict(r) for r in c.fetchall()]
+        conn.close()
+        with open(SHOPS_REGISTRY_FILE, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2)
+        print(f"[🛡️ REGISTRY] Synced {len(data)} kiosks to {SHOPS_REGISTRY_FILE.name}")
+    except Exception as e:
+        print("[-] Error saving shops_registry.json:", e)
+
+def sync_shops_from_registry():
+    """
+    Auto-Restoration Engine:
+    On every server boot, loads all registered shops from shops_registry.json
+    so that redeploying, updating software, or adding features NEVER deletes any kiosk.
+    """
+    if not SHOPS_REGISTRY_FILE.exists():
+        return
+    try:
+        with open(SHOPS_REGISTRY_FILE, "r", encoding="utf-8") as f:
+            registry = json.load(f)
+            
+        conn = sqlite3.connect(DB_FILE)
+        c = conn.cursor()
+        restored = 0
+        for s in registry:
+            slug = (s.get("slug") or "").strip().lower()
+            if not slug:
+                continue
+            c.execute("SELECT id FROM shops WHERE slug = ?", (slug,))
+            row = c.fetchone()
+            if not row:
+                c.execute("""
+                    INSERT INTO shops (
+                        slug, shop_name, owner_name, phone, upi_id, upi_name,
+                        razorpay_enabled, razorpay_key_id, razorpay_key_secret,
+                        rate_bw, rate_color, enable_cash_payment, counter_name,
+                        kiosk_api_key, plan_type, subscription_expiry, is_active, created_at
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (
+                    slug,
+                    s.get("shop_name", "Print Kiosk"),
+                    s.get("owner_name", ""),
+                    s.get("phone", ""),
+                    s.get("upi_id", ""),
+                    s.get("upi_name", ""),
+                    s.get("razorpay_enabled", 1),
+                    s.get("razorpay_key_id", ""),
+                    s.get("razorpay_key_secret", ""),
+                    float(s.get("rate_bw", 5.0)),
+                    float(s.get("rate_color", 10.0)),
+                    s.get("enable_cash_payment", 1),
+                    s.get("counter_name", "Counter 1"),
+                    s.get("kiosk_api_key") or f"qp_kiosk_{uuid.uuid4().hex[:12]}",
+                    s.get("plan_type", "yearly"),
+                    s.get("subscription_expiry", "2099-12-31"),
+                    s.get("is_active", 1),
+                    s.get("created_at") or datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                ))
+                restored += 1
+                print(f"[🛡️ AUTO-RESTORE] Restored Kiosk: {slug} ({s.get('shop_name')})")
+        conn.commit()
+        conn.close()
+        if restored > 0:
+            print(f"[🛡️ AUTO-RESTORE] Successfully restored {restored} kiosks from permanent registry.")
+    except Exception as ex:
+        print("[-] Error syncing from shops_registry.json:", ex)
+
 def init_db():
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
@@ -167,6 +246,9 @@ def init_db():
         ))
     conn.commit()
     conn.close()
+
+    # Sync all registered kiosks from permanent registry
+    sync_shops_from_registry()
 
 init_db()
 
@@ -1506,6 +1588,7 @@ def api_super_create_shop():
     ))
     conn.commit()
     conn.close()
+    save_shops_registry()
     return jsonify({"success": True, "slug": slug, "kiosk_api_key": kiosk_api_key})
 
 @app.route("/api/super/shops/<slug>/renew", methods=["POST"])
@@ -1542,6 +1625,7 @@ def api_super_renew_shop(slug):
     c.execute("UPDATE shops SET subscription_expiry = ?, is_active = 1 WHERE slug = ?", (new_expiry, slug))
     conn.commit()
     conn.close()
+    save_shops_registry()
     return jsonify({"success": True, "new_expiry": new_expiry})
 
 @app.route("/api/super/shops/<slug>/toggle", methods=["POST"])
@@ -1558,6 +1642,7 @@ def api_super_toggle_shop(slug):
     c.execute("UPDATE shops SET is_active = ? WHERE slug = ?", (new_state, slug))
     conn.commit()
     conn.close()
+    save_shops_registry()
     return jsonify({"success": True, "is_active": new_state})
 
 @app.route("/api/super/shops/<slug>/update", methods=["POST"])
@@ -1595,6 +1680,7 @@ def api_super_update_shop(slug):
     """, (shop_name, owner_name, phone, upi_id, upi_name, rate_bw, rate_color, enable_cash, razorpay_enabled, razorpay_key_id, razorpay_key_secret, slug))
     conn.commit()
     conn.close()
+    save_shops_registry()
     return jsonify({"success": True, "message": "Shop and Razorpay credentials updated successfully"})
 
 @app.route("/api/super/shops/<slug>", methods=["DELETE"])
@@ -1607,7 +1693,91 @@ def api_super_delete_shop(slug):
     c.execute("DELETE FROM shops WHERE slug = ?", (slug,))
     conn.commit()
     conn.close()
+    save_shops_registry()
     return jsonify({"success": True})
+
+@app.route("/api/super/shops/sync_vault", methods=["POST"])
+@require_super_admin
+def api_super_sync_vault():
+    """
+    Browser Vault Auto-Healing:
+    Accepts list of shops cached in Super Admin's browser.
+    If any shop is missing from the database, it gets automatically restored!
+    """
+    data = request.get_json(silent=True) or {}
+    vault_shops = data.get("shops") or []
+    if not isinstance(vault_shops, list):
+        return jsonify({"success": False, "error": "Invalid payload"}), 400
+
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+    restored = 0
+    for s in vault_shops:
+        slug = (s.get("slug") or "").strip().lower()
+        if not slug:
+            continue
+        c.execute("SELECT id FROM shops WHERE slug = ?", (slug,))
+        if not c.fetchone():
+            c.execute("""
+                INSERT INTO shops (
+                    slug, shop_name, owner_name, phone, upi_id, upi_name,
+                    razorpay_enabled, razorpay_key_id, razorpay_key_secret,
+                    rate_bw, rate_color, enable_cash_payment, counter_name,
+                    kiosk_api_key, plan_type, subscription_expiry, is_active, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                slug,
+                s.get("shop_name", "Print Kiosk"),
+                s.get("owner_name", ""),
+                s.get("phone", ""),
+                s.get("upi_id", ""),
+                s.get("upi_name", ""),
+                s.get("razorpay_enabled", 1),
+                s.get("razorpay_key_id", ""),
+                s.get("razorpay_key_secret", ""),
+                float(s.get("rate_bw", 5.0)),
+                float(s.get("rate_color", 10.0)),
+                s.get("enable_cash_payment", 1),
+                s.get("counter_name", "Counter 1"),
+                s.get("kiosk_api_key") or f"qp_kiosk_{uuid.uuid4().hex[:12]}",
+                s.get("plan_type", "yearly"),
+                s.get("subscription_expiry", "2099-12-31"),
+                s.get("is_active", 1),
+                s.get("created_at") or datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            ))
+            restored += 1
+    conn.commit()
+    conn.close()
+
+    if restored > 0:
+        save_shops_registry()
+        print(f"[🛡️ VAULT HEAL] Successfully auto-healed {restored} kiosks from browser vault.")
+
+    return jsonify({"success": True, "restored": restored})
+
+@app.route("/api/super/shops/backup", methods=["GET"])
+@require_super_admin
+def api_super_backup_shops():
+    """
+    1-Click Offline Backup:
+    Streams all active kiosks as a JSON download so the admin can keep an offline copy.
+    """
+    save_shops_registry()
+    if SHOPS_REGISTRY_FILE.exists():
+        with open(SHOPS_REGISTRY_FILE, "r", encoding="utf-8") as f:
+            registry_data = json.load(f)
+    else:
+        conn = sqlite3.connect(DB_FILE)
+        conn.row_factory = sqlite3.Row
+        c = conn.cursor()
+        c.execute("SELECT * FROM shops ORDER BY id ASC")
+        registry_data = [dict(r) for r in c.fetchall()]
+        conn.close()
+
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    response = jsonify(registry_data)
+    response.headers["Content-Disposition"] = f"attachment; filename=QuickPrint_Kiosks_Backup_{timestamp}.json"
+    return response
 
 # ==================== Kiosk Sync API (For Shop PC) ====================
 
