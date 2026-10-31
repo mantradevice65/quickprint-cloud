@@ -700,7 +700,12 @@
   <!-- HEADER -->
   <div class="header">
     <div style="display: flex; justify-content: space-between; align-items: center; max-width: 500px; margin: 0 auto 10px;">
-      <div class="badge">Self-Service Print Kiosk</div>
+      <div style="display: flex; flex-direction: column; align-items: flex-start; gap: 4px;">
+        <div class="badge">Self-Service Print Kiosk</div>
+        <button type="button" onclick="openFeaturesTermsModal()" style="background: rgba(255,255,255,0.18); border: 1px solid rgba(255,255,255,0.35); color: #e0f2fe; padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; backdrop-filter: blur(4px); transition: all 0.2s;" title="View Kiosk Capabilities & Privacy Terms">
+          <span>✦ Features &amp; Terms ✦</span>
+        </button>
+      </div>
       <button type="button" onclick="openTrackModal()" style="background: rgba(255,255,255,0.22); border: 1px solid rgba(255,255,255,0.45); color: white; padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 6px; backdrop-filter: blur(6px); box-shadow: 0 2px 6px rgba(0,0,0,0.15); transition: all 0.2s;">
         <span>🔍</span>
         <span>Track Order Status</span>
@@ -1170,6 +1175,178 @@
       <div style="padding:12px 20px; border-top:1px solid #e2e8f0; text-align:right;">
         <button type="button" onclick="closePolicyModal()" class="action-btn" style="background:#2563eb; color:white; border:none; padding:8px 20px; border-radius:8px; font-weight:700;">Close</button>
       </div>
+    </div>
+  </div>
+
+  <!-- FEATURES & TERMS OF SERVICE MODAL -->
+  <div class="crop-modal-backdrop" id="featuresTermsModal" style="display:none; z-index:99999; background:rgba(15,23,42,0.85); align-items:center; justify-content:center; padding:16px;">
+    <div style="background:white; width:100%; max-width:480px; max-height:85vh; border-radius:20px; overflow:hidden; box-shadow:0 25px 50px -12px rgba(0,0,0,0.5); display:flex; flex-direction:column;">
+      
+      <!-- Modal Header -->
+      <div style="padding:16px 20px; background:linear-gradient(135deg, #0f172a, #1e293b); color:white; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #334155;">
+        <div>
+          <div style="font-weight:900; font-size:16px; color:#38bdf8; display:flex; align-items:center; gap:8px;">
+            <span>⚡ Self-Service Kiosk Capabilities</span>
+          </div>
+          <div style="font-size:11px; color:#94a3b8; margin-top:2px;">Features &amp; Terms of Service</div>
+        </div>
+        <button type="button" onclick="closeFeaturesTermsModal()" style="background:rgba(255,255,255,0.15); border:none; color:white; border-radius:50%; width:32px; height:32px; font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center;">✕</button>
+      </div>
+
+      <!-- Segmented Tabs -->
+      <div style="display:flex; background:#f1f5f9; padding:6px; border-bottom:1px solid #e2e8f0;">
+        <button type="button" id="tabBtnFeatures" onclick="switchFeaturesTab('features')" style="flex:1; padding:8px 12px; border-radius:10px; border:none; background:#2563eb; color:white; font-size:13px; font-weight:800; cursor:pointer; transition:all 0.2s;">
+          ⚡ Kiosk Features
+        </button>
+        <button type="button" id="tabBtnTerms" onclick="switchFeaturesTab('terms')" style="flex:1; padding:8px 12px; border-radius:10px; border:none; background:transparent; color:#64748b; font-size:13px; font-weight:800; cursor:pointer; transition:all 0.2s;">
+          📜 Terms &amp; Privacy
+        </button>
+      </div>
+
+      <!-- Modal Body (Scrollable) -->
+      <div style="padding:20px; overflow-y:auto; flex:1; font-size:13px; line-height:1.55; color:#334155;">
+        
+        <!-- TAB 1: FEATURES -->
+        <div id="contentFeatures">
+          <div style="display:flex; flex-direction:column; gap:14px;">
+            
+            <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:12px;">
+              <div style="font-weight:800; font-size:14px; color:#0f172a; display:flex; align-items:center; gap:6px;">
+                <span>🚀</span> 100% Instant Self-Service Printing
+              </div>
+              <div style="font-size:12px; color:#64748b; margin-top:4px;">
+                Scan QR from any smartphone, upload your files, pay online or cash, and prints come out instantly without WhatsApp or Email transfers.
+              </div>
+            </div>
+
+            <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:12px;">
+              <div style="font-weight:800; font-size:14px; color:#0f172a; display:flex; align-items:center; gap:6px;">
+                <span>📱</span> Multi-Format High Resolution Support
+              </div>
+              <div style="font-size:12px; color:#64748b; margin-top:4px;">
+                Supports standard PDF documents and all high-resolution images (JPG, PNG, WebP) with crisp, high-density print fidelity.
+              </div>
+            </div>
+
+            <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:12px;">
+              <div style="font-weight:800; font-size:14px; color:#0f172a; display:flex; align-items:center; gap:6px;">
+                <span>📐</span> 8-Point Perspective &amp; Freeform Cropper
+              </div>
+              <div style="font-size:12px; color:#64748b; margin-top:4px;">
+                Straighten any tilted, angled, or skewed mobile photo of paper documents, certificates, or cards with interactive 8-point handles.
+              </div>
+            </div>
+
+            <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:12px;">
+              <div style="font-weight:800; font-size:14px; color:#0f172a; display:flex; align-items:center; gap:6px;">
+                <span>💳</span> Smart 2-in-1 ID Card Mode
+              </div>
+              <div style="font-size:12px; color:#64748b; margin-top:4px;">
+                Automatically combines the Front and Back of Aadhaar, PAN, Voter ID, or licenses onto a single A4 sheet with 1 tap.
+              </div>
+            </div>
+
+            <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:12px;">
+              <div style="font-weight:800; font-size:14px; color:#0f172a; display:flex; align-items:center; gap:6px;">
+                <span>📑</span> Custom Page Range Selection
+              </div>
+              <div style="font-size:12px; color:#64748b; margin-top:4px;">
+                Choose to print the full document or select specific custom page ranges (e.g. 1-5, 8). You only pay for what you print.
+              </div>
+            </div>
+
+            <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:12px;">
+              <div style="font-weight:800; font-size:14px; color:#0f172a; display:flex; align-items:center; gap:6px;">
+                <span>🎨</span> Smart B&amp;W and Color Detection
+              </div>
+              <div style="font-size:12px; color:#64748b; margin-top:4px;">
+                High-speed intelligent page scanner automatically detects colored pages versus monochrome pages for fair and transparent billing.
+              </div>
+            </div>
+
+            <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:12px;">
+              <div style="font-weight:800; font-size:14px; color:#0f172a; display:flex; align-items:center; gap:6px;">
+                <span>💵</span> Dual Payment Flexibility
+              </div>
+              <div style="font-size:12px; color:#64748b; margin-top:4px;">
+                Pay instantly via UPI (Google Pay, PhonePe, Paytm, BHIM) or choose "Pay Cash at Counter" based on your convenience.
+              </div>
+            </div>
+
+            <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:12px;">
+              <div style="font-weight:800; font-size:14px; color:#0f172a; display:flex; align-items:center; gap:6px;">
+                <span>🔍</span> Real-Time Order Tracking
+              </div>
+              <div style="font-size:12px; color:#64748b; margin-top:4px;">
+                Every order generates a live Tracking ID. Tap "Track Order Status" at any time to verify printer progress in real time.
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- TAB 2: TERMS & PRIVACY -->
+        <div id="contentTerms" style="display:none;">
+          <div style="display:flex; flex-direction:column; gap:14px;">
+
+            <div style="background:#ecfdf5; border:1px solid #a7f3d0; border-radius:12px; padding:12px;">
+              <div style="font-weight:800; font-size:14px; color:#065f46; display:flex; align-items:center; gap:6px;">
+                <span>🔒</span> 100% Zero-Data Retention &amp; Privacy Guarantee
+              </div>
+              <div style="font-size:12px; color:#047857; margin-top:4px; line-height:1.45;">
+                Your privacy is guaranteed. All uploaded documents are processed securely in memory and permanently purged immediately once printed. No personal files or photos are retained or saved on the local computer or cloud.
+              </div>
+            </div>
+
+            <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:12px;">
+              <div style="font-weight:800; font-size:14px; color:#0f172a; display:flex; align-items:center; gap:6px;">
+                <span>👁️</span> Verification Prior to Confirmation
+              </div>
+              <div style="font-size:12px; color:#64748b; margin-top:4px;">
+                Please verify your uploaded preview, active page counts, and Color / Black &amp; White selections before confirming payment. Orders are sent directly to the printing hardware upon payment.
+              </div>
+            </div>
+
+            <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:12px;">
+              <div style="font-weight:800; font-size:14px; color:#0f172a; display:flex; align-items:center; gap:6px;">
+                <span>💵</span> Counter Cash Verification
+              </div>
+              <div style="font-size:12px; color:#64748b; margin-top:4px;">
+                When choosing "Pay Cash at Counter", please present your Order Tracking ID at the counter so the store manager can verify payment and release your print job.
+              </div>
+            </div>
+
+            <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:12px;">
+              <div style="font-weight:800; font-size:14px; color:#0f172a; display:flex; align-items:center; gap:6px;">
+                <span>⚖️</span> Lawful &amp; Authorized Usage
+              </div>
+              <div style="font-size:12px; color:#64748b; margin-top:4px;">
+                Users are solely responsible for ensuring they possess lawful authorization and copyright to reproduce their uploaded files. Printing of counterfeit currency, illegal, or prohibited materials is strictly prohibited.
+              </div>
+            </div>
+
+            <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:12px;">
+              <div style="font-weight:800; font-size:14px; color:#0f172a; display:flex; align-items:center; gap:6px;">
+                <span>🖨️</span> Hardware Assistance &amp; Free Reprint
+              </div>
+              <div style="font-size:12px; color:#64748b; margin-top:4px;">
+                In the rare event of a paper jam, printer outage, or quality defect, please immediately contact the store manager with your Order ID for prompt reprint or assistance at no additional cost.
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Modal Footer -->
+      <div style="padding:12px 20px; background:#f8fafc; border-top:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center;">
+        <span style="font-size:11px; color:#059669; font-weight:700;">🔒 Zero-Data Security Protocol Active</span>
+        <button type="button" onclick="closeFeaturesTermsModal()" style="background:#0f172a; color:white; border:none; padding:8px 20px; border-radius:8px; font-weight:700; font-size:13px; cursor:pointer;">
+          Close
+        </button>
+      </div>
+
     </div>
   </div>
 
@@ -3163,6 +3340,39 @@
         }).catch(() => fallbackCopy(text));
       } else {
         fallbackCopy(text);
+      }
+    }
+
+    function openFeaturesTermsModal() {
+      const modal = document.getElementById('featuresTermsModal');
+      if (modal) modal.style.display = 'flex';
+    }
+
+    function closeFeaturesTermsModal() {
+      const modal = document.getElementById('featuresTermsModal');
+      if (modal) modal.style.display = 'none';
+    }
+
+    function switchFeaturesTab(tab) {
+      const btnF = document.getElementById('tabBtnFeatures');
+      const btnT = document.getElementById('tabBtnTerms');
+      const conF = document.getElementById('contentFeatures');
+      const conT = document.getElementById('contentTerms');
+      if (!btnF || !btnT || !conF || !conT) return;
+      if (tab === 'features') {
+        btnF.style.background = '#2563eb';
+        btnF.style.color = '#ffffff';
+        btnT.style.background = 'transparent';
+        btnT.style.color = '#64748b';
+        conF.style.display = 'block';
+        conT.style.display = 'none';
+      } else {
+        btnT.style.background = '#2563eb';
+        btnT.style.color = '#ffffff';
+        btnF.style.background = 'transparent';
+        btnF.style.color = '#64748b';
+        conF.style.display = 'none';
+        conT.style.display = 'block';
       }
     }
 
