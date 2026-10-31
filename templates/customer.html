@@ -1467,8 +1467,8 @@
     </div>
     <div class="crop-body" id="cropBodyContainer" style="position:relative; width:100%; height:100%; display:flex; align-items:center; justify-content:center; touch-action:none; user-select:none; overflow:hidden;">
       <canvas id="perspectiveCanvas" style="max-width:100%; max-height:100%; border-radius:8px; box-shadow:0 10px 30px rgba(0,0,0,0.8); cursor:crosshair; touch-action:none;"></canvas>
-      <div id="cornerLoupe" style="display:none; position:absolute; width:90px; height:90px; border-radius:50%; border:3px solid #38bdf8; box-shadow:0 6px 20px rgba(0,0,0,0.7); overflow:hidden; pointer-events:none; z-index:10000; background:#000;">
-        <canvas id="loupeCanvas" width="90" height="90"></canvas>
+      <div id="cornerLoupe" style="display:none; position:absolute; width:96px; height:96px; border-radius:50%; border:3px solid #38bdf8; box-shadow:0 8px 25px rgba(0,0,0,0.85); overflow:hidden; pointer-events:none; z-index:10000; background:#000;">
+        <canvas id="loupeCanvas" width="96" height="96"></canvas>
       </div>
     </div>
     <div class="crop-footer">
@@ -2170,10 +2170,27 @@
     function updateLoupe(touchX, touchY, ptNorm) {
       const loupe = document.getElementById('cornerLoupe');
       const lCanvas = document.getElementById('loupeCanvas');
-      if (!loupe || !lCanvas || !perspectiveImg) return;
+      const container = document.getElementById('cropBodyContainer');
+      if (!loupe || !lCanvas || !perspectiveImg || !container) return;
       loupe.style.display = 'block';
-      loupe.style.left = (touchX - 45) + 'px';
-      loupe.style.top = (touchY - 110) + 'px';
+
+      // Always show round preview at the TOP (upar) of the crop viewport
+      loupe.style.top = '14px';
+      loupe.style.bottom = 'auto';
+
+      // Smart opposite docking:
+      // If user drags on the left half, dock magnifier at top-right
+      // If user drags on the right half, dock magnifier at top-left
+      // This prevents the user's hand/cursor from blocking the magnified preview
+      const cRect = container.getBoundingClientRect();
+      const relX = touchX - cRect.left;
+      if (relX < cRect.width / 2) {
+        loupe.style.right = '16px';
+        loupe.style.left = 'auto';
+      } else {
+        loupe.style.left = '16px';
+        loupe.style.right = 'auto';
+      }
 
       const lctx = lCanvas.getContext('2d');
       const iw = perspectiveImg.naturalWidth || perspectiveImg.width;
@@ -2183,18 +2200,20 @@
       const zoomW = 70;
       const zoomH = 70;
 
-      lctx.clearRect(0, 0, 90, 90);
-      lctx.drawImage(perspectiveImg, cx - zoomW / 2, cy - zoomH / 2, zoomW, zoomH, 0, 0, 90, 90);
+      lctx.clearRect(0, 0, 96, 96);
+      lctx.drawImage(perspectiveImg, cx - zoomW / 2, cy - zoomH / 2, zoomW, zoomH, 0, 0, 96, 96);
 
+      // Clean cyan crosshairs
       lctx.strokeStyle = '#38bdf8';
       lctx.lineWidth = 1.5;
       lctx.beginPath();
-      lctx.moveTo(45, 0); lctx.lineTo(45, 90);
-      lctx.moveTo(0, 45); lctx.lineTo(90, 45);
+      lctx.moveTo(48, 0); lctx.lineTo(48, 96);
+      lctx.moveTo(0, 48); lctx.lineTo(96, 48);
       lctx.stroke();
-      
+
+      // Precision target ring
       lctx.beginPath();
-      lctx.arc(45, 45, 8, 0, Math.PI * 2);
+      lctx.arc(48, 48, 9, 0, Math.PI * 2);
       lctx.stroke();
     }
 
