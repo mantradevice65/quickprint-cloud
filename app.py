@@ -42,11 +42,13 @@ SUPER_ADMIN_PASSWORD = "Admin_1977"
 
 UPLOAD_FOLDER = BASE_DIR / "uploads"
 THUMBNAIL_FOLDER = BASE_DIR / "thumbnails"
+PREVIEWS_FOLDER = BASE_DIR / "previews"
 DB_FILE = BASE_DIR / "jobs.db"
 CONFIG_FILE = BASE_DIR / "config.json"
 
 UPLOAD_FOLDER.mkdir(exist_ok=True, parents=True)
 THUMBNAIL_FOLDER.mkdir(exist_ok=True, parents=True)
+PREVIEWS_FOLDER.mkdir(exist_ok=True, parents=True)
 
 app.config["UPLOAD_FOLDER"] = str(UPLOAD_FOLDER)
 app.config["MAX_CONTENT_LENGTH"] = 100 * 1024 * 1024  # 100 MB max
@@ -2278,8 +2280,17 @@ def serve_thumbnail(filename):
 
 @app.route("/api/preview/<job_id>/<int:page_num>")
 def api_document_page_preview(job_id, page_num):
-    """Renders a specific page of an uploaded PDF or image at high resolution (DPI 180) for crystal clear preview."""
+    """Renders a specific page of an uploaded PDF or image with lightning-fast on-disk caching."""
     try:
+        # 1. Fast Cache Check: If page is already rendered to disk, send immediately (<5ms)
+        cached_file = PREVIEWS_FOLDER / f"{job_id}_p{page_num}.jpg"
+        if cached_file.exists():
+            resp = send_file(str(cached_file), mimetype="image/jpeg")
+            resp.headers["Cache-Control"] = "public, max-age=86400"
+            resp.headers["Access-Control-Allow-Origin"] = "*"
+            return resp
+
+        # 2. Check PDF
         pdf_path = UPLOAD_FOLDER / f"{job_id}.pdf"
         if pdf_path.exists():
             doc = fitz.open(str(pdf_path))
@@ -2290,32 +2301,41 @@ def api_document_page_preview(job_id, page_num):
             
             idx = max(0, min(page_num - 1, total - 1))
             page = doc[idx]
-            pix = page.get_pixmap(dpi=180)
-            png_bytes = pix.tobytes("png")
+            pix = page.get_pixmap(dpi=140)
             doc.close()
-            
-            resp = make_response(png_bytes)
-            resp.headers["Content-Type"] = "image/png"
-            resp.headers["Cache-Control"] = "public, max-age=300"
+
+            # Save to disk cache for instantaneous future requests
+            try:
+                pix.save(str(cached_file), "JPEG")
+                resp = send_file(str(cached_file), mimetype="image/jpeg")
+            except Exception:
+                resp = make_response(pix.tobytes("jpeg"))
+                resp.headers["Content-Type"] = "image/jpeg"
+
+            resp.headers["Cache-Control"] = "public, max-age=86400"
             resp.headers["Access-Control-Allow-Origin"] = "*"
             return resp
 
+        # 3. Fallback to raw image
         for ext in ["png", "jpg", "jpeg", "webp", "bmp"]:
             raw_path = UPLOAD_FOLDER / f"{job_id}_raw.{ext}"
             if raw_path.exists():
                 resp = send_file(str(raw_path), mimetype=f"image/{ext}")
+                resp.headers["Cache-Control"] = "public, max-age=86400"
                 resp.headers["Access-Control-Allow-Origin"] = "*"
                 return resp
 
+        # 4. Fallback to thumbnail
         thumb_path = THUMBNAIL_FOLDER / f"{job_id}.png"
         if thumb_path.exists():
             resp = send_file(str(thumb_path), mimetype="image/png")
+            resp.headers["Cache-Control"] = "public, max-age=86400"
             resp.headers["Access-Control-Allow-Origin"] = "*"
             return resp
 
         return jsonify({"error": "Document not found"}), 404
     except Exception as ex:
-        print(f"[-] Preview render error for {job_id} pg {page_num}:", ex)
+        print(f"[-] Fast preview render error for {job_id} pg {page_num}:", ex)
         return jsonify({"error": str(ex)}), 500
 
 if __name__ == "__main__":

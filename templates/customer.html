@@ -3349,7 +3349,25 @@
         summary.innerHTML = `Printing ${totalSelected} page${totalSelected > 1 ? 's' : ''}: <b>${formatPageRanges(previewState.pages)}</b>`;
       }
 
-      // Fetch high-res preview image for the selected page
+      // ⚡ Smart pre-fetching of next & previous pages for instant switching (0ms delay)
+      if (previewState.currentIndex + 1 < previewState.pages.length) {
+        const nextPg = previewState.pages[previewState.currentIndex + 1];
+        const preNext = new Image();
+        preNext.src = `/api/preview/${previewState.jobId}/${nextPg}`;
+      }
+      if (previewState.currentIndex - 1 >= 0) {
+        const prevPg = previewState.pages[previewState.currentIndex - 1];
+        const prePrev = new Image();
+        prePrev.src = `/api/preview/${previewState.jobId}/${prevPg}`;
+      }
+
+      const targetSrc = `/api/preview/${previewState.jobId}/${currentActualPage}`;
+      if (img.getAttribute('src') === targetSrc && img.complete && img.naturalWidth > 0) {
+        loader.style.display = 'none';
+        img.style.display = 'block';
+        return;
+      }
+
       loader.style.display = 'block';
       img.style.display = 'none';
 
@@ -3363,7 +3381,7 @@
         img.src = `/thumbnails/${previewState.jobId}.png`;
       };
 
-      img.src = `/api/preview/${previewState.jobId}/${currentActualPage}?t=${Date.now()}`;
+      img.src = targetSrc;
     }
 
     function backToOptions() {
