@@ -7,6 +7,8 @@ import shutil
 import io
 import time
 import threading
+import subprocess
+import socket
 import hmac
 import hashlib
 import urllib.request
@@ -76,7 +78,7 @@ DEFAULT_CONFIG = {
 def load_config():
     if CONFIG_FILE.exists():
         try:
-            with open(CONFIG_FILE, "r", encoding="utf-8") as f:
+            with open(CONFIG_FILE, "r", encoding="utf-8-sig") as f:
                 cfg = json.load(f)
                 merged = DEFAULT_CONFIG.copy()
                 merged.update(cfg)
@@ -694,6 +696,233 @@ def apply_camscanner_filter(input_image_path, output_image_path):
         print("PIL filter error:", ex)
         return False
 
+
+def get_local_ip():
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        ip = s.getsockname()[0]
+        s.close()
+        return ip
+    except Exception:
+        return "127.0.0.1"
+
+def get_system_printers():
+    printers = []
+    try:
+        import win32print
+        flags = win32print.PRINTER_ENUM_LOCAL | win32print.PRINTER_ENUM_CONNECTIONS
+        for p in win32print.EnumPrinters(flags):
+            printers.append(p[2])
+    except Exception:
+        pass
+    if not printers:
+        printers = ["Default Printer"]
+    return printers
+
+def print_pdf_file(pdf_path, printer_name=None, copies=1):
+    """Silently prints a PDF using SumatraPDF."""
+    try:
+        sumatra_exe = None
+        candidates = [
+            BASE_DIR / "SumatraPDF.exe",
+            Path(sys.executable).parent / "SumatraPDF.exe",
+            Path(sys.executable).parent / "_internal" / "SumatraPDF.exe",
+            Path(r"C:\Users\ADMIN\AppData\Local\Programs\QuickPrint\resources\server\SumatraPDF.exe"),
+            Path(r"D:\QR Code Print\SumatraPDF.exe")
+        ]
+        for c in candidates:
+            if c.exists():
+                sumatra_exe = str(c)
+                break
+                
+        if not sumatra_exe:
+            sumatra_exe = "SumatraPDF.exe"
+            
+        cmd = [sumatra_exe, "-silent"]
+        if printer_name and printer_name != "Default Printer":
+            cmd.extend(["-print-to", printer_name])
+        else:
+            cmd.append("-print-to-default")
+            
+        if copies > 1:
+            cmd.extend(["-print-settings", f"{copies}x"])
+            
+        cmd.append(str(pdf_path))
+        subprocess.Popen(cmd)
+        print(f"[+] SumatraPDF print initiated: {pdf_path} on {printer_name} ({copies} copies)")
+        return True
+    except Exception as e:
+        print("[-] Silent print error:", e)
+        return False
+
+# ==================== Shopkeeper Dashboard Routes ====================
+
+@app.route("/dashboard")
+def dashboard_view():
+    """Shopkeeper administrative dashboard and real-time print queue."""
+    cfg = load_config()
+    printers = get_system_printers()
+    local_ip = get_local_ip()
+    port = cfg.get("port", 5000)
+    server_url = f"http://{local_ip}:{port}"
+    return render_template("dashboard.html", config=cfg, printers=printers, local_ip=local_ip, server_url=server_url)
+
+@app.route("/api/job/<job_id>/print", methods=["POST"])
+def api_job_print(job_id):
+    """Shopkeeper manual print trigger for a specific job."""
+    data = request.get_json(silent=True) or {}
+    printer_name = data.get("printer_name")
+    
+    conn = sqlite3.connect(DB_FILE)
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    c.execute("SELECT * FROM jobs WHERE id = ?", (job_id,))
+    job = c.fetchone()
+    if not job:
+        conn.close()
+        return jsonify({"success": False, "error": "Job not found"}), 404
+        
+    pdf_path = UPLOAD_FOLDER / f"{job_id}.pdf"
+    if not pdf_path.exists() and job["pdf_path"] and os.path.exists(job["pdf_path"]):
+        pdf_path = Path(job["pdf_path"])
+        
+    copies = int(job["copies"] or 1)
+    if pdf_path.exists():
+        print_pdf_file(pdf_path, printer_name, copies)
+        
+    c.execute("UPDATE jobs SET status = 'printed', printer_used = ? WHERE id = ?", (printer_name or "Default", job_id))
+    conn.commit()
+    conn.close()
+    return jsonify({"success": True})
+
+@app.route("/api/job/<job_id>/cancel", methods=["POST"])
+def api_job_cancel(job_id):
+    """Shopkeeper rejects or cancels an order."""
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+    c.execute("UPDATE jobs SET status = 'cancelled' WHERE id = ?", (job_id,))
+    conn.commit()
+    conn.close()
+    return jsonify({"success": True})
+
+@app.route("/api/batch/<batch_id>/print", methods=["POST"])
+def api_batch_print(batch_id):
+    """Shopkeeper approves and prints all documents in a batch order."""
+    data = request.get_json(silent=True) or {}
+    printer_name = data.get("printer_name")
+    
+    conn = sqlite3.connect(DB_FILE)
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    c.execute("SELECT * FROM jobs WHERE batch_id = ?", (batch_id,))
+    jobs = c.fetchall()
+    
+    for job in jobs:
+        job_id = job["id"]
+        pdf_path = UPLOAD_FOLDER / f"{job_id}.pdf"
+        if not pdf_path.exists() and job["pdf_path"] and os.path.exists(job["pdf_path"]):
+            pdf_path = Path(job["pdf_path"])
+        copies = int(job["copies"] or 1)
+        if pdf_path.exists():
+            print_pdf_file(pdf_path, printer_name, copies)
+        c.execute("UPDATE jobs SET status = 'printed', printer_used = ? WHERE id = ?", (printer_name or "Default", job_id))
+        
+    conn.commit()
+    conn.close()
+    return jsonify({"success": True})
+
+@app.route("/api/batch/<batch_id>/cancel", methods=["POST"])
+def api_batch_cancel(batch_id):
+    """Shopkeeper rejects an entire batch order."""
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+    c.execute("UPDATE jobs SET status = 'cancelled' WHERE batch_id = ?", (batch_id,))
+    conn.commit()
+    conn.close()
+    return jsonify({"success": True})
+
+@app.route("/api/open-edge", methods=["POST"])
+def api_open_edge():
+    """Opens Dashboard in Microsoft Edge."""
+    import webbrowser
+    cfg = load_config()
+    port = cfg.get("port", 5000)
+    webbrowser.open(f"http://localhost:{port}/dashboard")
+    return jsonify({"success": True})
+
+# ==================== Background Cloud Kiosk Sync ====================
+
+def cloud_kiosk_sync_worker():
+    """Background polling thread: fetches pending orders from cloud server and prints on local printer."""
+    while True:
+        try:
+            cfg = load_config()
+            cloud_url = cfg.get("cloud_server_url", "https://print.fruitsgenerator.co.in").rstrip("/")
+            api_key = cfg.get("cloud_api_key", "").strip()
+            sync_enabled = bool(cfg.get("cloud_sync_enabled", True))
+            interval = int(cfg.get("cloud_sync_interval", 3))
+            
+            if sync_enabled and api_key and cloud_url:
+                req_url = f"{cloud_url}/api/kiosk/pending_jobs?api_key={api_key}"
+                req = urllib.request.Request(req_url, headers={"User-Agent": "QuickPrint-Kiosk-Client/1.0"})
+                try:
+                    with urllib.request.urlopen(req, timeout=5) as resp:
+                        if resp.status == 200:
+                            data = json.loads(resp.read().decode("utf-8"))
+                            pending = data.get("pending_jobs", [])
+                            for pjob in pending:
+                                p_id = pjob.get("id")
+                                dl_url = f"{cloud_url}/api/kiosk/download/{p_id}?api_key={api_key}"
+                                local_pdf = UPLOAD_FOLDER / f"{p_id}.pdf"
+                                if not local_pdf.exists():
+                                    try:
+                                        dl_req = urllib.request.Request(dl_url, headers={"User-Agent": "QuickPrint-Kiosk-Client/1.0"})
+                                        with urllib.request.urlopen(dl_req, timeout=20) as dl_resp:
+                                            with open(local_pdf, "wb") as pf:
+                                                pf.write(dl_resp.read())
+                                    except Exception as dl_err:
+                                        print(f"[-] Error downloading PDF for {p_id}:", dl_err)
+                                
+                                conn = sqlite3.connect(DB_FILE)
+                                c = conn.cursor()
+                                c.execute("""
+                                    INSERT OR REPLACE INTO jobs (
+                                        id, batch_id, customer_name, filename, pdf_path, original_type,
+                                        page_count, print_type, copies, page_range, total_price, status,
+                                        printer_used, utr, created_at, color_pages
+                                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                                """, (
+                                    pjob.get("id"), pjob.get("batch_id"), pjob.get("customer_name"),
+                                    pjob.get("filename"), str(local_pdf), pjob.get("original_type"),
+                                    pjob.get("page_count"), pjob.get("print_type"), pjob.get("copies", 1),
+                                    pjob.get("page_range", "all"), pjob.get("total_price", 0.0),
+                                    pjob.get("status"), pjob.get("printer_used"), pjob.get("utr"),
+                                    pjob.get("created_at"), pjob.get("color_pages")
+                                ))
+                                conn.commit()
+                                conn.close()
+                                
+                                # Auto print if enabled and paid
+                                if cfg.get("auto_print", True) and pjob.get("status") == "paid":
+                                    ptype = pjob.get("print_type", "bw")
+                                    printer = cfg.get("default_color_printer") if ptype in ("color", "mixed") else cfg.get("default_bw_printer")
+                                    print_pdf_file(local_pdf, printer, int(pjob.get("copies", 1)))
+                                    try:
+                                        ack_url = f"{cloud_url}/api/kiosk/ack_job/{p_id}?api_key={api_key}"
+                                        ack_req = urllib.request.Request(ack_url, data=json.dumps({"status": "printed"}).encode("utf-8"), headers={"Content-Type": "application/json"})
+                                        urllib.request.urlopen(ack_req, timeout=5)
+                                    except Exception:
+                                        pass
+                except Exception:
+                    pass
+        except Exception:
+            pass
+        time.sleep(3)
+
+threading.Thread(target=cloud_kiosk_sync_worker, daemon=True).start()
+
+
 # ==================== Customer Routes ====================
 
 @app.route("/")
@@ -761,12 +990,24 @@ def view_shop_poster(shop_slug):
     portal_url = f"{base_url}/s/{shop['slug']}"
     return render_template("counter_poster.html", shop=shop, portal_url=portal_url)
 
-@app.route("/api/config", methods=["GET"])
+@app.route("/api/config", methods=["GET", "POST"])
 def api_get_config():
-    shop_slug = request.args.get("shop_slug") or "karnataka-one"
-    shop = get_shop_by_slug(shop_slug)
+    if request.method == "POST":
+        data = request.get_json(silent=True) or {}
+        cfg = load_config()
+        cfg.update(data)
+        try:
+            with open(CONFIG_FILE, "w", encoding="utf-8") as f:
+                json.dump(cfg, f, indent=4)
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+        return jsonify({"success": True, "config": cfg})
+
+    shop_slug = request.args.get("shop_slug")
+    shop = get_shop_by_slug(shop_slug) if shop_slug else None
     if not shop:
-        return jsonify({"error": "Shop not found"}), 404
+        cfg = load_config()
+        return jsonify(cfg)
         
     has_rzp_keys = bool((shop.get("razorpay_key_id") or "").strip() and (shop.get("razorpay_key_secret") or "").strip())
     rzp_enabled = bool(shop.get("razorpay_enabled", 1)) and has_rzp_keys
@@ -1436,11 +1677,23 @@ def api_unlock_pdf():
 # --- Jobs list for status polling ---
 @app.route("/api/jobs", methods=["GET"])
 def api_get_jobs():
-    shop_slug = request.args.get("shop_slug") or "karnataka-one"
+    shop_slug = request.args.get("shop_slug")
     conn = sqlite3.connect(DB_FILE)
     conn.row_factory = sqlite3.Row
     c = conn.cursor()
-    c.execute("SELECT id, batch_id, status FROM jobs WHERE shop_slug = ? ORDER BY created_at DESC LIMIT 50", (shop_slug,))
+    if shop_slug:
+        c.execute("""
+            SELECT id, batch_id, customer_name, filename, original_type, page_count, print_type, copies, page_range, total_price, status, utr, created_at, color_pages, printer_used
+            FROM jobs
+            WHERE shop_slug = ?
+            ORDER BY created_at DESC LIMIT 100
+        """, (shop_slug,))
+    else:
+        c.execute("""
+            SELECT id, batch_id, customer_name, filename, original_type, page_count, print_type, copies, page_range, total_price, status, utr, created_at, color_pages, printer_used
+            FROM jobs
+            ORDER BY created_at DESC LIMIT 100
+        """)
     rows = [dict(r) for r in c.fetchall()]
     conn.close()
     return jsonify({"jobs": rows})
