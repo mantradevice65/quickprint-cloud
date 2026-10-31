@@ -6,6 +6,7 @@ import sqlite3
 import shutil
 import io
 import time
+import threading
 import hmac
 import hashlib
 import urllib.request
@@ -993,24 +994,24 @@ def api_unlock_pdf():
     job_id = data.get("job_id", "").strip()
     password = data.get("password", "").strip()
     if not job_id or not password:
-        return jsonify({"success": False, "error": "Job ID aur Password zaroori hain"}), 400
+        return jsonify({"success": False, "error": "Job ID and Password are required"}), 400
 
     pdf_path = UPLOAD_FOLDER / f"{job_id}.pdf"
     thumbnail_path = THUMBNAIL_FOLDER / f"{job_id}.png"
     if not pdf_path.exists():
-        return jsonify({"success": False, "error": "Document nahi mila"}), 404
+        return jsonify({"success": False, "error": "Document not found"}), 404
 
     try:
         doc = fitz.open(str(pdf_path))
         if not (doc.needs_pass or doc.is_encrypted):
             page_count = len(doc)
             doc.close()
-            return jsonify({"success": True, "message": "Pehle se unlocked hai", "page_count": page_count})
+            return jsonify({"success": True, "message": "Already unlocked", "page_count": page_count})
 
         auth_res = doc.authenticate(password)
         if auth_res <= 0:
             doc.close()
-            return jsonify({"success": False, "error": "Galat password! Dobara koshish karein. (Aadhaar example: Naam ke 4 bade akshar + Janm saal, jaise AMER1992)"})
+            return jsonify({"success": False, "error": "Incorrect password! Please try again. (Aadhaar example: First 4 uppercase letters of name + Birth year, e.g. AMER1992)"})
 
         unlocked_tmp = UPLOAD_FOLDER / f"{job_id}_unlocked.pdf"
         doc.save(str(unlocked_tmp))
@@ -1642,6 +1643,90 @@ def kiosk_download_job(job_id):
         
     return send_file(str(fpath), as_attachment=True, download_name=f"{job_id}.pdf")
 
+def purge_job_document_files(job_id, delay_seconds=1):
+    """
+    Zero-Data Customer Privacy Shredder (Cloud):
+    Permanently deletes all customer files (original files, rendered PDFs, slices, thumbnails)
+    immediately after the job is printed or cancelled. Anonymizes the file path in database
+    while retaining count and revenue metrics for 1-month store accounting.
+    """
+    def _shred():
+        if delay_seconds > 0:
+            time.sleep(delay_seconds)
+        try:
+            # Delete all matching files from UPLOAD_FOLDER
+            for p in UPLOAD_FOLDER.glob(f"*{job_id}*"):
+                try:
+                    p.unlink(missing_ok=True)
+                except Exception as ex:
+                    print(f"[-] Cloud purge upload error for {p}:", ex)
+                    
+            # Delete all matching thumbnails
+            for p in THUMBNAIL_FOLDER.glob(f"*{job_id}*"):
+                try:
+                    p.unlink(missing_ok=True)
+                except Exception as ex:
+                    print(f"[-] Cloud purge thumbnail error for {p}:", ex)
+
+            # Clear pdf_path in database to prevent unauthorized retrieval
+            conn = sqlite3.connect(DB_FILE)
+            c = conn.cursor()
+            c.execute("UPDATE jobs SET pdf_path = '' WHERE id = ?", (job_id,))
+            conn.commit()
+            conn.close()
+            print(f"[🔒 PRIVACY SHREDDER] Cloud customer files permanently deleted for {job_id}")
+        except Exception as e:
+            print(f"[-] Error purging cloud files for {job_id}:", e)
+
+    threading.Thread(target=_shred, daemon=True).start()
+
+def cleanup_old_jobs(days=30):
+    """
+    1-Month (30 Days) Accounting Ledger Retention:
+    Purges print records and any orphaned files older than 30 days so dashboard keeps exactly 1 month of stats.
+    """
+    try:
+        cutoff = datetime.now() - timedelta(days=days)
+        cutoff_str = cutoff.strftime("%Y-%m-%d %H:%M:%S")
+
+        conn = sqlite3.connect(DB_FILE)
+        c = conn.cursor()
+        c.execute("SELECT id, pdf_path FROM jobs WHERE created_at < ?", (cutoff_str,))
+        old_jobs = c.fetchall()
+
+        for job_id, pdf_path in old_jobs:
+            try:
+                if pdf_path and os.path.exists(pdf_path):
+                    os.remove(pdf_path)
+            except Exception:
+                pass
+            for p in UPLOAD_FOLDER.glob(f"*{job_id}*"):
+                try:
+                    p.unlink(missing_ok=True)
+                except Exception:
+                    pass
+            for p in THUMBNAIL_FOLDER.glob(f"*{job_id}*"):
+                try:
+                    p.unlink(missing_ok=True)
+                except Exception:
+                    pass
+
+        c.execute("DELETE FROM jobs WHERE created_at < ?", (cutoff_str,))
+        conn.commit()
+        conn.close()
+        if old_jobs:
+            print(f"[+] Purged {len(old_jobs)} accounting ledger records older than {days} days on cloud.")
+    except Exception as e:
+        print("[-] Error during cloud 30-day cleanup:", e)
+
+def cleanup_worker():
+    """Background thread that runs cleanup_old_jobs(days=30) every 6 hours."""
+    while True:
+        cleanup_old_jobs(days=30)
+        time.sleep(6 * 3600)
+
+threading.Thread(target=cleanup_worker, daemon=True).start()
+
 @app.route("/api/kiosk/ack_job/<job_id>", methods=["POST"])
 def kiosk_ack_job(job_id):
     """Shop PC acknowledges receipt and printing of the job."""
@@ -1663,6 +1748,10 @@ def kiosk_ack_job(job_id):
     c.execute("UPDATE jobs SET status = ? WHERE id = ?", (new_status, job_id))
     conn.commit()
     conn.close()
+
+    if new_status in ("printed", "completed", "cancelled"):
+        purge_job_document_files(job_id, delay_seconds=1)
+
     return jsonify({"success": True, "job_id": job_id, "status": new_status})
 
 @app.route("/api/health")

@@ -502,18 +502,18 @@
     </div>
   </div>
 
-  <!-- STATS BAR -->
+  <!-- STATS BAR (1-MONTH COUNTER) -->
   <div class="stats-container">
     <div class="stat-card">
       <div class="stat-label">Pending Prints (Ready)</div>
       <div class="stat-value" style="color: #2563eb;" id="statPending">0</div>
     </div>
     <div class="stat-card">
-      <div class="stat-label">Printed Today</div>
+      <div class="stat-label">Prints This Month (30 Days)</div>
       <div class="stat-value" style="color: #16a34a;" id="statPrinted">0</div>
     </div>
     <div class="stat-card">
-      <div class="stat-label">Today's Total Revenue</div>
+      <div class="stat-label">This Month's Revenue</div>
       <div class="stat-value" style="color: #0f172a;" id="statRevenue">₹0</div>
     </div>
     <div class="stat-card">
@@ -548,9 +548,10 @@
       </div>
     </div>
 
-    <!-- RECENT COMPLETED HISTORY -->
-    <div class="section-title" style="margin-top: 30px;">
-      <span>Recent Completed Orders</span>
+    <!-- 1-MONTH COMPLETED PRINT LEDGER -->
+    <div class="section-title" style="margin-top: 30px; display:flex; justify-content:space-between; align-items:center;">
+      <span>1-Month Print Ledger (Zero-Data Privacy Active)</span>
+      <span style="font-size:11px; color:#16a34a; font-weight:700;">🔒 Customer files auto-deleted immediately after printing</span>
     </div>
 
     <div class="history-card">
@@ -566,7 +567,7 @@
             <th>Amount</th>
             <th>Printer</th>
             <th>Status</th>
-            <th>Action</th>
+            <th>Privacy Status</th>
           </tr>
         </thead>
         <tbody id="historyTableBody">
@@ -712,11 +713,11 @@
         </span>
       </div>
 
-      <!-- 4. 7-DAY HISTORY AUTO-CLEANUP -->
-      <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:12px; padding:10px 14px; margin-top:12px; font-size:12px; color:#166534; display:flex; align-items:center; gap:8px;">
-        <span style="font-size:16px;">🗓️</span>
+      <!-- 4. ZERO-DATA PRIVACY & 1-MONTH LEDGER -->
+      <div style="background:#f0fdf4; border:1px solid #86efac; border-radius:12px; padding:10px 14px; margin-top:12px; font-size:12px; color:#166534; display:flex; align-items:center; gap:10px;">
+        <span style="font-size:20px;">🔒</span>
         <div>
-          <b>7-Day Auto-Cleanup Active:</b> Files and print history older than 7 days are automatically purged.
+          <b>Zero-Data Privacy & Instant Shredder Active:</b> Customer document files are automatically shredded and permanently deleted immediately after printing. Your dashboard maintains only a 1-month print count and revenue ledger for accounting.
         </div>
       </div>
 
@@ -876,13 +877,21 @@
           triggerVoiceAlert(hasNewCashOrder ? "Cash print request received. Please collect cash." : "Print request pending");
         }
 
-        // Update Stats
+        // Update Stats for 1-Month (Last 30 Days)
+        const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+        const monthPrintedJobs = (jobs || []).filter(j => {
+          if (j.status !== 'printed' && j.status !== 'completed') return false;
+          if (!j.created_at) return true;
+          const dt = new Date(j.created_at.replace(' ', 'T'));
+          return isNaN(dt.getTime()) || dt >= thirtyDaysAgo;
+        });
+
         document.getElementById('statPending').innerText = pendingJobs.length;
         document.getElementById('queueBadge').innerText = pendingJobs.length;
-        document.getElementById('statPrinted').innerText = (jobs || []).filter(j => j.status === 'printed').length;
+        document.getElementById('statPrinted').innerText = monthPrintedJobs.length;
 
-        const totalRev = (jobs || []).filter(j => j.status === 'printed').reduce((acc, curr) => acc + (curr.total_price || 0), 0);
-        document.getElementById('statRevenue').innerText = '₹' + Math.round(totalRev);
+        const totalMonthRev = monthPrintedJobs.reduce((acc, curr) => acc + (curr.total_price || 0), 0);
+        document.getElementById('statRevenue').innerText = '₹' + Math.round(totalMonthRev);
 
         // Render Queue
         if (pendingJobs.length === 0) {
@@ -1106,9 +1115,9 @@
                 </span>
               </td>
               <td>
-                <button class="btn btn-outline-white" style="color:#2563eb; border:1px solid #cbd5e1; padding:4px 8px; font-size:11px;" onclick="reprintJob('${j.id}')">
-                  Reprint
-                </button>
+                <span class="pill" style="background:#f1f5f9; color:#16a34a; font-weight:700; font-size:11px; border:1px solid #cbd5e1;">
+                  🔒 File Shredded
+                </span>
               </td>
             </tr>
           `).join('');
