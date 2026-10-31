@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>{% if error_type == 'expired' %}Kiosk License Expired{% elif error_type == 'suspended' %}Kiosk Temporarily Inactive{% else %}Kiosk Not Found{% endif %} - QuickPrint</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #0f172a;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      color: #0f172a;
+    }
+    .card {
+      background: white;
+      max-width: 440px;
+      width: 100%;
+      border-radius: 24px;
+      padding: 32px 24px;
+      text-align: center;
+      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.4);
+    }
+    .icon {
+      font-size: 56px;
+      margin-bottom: 16px;
+      display: inline-block;
+      animation: float 2s ease-in-out infinite;
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-6px); }
+    }
+    h1 {
+      font-size: 22px;
+      font-weight: 900;
+      color: #0f172a;
+      margin-bottom: 8px;
+    }
+    p {
+      font-size: 14px;
+      color: #64748b;
+      line-height: 1.5;
+      margin-bottom: 20px;
+    }
+    .shop-box {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 20px;
+      font-size: 13px;
+    }
+    .btn {
+      display: inline-block;
+      width: 100%;
+      padding: 14px;
+      background: #2563eb;
+      color: white;
+      font-weight: 800;
+      font-size: 14px;
+      border-radius: 12px;
+      text-decoration: none;
+      transition: background 0.2s;
+    }
+    .btn:hover { background: #1d4ed8; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    {% if error_type == 'expired' %}
+      <div class="icon">⏳</div>
+      <h1>Kiosk License Expired</h1>
+      <p>This self-service printing kiosk's subscription has expired. Printing services are currently paused for this location.</p>
+      {% if shop %}
+      <div class="shop-box">
+        <b>{{ shop.shop_name }}</b>
+        <div style="color:#94a3b8; font-size:11px; margin-top:2px;">Contact store owner to renew subscription</div>
+      </div>
+      {% endif %}
+    {% elif error_type == 'suspended' %}
+      <div class="icon">⏸️</div>
+      <h1>Kiosk Temporarily Inactive</h1>
+      <p>This self-service kiosk is currently paused by the store administrator. Please check with the counter staff.</p>
+      {% if shop %}
+      <div class="shop-box">
+        <b>{{ shop.shop_name }}</b>
+      </div>
+      {% endif %}
+    {% else %}
+      <div class="icon">🔍</div>
+      <h1>Kiosk Not Found</h1>
+      <p>We could not find a printing kiosk at this link. Please check the URL or scan the official QR code at the counter.</p>
+      {% if shop_slug %}
+      <div class="shop-box">
+        Code: <code>{{ shop_slug }}</code>
+      </div>
+      {% endif %}
+    {% endif %}
+
+    <a href="/" class="btn">Go to Main Portal</a>
+  </div>
+</body>
+</html>

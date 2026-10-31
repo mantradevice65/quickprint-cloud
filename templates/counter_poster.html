@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>{{ shop.shop_name }} - Counter QR Poster</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
+      background: #f1f5f9;
+      display: flex;
+      justify-content: center;
+      padding: 24px;
+      color: #0f172a;
+    }
+    .poster-sheet {
+      width: 210mm;
+      min-height: 297mm;
+      background: white;
+      padding: 20mm 18mm;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      text-align: center;
+      position: relative;
+    }
+    .top-badge {
+      display: inline-block;
+      background: #1e3a8a;
+      color: white;
+      font-size: 13px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      padding: 8px 24px;
+      border-radius: 50px;
+      margin-bottom: 12px;
+    }
+    .shop-title {
+      font-size: 38px;
+      font-weight: 900;
+      color: #0f172a;
+      letter-spacing: -0.5px;
+      line-height: 1.1;
+      margin-bottom: 8px;
+    }
+    .shop-subtitle {
+      font-size: 16px;
+      color: #475569;
+      font-weight: 600;
+      margin-bottom: 24px;
+    }
+    .qr-container {
+      background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+      border: 3px dashed #2563eb;
+      border-radius: 28px;
+      padding: 24px;
+      display: inline-block;
+      margin: 0 auto;
+      max-width: 320px;
+    }
+    .qr-image {
+      width: 240px;
+      height: 240px;
+      border-radius: 16px;
+      background: white;
+      padding: 12px;
+      box-shadow: 0 8px 20px rgba(37,99,235,0.15);
+      display: block;
+      margin: 0 auto;
+    }
+    .scan-hint {
+      margin-top: 14px;
+      font-size: 15px;
+      font-weight: 800;
+      color: #1e40af;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .url-pill {
+      margin-top: 6px;
+      font-size: 12px;
+      color: #64748b;
+      font-weight: 600;
+      font-family: monospace;
+    }
+    .steps-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin: 28px 0;
+      text-align: left;
+    }
+    .step-card {
+      background: #f8fafc;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 16px;
+      padding: 16px 14px;
+    }
+    .step-num {
+      width: 28px;
+      height: 28px;
+      background: #2563eb;
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 14px;
+      margin-bottom: 8px;
+    }
+    .step-title {
+      font-size: 14px;
+      font-weight: 800;
+      color: #0f172a;
+      margin-bottom: 4px;
+    }
+    .step-desc {
+      font-size: 11px;
+      color: #64748b;
+      line-height: 1.4;
+    }
+    .pricing-bar {
+      background: #f0fdf4;
+      border: 2px solid #86efac;
+      border-radius: 16px;
+      padding: 14px 20px;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    .price-item {
+      font-size: 16px;
+      font-weight: 800;
+      color: #166534;
+    }
+    .price-val {
+      font-size: 22px;
+      font-weight: 900;
+      color: #15803d;
+      margin-left: 4px;
+    }
+    .footer {
+      font-size: 12px;
+      color: #94a3b8;
+      font-weight: 600;
+      display: flex;
+      justify-content: space-between;
+      border-top: 1px solid #f1f5f9;
+      padding-top: 12px;
+    }
+    .print-bar {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #0f172a;
+      padding: 12px 24px;
+      border-radius: 50px;
+      display: flex;
+      gap: 12px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+      z-index: 999;
+    }
+    .print-btn {
+      background: #2563eb;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 30px;
+      font-size: 14px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    @media print {
+      body { background: white; padding: 0; }
+      .poster-sheet { box-shadow: none; border-radius: 0; padding: 15mm 15mm; width: 100%; min-height: 100vh; }
+      .print-bar { display: none !important; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="print-bar">
+    <button class="print-btn" onclick="window.print()">🖨️ Print Poster (A4)</button>
+  </div>
+
+  <div class="poster-sheet">
+    <div>
+      <div class="top-badge">⚡ Self-Service Print Kiosk</div>
+      <h1 class="shop-title">{{ shop.shop_name }}</h1>
+      <p class="shop-subtitle">Upload &bull; Pay Instant Online/Cash &bull; Get Instant Print</p>
+
+      <div class="qr-container">
+        <img src="/s/{{ shop.slug }}/qr" alt="Scan QR to Print" class="qr-image">
+        <div class="scan-hint">
+          <span>📷</span> Scan with Any Phone Camera or Lens
+        </div>
+        <div class="url-pill">{{ portal_url }}</div>
+      </div>
+    </div>
+
+    <!-- Steps Grid -->
+    <div class="steps-grid">
+      <div class="step-card">
+        <div class="step-num">1</div>
+        <div class="step-title">Scan QR Code</div>
+        <div class="step-desc">Open phone camera or Google Lens and tap the link to open portal.</div>
+      </div>
+      <div class="step-card">
+        <div class="step-num">2</div>
+        <div class="step-title">Select Document</div>
+        <div class="step-desc">Upload PDF, Photos, ID Card (Front+Back), or 2-in-1 print.</div>
+      </div>
+      <div class="step-card">
+        <div class="step-num">3</div>
+        <div class="step-title">Pay &amp; Collect</div>
+        <div class="step-desc">Pay via UPI (GPay/PhonePe) or Cash, collect print right here.</div>
+      </div>
+    </div>
+
+    <div>
+      <!-- Pricing Bar -->
+      <div class="pricing-bar">
+        <div class="price-item">Black &amp; White: <span class="price-val">₹{{ shop.rate_bw }}</span>/pg</div>
+        <div style="width:2px; height:24px; background:#bbf7d0;"></div>
+        <div class="price-item">Color Print: <span class="price-val">₹{{ shop.rate_color }}</span>/pg</div>
+      </div>
+
+      <div class="footer">
+        <span>Powered by QuickPrint Self-Service Kiosk</span>
+        <span>Secure &bull; 100% Encrypted &bull; Instant Auto-Print</span>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

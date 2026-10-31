@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QuickPrint SaaS - Super Admin Control Center</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #090d16;
+      --card-bg: #111827;
+      --border: #1f2937;
+      --accent: #2563eb;
+      --accent-hover: #1d4ed8;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --text: #f9fafb;
+      --muted: #9ca3af;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding-bottom: 60px;
+    }
+
+    /* Top Navbar */
+    .navbar {
+      background: rgba(17, 24, 39, 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      padding: 14px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 18px;
+      font-weight: 900;
+      color: white;
+      text-decoration: none;
+    }
+    .brand-badge {
+      background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+      color: white;
+      font-size: 10px;
+      font-weight: 800;
+      padding: 3px 8px;
+      border-radius: 6px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+    .nav-btn {
+      background: #1f2937;
+      border: 1px solid #374151;
+      color: #e5e7eb;
+      padding: 8px 14px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .nav-btn:hover { background: #374151; }
+
+    /* Layout Container */
+    .container {
+      max-width: 1280px;
+      margin: 28px auto 0;
+      padding: 0 20px;
+    }
+
+    /* Stat Cards */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .stat-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+    .stat-title {
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+    .stat-val {
+      font-size: 32px;
+      font-weight: 900;
+      color: white;
+    }
+    .stat-icon {
+      position: absolute;
+      right: 18px;
+      top: 18px;
+      font-size: 28px;
+      opacity: 0.2;
+    }
+
+    /* Search & Action Bar */
+    .action-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .search-input {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      color: white;
+      padding: 10px 16px;
+      border-radius: 12px;
+      font-size: 14px;
+      width: 320px;
+      max-width: 100%;
+    }
+    .btn-primary {
+      background: var(--accent);
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 800;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: background 0.2s;
+    }
+    .btn-primary:hover { background: var(--accent-hover); }
+
+    /* Shops Table */
+    .table-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      overflow: hidden;
+    }
+    .table-responsive {
+      overflow-x: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 13px;
+    }
+    th {
+      background: #1e293b;
+      padding: 14px 18px;
+      color: #94a3b8;
+      font-weight: 800;
+      text-transform: uppercase;
+      font-size: 11px;
+      letter-spacing: 0.5px;
+      border-bottom: 1px solid var(--border);
+    }
+    td {
+      padding: 16px 18px;
+      border-bottom: 1px solid #1f2937;
+      vertical-align: middle;
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #172033; }
+
+    /* Badges */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 800;
+    }
+    .badge-success { background: #064e3b; color: #6ee7b7; border: 1px solid #047857; }
+    .badge-warning { background: #78350f; color: #fde68a; border: 1px solid #b45309; }
+    .badge-danger { background: #7f1d1d; color: #fca5a5; border: 1px solid #b91c1c; }
+
+    .action-btn {
+      background: #1f2937;
+      border: 1px solid #374151;
+      color: white;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.2s;
+    }
+    .action-btn:hover { background: #374151; }
+
+    /* Modals */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.75);
+      backdrop-filter: blur(6px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      z-index: 1000;
+    }
+    .modal {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      width: 100%;
+      max-width: 540px;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 26px;
+      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+    }
+    .modal-title {
+      font-size: 18px;
+      font-weight: 900;
+      margin-bottom: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .form-group {
+      margin-bottom: 14px;
+    }
+    .form-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--muted);
+      display: block;
+      margin-bottom: 6px;
+    }
+    .form-input, .form-select {
+      width: 100%;
+      background: #1f2937;
+      border: 1px solid #374151;
+      color: white;
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-size: 14px;
+    }
+    .form-input:focus, .form-select:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    /* Login Screen */
+    .login-container {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .login-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      width: 100%;
+      max-width: 400px;
+      padding: 36px 28px;
+      text-align: center;
+      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+    }
+  </style>
+</head>
+<body>
+
+  {% if not is_authenticated %}
+  <!-- SUPER ADMIN LOGIN -->
+  <div class="login-container">
+    <div class="login-card">
+      <div style="font-size: 48px; margin-bottom: 12px;">🛡️</div>
+      <h1 style="font-size: 22px; font-weight: 900; margin-bottom: 6px;">Super Admin Portal</h1>
+      <p style="font-size: 13px; color: var(--muted); margin-bottom: 24px;">QuickPrint SaaS Central Management</p>
+
+      <form id="loginForm" onsubmit="handleLogin(event)">
+        <div class="form-group" style="text-align: left;">
+          <label class="form-label">Master Admin Password</label>
+          <input type="password" id="masterPasswordInput" class="form-input" placeholder="Enter Super Admin Password" required autofocus>
+        </div>
+        <button type="submit" class="btn-primary" style="width: 100%; justify-content: center; margin-top: 8px;" id="loginBtn">
+          Unlock Control Center &rarr;
+        </button>
+        <div id="loginErrorMsg" style="color: var(--danger); font-size: 12px; font-weight: 700; margin-top: 12px; display: none;"></div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    function handleLogin(e) {
+      e.preventDefault();
+      const pwd = document.getElementById('masterPasswordInput').value;
+      const btn = document.getElementById('loginBtn');
+      const err = document.getElementById('loginErrorMsg');
+      btn.disabled = true;
+      btn.innerText = 'Verifying...';
+      err.style.display = 'none';
+
+      fetch('/api/super/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: pwd })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          location.reload();
+        } else {
+          err.innerText = data.error || 'Invalid Password!';
+          err.style.display = 'block';
+          btn.disabled = false;
+          btn.innerText = 'Unlock Control Center →';
+        }
+      })
+      .catch(() => {
+        err.innerText = 'Network error. Please try again.';
+        err.style.display = 'block';
+        btn.disabled = false;
+        btn.innerText = 'Unlock Control Center →';
+      });
+    }
+  </script>
+
+  {% else %}
+  <!-- SUPER ADMIN DASHBOARD -->
+  <header class="navbar">
+    <a href="/super-admin" class="brand">
+      <span>⚡ QuickPrint</span>
+      <span class="brand-badge">SaaS Manager</span>
+    </a>
+    <div style="display: flex; gap: 10px; align-items: center;">
+      <a href="/" target="_blank" class="nav-btn">🌐 View Customer Kiosk</a>
+      <button onclick="handleLogout()" class="nav-btn" style="color: #f87171;">Logout</button>
+    </div>
+  </header>
+
+  <div class="container">
+    <!-- Stat Cards -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-title">Active Kiosks</div>
+        <div class="stat-val" id="statActiveKiosks">0</div>
+        <div class="stat-icon">🏪</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-title">Total Print Orders</div>
+        <div class="stat-val" id="statTotalPrints">0</div>
+        <div class="stat-icon">🖨️</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-title">Total Processed Revenue</div>
+        <div class="stat-val" id="statTotalRevenue">₹0</div>
+        <div class="stat-icon">💰</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-title">Expiring Soon (&lt; 15 Days)</div>
+        <div class="stat-val" style="color: #f59e0b;" id="statExpiringSoon">0</div>
+        <div class="stat-icon">⏳</div>
+      </div>
+    </div>
+
+    <!-- Action Bar -->
+    <div class="action-bar">
+      <input type="text" id="searchInput" class="search-input" placeholder="🔍 Search by shop name, owner, or phone..." oninput="filterShops()">
+      <button class="btn-primary" onclick="openAddShopModal()">
+        <span>➕</span> Add New Print Kiosk
+      </button>
+    </div>
+
+    <!-- Shops Table -->
+    <div class="table-card">
+      <div class="table-responsive">
+        <table>
+          <thead>
+            <tr>
+              <th>Shop / Kiosk</th>
+              <th>Owner &amp; Contact</th>
+              <th>Rates &amp; Modes</th>
+              <th>License Plan &amp; Expiry</th>
+              <th>Orders / Revenue</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="shopsTableBody">
+            <tr>
+              <td colspan="6" style="text-align: center; padding: 32px; color: var(--muted);">
+                Loading kiosks...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADD SHOP MODAL -->
+  <div class="modal-backdrop" id="addShopModal" style="display: none;">
+    <div class="modal">
+      <div class="modal-title">
+        <span>➕ Register New Print Kiosk</span>
+        <button onclick="closeModal('addShopModal')" style="background:none; border:none; color:var(--muted); font-size:20px; cursor:pointer;">&times;</button>
+      </div>
+
+      <form onsubmit="submitCreateShop(event)">
+        <div class="grid-2">
+          <div class="form-group">
+            <label class="form-label">Shop Name *</label>
+            <input type="text" id="addShopName" class="form-input" placeholder="e.g. Khan Xerox & Cyber" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Shop Slug (URL Identifier) *</label>
+            <input type="text" id="addShopSlug" class="form-input" placeholder="e.g. khan-xerox" required>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="form-group">
+            <label class="form-label">Owner Name</label>
+            <input type="text" id="addOwnerName" class="form-input" placeholder="e.g. Ameen Khan">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Mobile Number</label>
+            <input type="text" id="addPhone" class="form-input" placeholder="e.g. 9876543210">
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="form-group">
+            <label class="form-label">License Plan</label>
+            <select id="addPlanType" class="form-select" onchange="adjustValidityByPlan()">
+              <option value="yearly" selected>1 Year Subscription (365 Days)</option>
+              <option value="monthly">Monthly Subscription (30 Days)</option>
+              <option value="trial">7-Day Free Trial</option>
+              <option value="lifetime">Lifetime License</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Validity (Days)</label>
+            <input type="number" id="addValidityDays" class="form-input" value="365" required>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="form-group">
+            <label class="form-label">B&amp;W Rate (₹/Page)</label>
+            <input type="number" step="0.5" id="addRateBw" class="form-input" value="5.0" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Color Rate (₹/Page)</label>
+            <input type="number" step="0.5" id="addRateColor" class="form-input" value="10.0" required>
+          </div>
+        </div>
+
+        <!-- Payment Settings -->
+        <div style="background:#1e293b; border-radius:12px; padding:14px; margin-bottom:14px;">
+          <div style="font-size:12px; font-weight:800; color:#38bdf8; text-transform:uppercase; margin-bottom:10px;">Payment Gateway Settings</div>
+          <div class="grid-2">
+            <div class="form-group">
+              <label class="form-label">UPI ID</label>
+              <input type="text" id="addUpiId" class="form-input" placeholder="e.g. khan@ybl">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Payee Name</label>
+              <input type="text" id="addUpiName" class="form-input" placeholder="e.g. Ameen Khan">
+            </div>
+          </div>
+          <div class="grid-2">
+            <div class="form-group">
+              <label class="form-label">Razorpay Key ID</label>
+              <input type="text" id="addRazorpayKeyId" class="form-input" placeholder="rzp_live_...">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Razorpay Key Secret</label>
+              <input type="password" id="addRazorpayKeySecret" class="form-input" placeholder="Secret Key">
+            </div>
+          </div>
+          <div style="display:flex; gap:16px; margin-top:6px;">
+            <label style="display:flex; align-items:center; gap:6px; font-size:12px; cursor:pointer;">
+              <input type="checkbox" id="addRazorpayEnabled" checked> Enable Razorpay
+            </label>
+            <label style="display:flex; align-items:center; gap:6px; font-size:12px; cursor:pointer;">
+              <input type="checkbox" id="addEnableCash" checked> Enable Cash at Counter
+            </label>
+          </div>
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; gap:10px;">
+          <button type="button" class="action-btn" onclick="closeModal('addShopModal')">Cancel</button>
+          <button type="submit" class="btn-primary" id="btnSubmitAddShop">Create Kiosk</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- RENEW MODAL -->
+  <div class="modal-backdrop" id="renewModal" style="display: none;">
+    <div class="modal" style="max-width: 400px;">
+      <div class="modal-title">
+        <span>⏳ Renew Kiosk License</span>
+        <button onclick="closeModal('renewModal')" style="background:none; border:none; color:var(--muted); font-size:20px; cursor:pointer;">&times;</button>
+      </div>
+
+      <div style="margin-bottom: 16px;">
+        <b id="renewShopTitle" style="font-size: 16px; color: white;">Shop Name</b>
+        <div id="renewCurrentExpiry" style="font-size: 12px; color: var(--muted); margin-top: 4px;">Current Expiry: -</div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Add Validity Period</label>
+        <select id="renewDurationSelect" class="form-select">
+          <option value="365" selected>+ 1 Year (365 Days)</option>
+          <option value="30">+ 1 Month (30 Days)</option>
+          <option value="90">+ 3 Months (90 Days)</option>
+          <option value="180">+ 6 Months (180 Days)</option>
+          <option value="7">+ 7 Days Trial</option>
+          <option value="lifetime">Set as Lifetime License</option>
+        </select>
+      </div>
+
+      <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px;">
+        <button type="button" class="action-btn" onclick="closeModal('renewModal')">Cancel</button>
+        <button type="button" class="btn-primary" onclick="submitRenew()">Confirm Renewal</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- KIOSK TOKEN / PAIRING MODAL -->
+  <div class="modal-backdrop" id="tokenModal" style="display: none;">
+    <div class="modal" style="max-width: 480px;">
+      <div class="modal-title">
+        <span>🔑 Shop PC Setup Token</span>
+        <button onclick="closeModal('tokenModal')" style="background:none; border:none; color:var(--muted); font-size:20px; cursor:pointer;">&times;</button>
+      </div>
+
+      <p style="font-size: 13px; color: var(--muted); margin-bottom: 16px;">
+        Install QuickPrint on the shop PC. In their <code>config.json</code> or Settings, paste this unique API key so their PC syncs only their orders.
+      </p>
+
+      <div style="background:#1e293b; border:1px solid #334155; border-radius:12px; padding:14px; margin-bottom:16px;">
+        <div style="font-size:11px; color:#94a3b8; font-weight:700; text-transform:uppercase;">Shop Kiosk API Key</div>
+        <div id="displayKioskApiKey" style="font-family:monospace; font-size:14px; color:#38bdf8; font-weight:800; word-break:break-all; margin:8px 0;">-</div>
+        <button type="button" class="action-btn" onclick="copyKioskKey()" style="width:100%; justify-content:center;">
+          📋 <span id="copyKeyBtnText">Copy API Key</span>
+        </button>
+      </div>
+
+      <div style="background:#1e293b; border:1px solid #334155; border-radius:12px; padding:14px;">
+        <div style="font-size:11px; color:#94a3b8; font-weight:700; text-transform:uppercase;">Customer Portal URL</div>
+        <div id="displayCustomerUrl" style="font-family:monospace; font-size:13px; color:#a7f3d0; margin-top:4px; word-break:break-all;">-</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let allShops = [];
+    let activeRenewSlug = null;
+
+    function loadShops() {
+      fetch('/api/super/shops')
+        .then(res => res.json())
+        .then(data => {
+          allShops = data.shops || [];
+          renderShops(allShops);
+          updateSummaryStats(allShops);
+        })
+        .catch(err => {
+          document.getElementById('shopsTableBody').innerHTML = `
+            <tr><td colspan="6" style="text-align:center; color:#f87171; padding:24px;">Failed to load kiosks. Please refresh.</td></tr>
+          `;
+        });
+    }
+
+    function updateSummaryStats(shops) {
+      let active = 0;
+      let totalPrints = 0;
+      let totalRev = 0;
+      let expiring = 0;
+
+      shops.forEach(s => {
+        if (s.is_active && !s.is_expired) active++;
+        totalPrints += (s.total_jobs || 0);
+        totalRev += (s.total_revenue || 0);
+        if (s.is_active && s.days_remaining <= 15 && s.days_remaining >= 0) expiring++;
+      });
+
+      document.getElementById('statActiveKiosks').innerText = active;
+      document.getElementById('statTotalPrints').innerText = totalPrints;
+      document.getElementById('statTotalRevenue').innerText = '₹' + Math.round(totalRev);
+      document.getElementById('statExpiringSoon').innerText = expiring;
+    }
+
+    function renderShops(shops) {
+      const tbody = document.getElementById('shopsTableBody');
+      if (!shops || shops.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:32px; color:var(--muted);">No kiosks found.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = shops.map(s => {
+        let badgeHtml = '';
+        if (!s.is_active) {
+          badgeHtml = `<span class="badge badge-warning">⏸️ Suspended</span>`;
+        } else if (s.is_expired) {
+          badgeHtml = `<span class="badge badge-danger">🔴 Expired</span>`;
+        } else {
+          badgeHtml = `<span class="badge badge-success">🟢 Active</span>`;
+        }
+
+        let expirySub = '';
+        if (s.plan_type === 'lifetime' || s.subscription_expiry === '2099-12-31') {
+          expirySub = `<div style="font-size:11px; color:#10b981; font-weight:700;">Lifetime Access</div>`;
+        } else if (s.is_expired) {
+          expirySub = `<div style="font-size:11px; color:#f87171; font-weight:700;">Expired ${Math.abs(s.days_remaining)} days ago</div>`;
+        } else {
+          expirySub = `<div style="font-size:11px; color:#38bdf8; font-weight:700;">${s.days_remaining} days left</div>`;
+        }
+
+        return `
+          <tr>
+            <td>
+              <div style="font-size:15px; font-weight:800; color:white;">${s.shop_name}</div>
+              <div style="font-size:11px; color:#94a3b8; font-family:monospace; margin-top:2px;">/s/${s.slug}</div>
+              <div style="margin-top:6px;">${badgeHtml}</div>
+            </td>
+            <td>
+              <div style="font-weight:700;">${s.owner_name || 'N/A'}</div>
+              <div style="font-size:12px; color:var(--muted);">${s.phone || 'No phone'}</div>
+            </td>
+            <td>
+              <div>B&amp;W: <b>₹${s.rate_bw}</b> &bull; Color: <b>₹${s.rate_color}</b></div>
+              <div style="font-size:11px; color:#94a3b8; margin-top:2px;">
+                ${s.razorpay_enabled ? '⚡ Razorpay' : 'No RZP'} &bull; ${s.enable_cash_payment ? '💵 Cash' : 'No Cash'}
+              </div>
+            </td>
+            <td>
+              <div style="font-weight:700;">${s.subscription_expiry || 'Unlimited'}</div>
+              ${expirySub}
+            </td>
+            <td>
+              <div style="font-weight:800; color:white;">${s.total_jobs || 0} Orders</div>
+              <div style="font-size:12px; color:#34d399; font-weight:700;">₹${Math.round(s.total_revenue || 0)}</div>
+            </td>
+            <td>
+              <div style="display:flex; flex-wrap:wrap; gap:6px;">
+                <a href="/s/${s.slug}/poster" target="_blank" class="action-btn" title="Print Poster">
+                  📄 Poster
+                </a>
+                <button type="button" class="action-btn" onclick="openRenewModal('${s.slug}', '${escapeHtml(s.shop_name)}', '${s.subscription_expiry}')" title="Renew License">
+                  ⏳ Renew
+                </button>
+                <button type="button" class="action-btn" onclick="openTokenModal('${s.slug}', '${s.kiosk_api_key}')" title="Kiosk Setup Key">
+                  🔑 Key
+                </button>
+                <button type="button" class="action-btn" onclick="toggleShopActive('${s.slug}')" style="${s.is_active ? 'color:#f87171;' : 'color:#34d399;'}" title="Toggle Active/Pause">
+                  ${s.is_active ? '⏸️ Pause' : '▶️ Resume'}
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function filterShops() {
+      const q = document.getElementById('searchInput').value.trim().toLowerCase();
+      if (!q) {
+        renderShops(allShops);
+        return;
+      }
+      const filtered = allShops.filter(s => 
+        (s.shop_name || '').toLowerCase().includes(q) ||
+        (s.slug || '').toLowerCase().includes(q) ||
+        (s.owner_name || '').toLowerCase().includes(q) ||
+        (s.phone || '').includes(q)
+      );
+      renderShops(filtered);
+    }
+
+    // Modal Helpers
+    function closeModal(id) {
+      document.getElementById(id).style.display = 'none';
+    }
+
+    function openAddShopModal() {
+      document.getElementById('addShopModal').style.display = 'flex';
+      // Auto-generate slug from name
+      document.getElementById('addShopName').oninput = function() {
+        const slugInput = document.getElementById('addShopSlug');
+        if (!slugInput.dataset.manual) {
+          slugInput.value = this.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+        }
+      };
+      document.getElementById('addShopSlug').oninput = function() {
+        this.dataset.manual = 'true';
+      };
+    }
+
+    function adjustValidityByPlan() {
+      const plan = document.getElementById('addPlanType').value;
+      const valInput = document.getElementById('addValidityDays');
+      if (plan === 'yearly') valInput.value = 365;
+      else if (plan === 'monthly') valInput.value = 30;
+      else if (plan === 'trial') valInput.value = 7;
+      else if (plan === 'lifetime') valInput.value = 36500;
+    }
+
+    function submitCreateShop(e) {
+      e.preventDefault();
+      const btn = document.getElementById('btnSubmitAddShop');
+      btn.disabled = true;
+      btn.innerText = 'Creating...';
+
+      const payload = {
+        shop_name: document.getElementById('addShopName').value.trim(),
+        slug: document.getElementById('addShopSlug').value.trim(),
+        owner_name: document.getElementById('addOwnerName').value.trim(),
+        phone: document.getElementById('addPhone').value.trim(),
+        plan_type: document.getElementById('addPlanType').value,
+        validity_days: parseInt(document.getElementById('addValidityDays').value) || 365,
+        rate_bw: parseFloat(document.getElementById('addRateBw').value) || 5.0,
+        rate_color: parseFloat(document.getElementById('addRateColor').value) || 10.0,
+        upi_id: document.getElementById('addUpiId').value.trim(),
+        upi_name: document.getElementById('addUpiName').value.trim(),
+        razorpay_key_id: document.getElementById('addRazorpayKeyId').value.trim(),
+        razorpay_key_secret: document.getElementById('addRazorpayKeySecret').value.trim(),
+        razorpay_enabled: document.getElementById('addRazorpayEnabled').checked,
+        enable_cash_payment: document.getElementById('addEnableCash').checked
+      };
+
+      fetch('/api/super/shops/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+      .then(res => res.json())
+      .then(data => {
+        btn.disabled = false;
+        btn.innerText = 'Create Kiosk';
+        if (data.success) {
+          closeModal('addShopModal');
+          loadShops();
+          alert(`Kiosk "${payload.shop_name}" created successfully!\nUnique URL: /s/${payload.slug}`);
+        } else {
+          alert('Error: ' + (data.error || 'Failed to create shop.'));
+        }
+      })
+      .catch(err => {
+        btn.disabled = false;
+        btn.innerText = 'Create Kiosk';
+        alert('Network error while creating shop.');
+      });
+    }
+
+    function openRenewModal(slug, name, expiry) {
+      activeRenewSlug = slug;
+      document.getElementById('renewShopTitle').innerText = name;
+      document.getElementById('renewCurrentExpiry').innerText = 'Current Expiry: ' + (expiry || 'Lifetime');
+      document.getElementById('renewModal').style.display = 'flex';
+    }
+
+    function submitRenew() {
+      if (!activeRenewSlug) return;
+      const duration = document.getElementById('renewDurationSelect').value;
+
+      fetch(`/api/super/shops/${activeRenewSlug}/renew`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ duration: duration })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          closeModal('renewModal');
+          loadShops();
+          alert(`License renewed successfully! New Expiry: ${data.new_expiry}`);
+        } else {
+          alert('Error: ' + (data.error || 'Could not renew license.'));
+        }
+      });
+    }
+
+    function toggleShopActive(slug) {
+      if (!confirm(`Are you sure you want to toggle active status for "${slug}"?`)) return;
+      fetch(`/api/super/shops/${slug}/toggle`, { method: 'POST' })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) loadShops();
+        });
+    }
+
+    function openTokenModal(slug, key) {
+      document.getElementById('displayKioskApiKey').innerText = key || 'No key generated';
+      document.getElementById('displayCustomerUrl').innerText = `${location.origin}/s/${slug}`;
+      document.getElementById('tokenModal').style.display = 'flex';
+    }
+
+    function copyKioskKey() {
+      const text = document.getElementById('displayKioskApiKey').innerText;
+      navigator.clipboard.writeText(text).then(() => {
+        const btnText = document.getElementById('copyKeyBtnText');
+        btnText.innerText = 'Copied!';
+        setTimeout(() => { btnText.innerText = 'Copy API Key'; }, 2500);
+      });
+    }
+
+    function handleLogout() {
+      fetch('/api/super/logout', { method: 'POST' })
+        .then(() => location.reload());
+    }
+
+    function escapeHtml(text) {
+      return (text || '').replace(/'/g, "\\'");
+    }
+
+    // Initial Load
+    loadShops();
+  </script>
+  {% endif %}
+
+</body>
+</html>

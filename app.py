@@ -11,9 +11,9 @@ import hashlib
 import urllib.request
 import urllib.error
 import base64
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
-from flask import Flask, request, jsonify, render_template, send_from_directory, send_file
+from flask import Flask, request, jsonify, render_template, send_from_directory, send_file, session, redirect, url_for, make_response
 from werkzeug.utils import secure_filename
 from PIL import Image, ImageDraw, ImageOps, ImageEnhance
 
@@ -31,6 +31,8 @@ BASE_DIR = Path(__file__).resolve().parent
 template_dir = BASE_DIR / "templates"
 static_dir = BASE_DIR / "static"
 app = Flask(__name__, template_folder=str(template_dir), static_folder=str(static_dir))
+app.secret_key = "quickprint_super_admin_secret_key_2026"
+SUPER_ADMIN_PASSWORD = "Admin_1977"
 
 UPLOAD_FOLDER = BASE_DIR / "uploads"
 THUMBNAIL_FOLDER = BASE_DIR / "thumbnails"
@@ -96,13 +98,104 @@ def init_db():
             utr TEXT,
             created_at TEXT,
             color_pages TEXT,
-            is_magic_filtered INTEGER DEFAULT 0
+            is_magic_filtered INTEGER DEFAULT 0,
+            shop_slug TEXT DEFAULT 'karnataka-one'
         )
     """)
+    
+    # Ensure shop_slug column exists in jobs
+    try:
+        c.execute("ALTER TABLE jobs ADD COLUMN shop_slug TEXT DEFAULT 'karnataka-one'")
+    except Exception:
+        pass
+
+    # Multi-Tenant SaaS Shops Table
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS shops (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            slug TEXT UNIQUE NOT NULL,
+            shop_name TEXT NOT NULL,
+            owner_name TEXT,
+            phone TEXT,
+            upi_id TEXT,
+            upi_name TEXT,
+            razorpay_enabled INTEGER DEFAULT 1,
+            razorpay_key_id TEXT,
+            razorpay_key_secret TEXT,
+            rate_bw REAL DEFAULT 5.0,
+            rate_color REAL DEFAULT 10.0,
+            enable_cash_payment INTEGER DEFAULT 1,
+            counter_name TEXT DEFAULT 'Counter 1',
+            kiosk_api_key TEXT UNIQUE NOT NULL,
+            plan_type TEXT DEFAULT 'yearly',
+            subscription_expiry TEXT,
+            is_active INTEGER DEFAULT 1,
+            created_at TEXT
+        )
+    """)
+
+    # Seed default primary shop if missing
+    c.execute("SELECT id FROM shops WHERE slug = 'karnataka-one'")
+    if not c.fetchone():
+        c.execute("""
+            INSERT INTO shops (
+                slug, shop_name, owner_name, phone, upi_id, upi_name,
+                razorpay_enabled, razorpay_key_id, razorpay_key_secret,
+                rate_bw, rate_color, enable_cash_payment, counter_name,
+                kiosk_api_key, plan_type, subscription_expiry, is_active, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            'karnataka-one',
+            'Karnataka One',
+            'Ameer Solapur',
+            '',
+            'k1afzalpur@ybl',
+            'Ameer Solapur',
+            1,
+            'rzp_live_TtMiUNzNPJvQ0W',
+            '1Ktgu63RiXsb2gGH8iTPaHKK',
+            5.0,
+            10.0,
+            1,
+            'Counter 1',
+            'k1_quickprint_secret_2026',
+            'lifetime',
+            '2099-12-31',
+            1,
+            datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        ))
     conn.commit()
     conn.close()
 
 init_db()
+
+def get_shop_by_slug(slug):
+    slug = (slug or "karnataka-one").strip().lower()
+    conn = sqlite3.connect(DB_FILE)
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    c.execute("SELECT * FROM shops WHERE slug = ? LIMIT 1", (slug,))
+    row = c.fetchone()
+    conn.close()
+    if row:
+        return dict(row)
+    return None
+
+def get_shop_by_api_key(api_key):
+    api_key = (api_key or '').strip()
+    if not api_key:
+        return None
+    conn = sqlite3.connect(DB_FILE)
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    c.execute("SELECT * FROM shops WHERE kiosk_api_key = ? LIMIT 1", (api_key,))
+    row = c.fetchone()
+    conn.close()
+    if row:
+        return dict(row)
+    if api_key == "k1_quickprint_secret_2026":
+        return get_shop_by_slug("karnataka-one")
+    return None
 
 # ==================== Core Helpers & Image Processors ====================
 
@@ -380,35 +473,95 @@ def apply_camscanner_filter(input_image_path, output_image_path):
 
 @app.route("/")
 @app.route("/customer")
-def customer_page():
-    cfg = load_config()
-    return render_template(
-        "customer.html",
-        config=cfg,
-        shop_name=cfg.get("shop_name", "Karnataka One"),
-        upi_id=cfg.get("upi_id", "k1afzalpur@ybl"),
-        upi_name=cfg.get("upi_name", "Ameer Solapur"),
-        rate_bw=cfg.get("rate_bw", 5.0),
-        rate_color=cfg.get("rate_color", 10.0),
-        counter_name=cfg.get("counter_name", "Counter 1"),
-        razorpay_enabled=cfg.get("razorpay_enabled", True),
-        razorpay_key_id=cfg.get("razorpay_key_id", "rzp_live_TtMiUNzNPJvQ0W"),
-        enable_cash_payment=cfg.get("enable_cash_payment", True)
-    )
+@app.route("/s/<shop_slug>")
+def customer_page(shop_slug=None):
+    if not shop_slug:
+        shop_slug = "karnataka-one"
+    
+    shop = get_shop_by_slug(shop_slug)
+    if not shop:
+        return render_template("shop_error.html", error_type="not_found", shop_slug=shop_slug), 404
+        
+    if not shop.get("is_active"):
+        return render_template("shop_error.html", error_type="suspended", shop=shop), 403
+        
+    expiry_str = shop.get("subscription_expiry")
+    if expiry_str and expiry_str != "2099-12-31":
+        try:
+            exp_date = datetime.strptime(expiry_str, "%Y-%m-%d").date()
+            if datetime.now().date() > exp_date:
+                return render_template("shop_error.html", error_type="expired", shop=shop), 403
+        except Exception:
+            pass
+            
+    cfg = {
+        "shop_slug": shop["slug"],
+        "shop_name": shop["shop_name"],
+        "upi_id": shop.get("upi_id", ""),
+        "upi_name": shop.get("upi_name", ""),
+        "rate_bw": float(shop.get("rate_bw", 5.0)),
+        "rate_color": float(shop.get("rate_color", 10.0)),
+        "counter_name": shop.get("counter_name", "Counter 1"),
+        "razorpay_enabled": bool(shop.get("razorpay_enabled", 1)),
+        "razorpay_key_id": shop.get("razorpay_key_id", ""),
+        "enable_cash_payment": bool(shop.get("enable_cash_payment", 1))
+    }
+    return render_template("customer.html", config=cfg)
+
+@app.route("/s/<shop_slug>/qr")
+def get_shop_qr(shop_slug):
+    shop = get_shop_by_slug(shop_slug)
+    if not shop:
+        return jsonify({"error": "Shop not found"}), 404
+    base_url = request.host_url.rstrip("/")
+    target_url = f"{base_url}/s/{shop['slug']}"
+    qr = qrcode.QRCode(box_size=10, border=2)
+    qr.add_data(target_url)
+    qr.make(fit=True)
+    img = qr.make_image(fill_color="black", back_color="white")
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
+    buf.seek(0)
+    return send_file(buf, mimetype="image/png")
+
+@app.route("/s/<shop_slug>/poster")
+def view_shop_poster(shop_slug):
+    shop = get_shop_by_slug(shop_slug)
+    if not shop:
+        return render_template("shop_error.html", error_type="not_found", shop_slug=shop_slug), 404
+    base_url = request.host_url.rstrip("/")
+    portal_url = f"{base_url}/s/{shop['slug']}"
+    return render_template("counter_poster.html", shop=shop, portal_url=portal_url)
 
 @app.route("/api/config", methods=["GET"])
 def api_get_config():
-    cfg = load_config()
+    shop_slug = request.args.get("shop_slug") or "karnataka-one"
+    shop = get_shop_by_slug(shop_slug)
+    if not shop:
+        cfg = load_config()
+        return jsonify({
+            "shop_slug": "karnataka-one",
+            "shop_name": cfg.get("shop_name", "Karnataka One"),
+            "upi_id": cfg.get("upi_id", "k1afzalpur@ybl"),
+            "upi_name": cfg.get("upi_name", "Ameer Solapur"),
+            "rate_bw": cfg.get("rate_bw", 5.0),
+            "rate_color": cfg.get("rate_color", 10.0),
+            "counter_name": cfg.get("counter_name", "Counter 1"),
+            "razorpay_enabled": cfg.get("razorpay_enabled", True),
+            "razorpay_key_id": cfg.get("razorpay_key_id", "rzp_live_TtMiUNzNPJvQ0W"),
+            "enable_cash_payment": cfg.get("enable_cash_payment", True)
+        })
     return jsonify({
-        "shop_name": cfg.get("shop_name", "Karnataka One"),
-        "upi_id": cfg.get("upi_id", "k1afzalpur@ybl"),
-        "upi_name": cfg.get("upi_name", "Ameer Solapur"),
-        "rate_bw": cfg.get("rate_bw", 5.0),
-        "rate_color": cfg.get("rate_color", 10.0),
-        "counter_name": cfg.get("counter_name", "Counter 1"),
-        "razorpay_enabled": cfg.get("razorpay_enabled", True),
-        "razorpay_key_id": cfg.get("razorpay_key_id", "rzp_live_TtMiUNzNPJvQ0W"),
-        "enable_cash_payment": cfg.get("enable_cash_payment", True)
+        "shop_slug": shop["slug"],
+        "shop_name": shop["shop_name"],
+        "upi_id": shop.get("upi_id", ""),
+        "upi_name": shop.get("upi_name", ""),
+        "rate_bw": float(shop.get("rate_bw", 5.0)),
+        "rate_color": float(shop.get("rate_color", 10.0)),
+        "counter_name": shop.get("counter_name", "Counter 1"),
+        "razorpay_enabled": bool(shop.get("razorpay_enabled", 1)),
+        "razorpay_key_id": shop.get("razorpay_key_id", ""),
+        "enable_cash_payment": bool(shop.get("enable_cash_payment", 1))
     })
 
 @app.route("/api/qr")
@@ -435,9 +588,15 @@ def upload_file():
     if not file_list or len(file_list) == 0:
         return jsonify({"error": "No file uploaded"}), 400
         
-    cfg = load_config()
-    rate_bw = float(cfg.get("rate_bw", 5.0))
-    rate_color = float(cfg.get("rate_color", 10.0))
+    shop_slug = request.form.get("shop_slug") or request.args.get("shop_slug") or "karnataka-one"
+    shop = get_shop_by_slug(shop_slug)
+    if shop:
+        rate_bw = float(shop.get("rate_bw", 5.0))
+        rate_color = float(shop.get("rate_color", 10.0))
+    else:
+        cfg = load_config()
+        rate_bw = float(cfg.get("rate_bw", 5.0))
+        rate_color = float(cfg.get("rate_color", 10.0))
     
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
@@ -472,8 +631,8 @@ def upload_file():
         initial_status = "locked" if is_locked else "awaiting_payment"
 
         c.execute("""
-            INSERT INTO jobs (id, batch_id, customer_name, filename, pdf_path, original_type, page_count, print_type, copies, page_range, total_price, status, printer_used, utr, created_at, color_pages)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO jobs (id, batch_id, customer_name, filename, pdf_path, original_type, page_count, print_type, copies, page_range, total_price, status, printer_used, utr, created_at, color_pages, shop_slug)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             job_id,
             None,
@@ -490,7 +649,8 @@ def upload_file():
             "",
             "",
             datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            color_pages_str
+            color_pages_str,
+            shop_slug
         ))
         
         results.append({
@@ -565,15 +725,21 @@ def upload_id_card():
     except Exception as e:
         return jsonify({"error": f"Failed to generate ID card layout: {str(e)}"}), 500
 
-    cfg = load_config()
-    rate_bw = float(cfg.get("rate_bw", 5.0))
-    rate_color = float(cfg.get("rate_color", 10.0))
+    shop_slug = request.form.get("shop_slug") or request.args.get("shop_slug") or "karnataka-one"
+    shop = get_shop_by_slug(shop_slug)
+    if shop:
+        rate_bw = float(shop.get("rate_bw", 5.0))
+        rate_color = float(shop.get("rate_color", 10.0))
+    else:
+        cfg = load_config()
+        rate_bw = float(cfg.get("rate_bw", 5.0))
+        rate_color = float(cfg.get("rate_color", 10.0))
 
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
     c.execute("""
-        INSERT INTO jobs (id, batch_id, customer_name, filename, pdf_path, original_type, page_count, print_type, copies, page_range, total_price, status, printer_used, utr, created_at, color_pages)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO jobs (id, batch_id, customer_name, filename, pdf_path, original_type, page_count, print_type, copies, page_range, total_price, status, printer_used, utr, created_at, color_pages, shop_slug)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """, (
         job_id,
         None,
@@ -590,7 +756,8 @@ def upload_id_card():
         "",
         "",
         datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        ""
+        "",
+        shop_slug
     ))
     conn.commit()
     conn.close()
@@ -638,15 +805,21 @@ def upload_2in1():
     except Exception as e:
         return jsonify({"error": f"Failed to generate 2-in-1 layout: {str(e)}"}), 500
 
-    cfg = load_config()
-    rate_bw = float(cfg.get("rate_bw", 5.0))
-    rate_color = float(cfg.get("rate_color", 10.0))
+    shop_slug = request.form.get("shop_slug") or request.args.get("shop_slug") or "karnataka-one"
+    shop = get_shop_by_slug(shop_slug)
+    if shop:
+        rate_bw = float(shop.get("rate_bw", 5.0))
+        rate_color = float(shop.get("rate_color", 10.0))
+    else:
+        cfg = load_config()
+        rate_bw = float(cfg.get("rate_bw", 5.0))
+        rate_color = float(cfg.get("rate_color", 10.0))
 
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
     c.execute("""
-        INSERT INTO jobs (id, batch_id, customer_name, filename, pdf_path, original_type, page_count, print_type, copies, page_range, total_price, status, printer_used, utr, created_at, color_pages)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO jobs (id, batch_id, customer_name, filename, pdf_path, original_type, page_count, print_type, copies, page_range, total_price, status, printer_used, utr, created_at, color_pages, shop_slug)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """, (
         job_id,
         None,
@@ -663,7 +836,8 @@ def upload_2in1():
         "",
         "",
         datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        ""
+        "",
+        shop_slug
     ))
     conn.commit()
     conn.close()
@@ -880,10 +1054,11 @@ def api_unlock_pdf():
 # --- Jobs list for status polling ---
 @app.route("/api/jobs", methods=["GET"])
 def api_get_jobs():
+    shop_slug = request.args.get("shop_slug") or "karnataka-one"
     conn = sqlite3.connect(DB_FILE)
     conn.row_factory = sqlite3.Row
     c = conn.cursor()
-    c.execute("SELECT id, batch_id, status FROM jobs ORDER BY created_at DESC LIMIT 50")
+    c.execute("SELECT id, batch_id, status FROM jobs WHERE shop_slug = ? ORDER BY created_at DESC LIMIT 50", (shop_slug,))
     rows = [dict(r) for r in c.fetchall()]
     conn.close()
     return jsonify({"jobs": rows})
@@ -899,10 +1074,16 @@ def submit_order():
     copies = int(data.get("copies", 1))
     page_range = data.get("page_range", "all").strip() or "all"
     utr = data.get("utr", "").strip()
+    shop_slug = data.get("shop_slug") or "karnataka-one"
     
-    cfg = load_config()
-    rate_bw = float(cfg.get("rate_bw", 5.0))
-    rate_color = float(cfg.get("rate_color", 10.0))
+    shop = get_shop_by_slug(shop_slug)
+    if shop:
+        rate_bw = float(shop.get("rate_bw", 5.0))
+        rate_color = float(shop.get("rate_color", 10.0))
+    else:
+        cfg = load_config()
+        rate_bw = float(cfg.get("rate_bw", 5.0))
+        rate_color = float(cfg.get("rate_color", 10.0))
     
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
@@ -922,9 +1103,9 @@ def submit_order():
     # Mark as pending_kiosk_sync so PC picks it up immediately
     c.execute("""
         UPDATE jobs
-        SET customer_name = ?, print_type = ?, copies = ?, page_range = ?, total_price = ?, status = 'pending_kiosk_sync', utr = ?
+        SET customer_name = ?, print_type = ?, copies = ?, page_range = ?, total_price = ?, status = 'pending_kiosk_sync', utr = ?, shop_slug = ?
         WHERE id = ?
-    """, (customer_name, print_type, copies, page_range, total_price, utr, job_id))
+    """, (customer_name, print_type, copies, page_range, total_price, utr, shop_slug, job_id))
     conn.commit()
     conn.close()
     
@@ -945,10 +1126,16 @@ def submit_batch_order():
     print_type = data.get("print_type", "bw")
     copies = int(data.get("copies", 1))
     utr = data.get("utr", "").strip()
+    shop_slug = data.get("shop_slug") or "karnataka-one"
     
-    cfg = load_config()
-    rate_bw = float(cfg.get("rate_bw", 5.0))
-    rate_color = float(cfg.get("rate_color", 10.0))
+    shop = get_shop_by_slug(shop_slug)
+    if shop:
+        rate_bw = float(shop.get("rate_bw", 5.0))
+        rate_color = float(shop.get("rate_color", 10.0))
+    else:
+        cfg = load_config()
+        rate_bw = float(cfg.get("rate_bw", 5.0))
+        rate_color = float(cfg.get("rate_color", 10.0))
     rate = rate_bw if print_type == "bw" else rate_color
     
     batch_id = f"BATCH-{uuid.uuid4().hex[:6].upper()}"
@@ -970,9 +1157,9 @@ def submit_batch_order():
         
         c.execute("""
             UPDATE jobs
-            SET batch_id = ?, customer_name = ?, print_type = ?, copies = ?, page_range = ?, total_price = ?, status = 'pending_kiosk_sync', utr = ?
+            SET batch_id = ?, customer_name = ?, print_type = ?, copies = ?, page_range = ?, total_price = ?, status = 'pending_kiosk_sync', utr = ?, shop_slug = ?
             WHERE id = ?
-        """, (batch_id, customer_name, print_type, copies, page_range, item_cost, utr, job_id))
+        """, (batch_id, customer_name, print_type, copies, page_range, item_cost, utr, shop_slug, job_id))
         
     conn.commit()
     conn.close()
@@ -993,13 +1180,21 @@ def api_razorpay_create_order():
     amount_inr = float(data.get("amount", 0.0))
     job_id = data.get("job_id", "")
     customer_name = data.get("customer_name", "Customer").strip()
+    shop_slug = data.get("shop_slug") or "karnataka-one"
     
     if amount_inr <= 0:
         return jsonify({"error": "Invalid payment amount"}), 400
         
+    shop = get_shop_by_slug(shop_slug)
     cfg = load_config()
-    key_id = cfg.get("razorpay_key_id", "rzp_live_TtMiUNzNPJvQ0W")
-    key_secret = cfg.get("razorpay_key_secret", "1Ktgu63RiXsb2gGH8iTPaHKK")
+    if shop:
+        key_id = shop.get("razorpay_key_id") or cfg.get("razorpay_key_id")
+        key_secret = shop.get("razorpay_key_secret") or cfg.get("razorpay_key_secret")
+        shop_title = shop.get("shop_name", "QuickPrint Kiosk")
+    else:
+        key_id = cfg.get("razorpay_key_id", "rzp_live_TtMiUNzNPJvQ0W")
+        key_secret = cfg.get("razorpay_key_secret", "1Ktgu63RiXsb2gGH8iTPaHKK")
+        shop_title = cfg.get("shop_name", "Karnataka One")
     
     amount_paise = int(round(amount_inr * 100))
     receipt_id = f"rcpt_{job_id[:14]}" if job_id else f"rcpt_{uuid.uuid4().hex[:10]}"
@@ -1009,9 +1204,10 @@ def api_razorpay_create_order():
         "currency": "INR",
         "receipt": receipt_id,
         "notes": {
+            "shop_slug": shop_slug,
             "job_id": job_id,
             "customer_name": customer_name,
-            "shop": cfg.get("shop_name", "Karnataka One")
+            "shop": shop_title
         }
     }
     
@@ -1035,7 +1231,7 @@ def api_razorpay_create_order():
                 "amount": amount_paise,
                 "currency": "INR",
                 "key_id": key_id,
-                "shop_name": cfg.get("shop_name", "Karnataka One")
+                "shop_name": shop_title
             })
     except urllib.error.HTTPError as e:
         err_msg = e.read().decode("utf-8")
@@ -1055,12 +1251,21 @@ def api_razorpay_verify_payment():
     customer_name = data.get("customer_name", "Customer").strip() or "Customer"
     print_type = data.get("print_type", "bw")
     copies = int(data.get("copies", 1))
+    shop_slug = data.get("shop_slug") or "karnataka-one"
     
     if not order_id or not payment_id or not signature:
         return jsonify({"error": "Missing Razorpay verification parameters"}), 400
         
+    shop = get_shop_by_slug(shop_slug)
     cfg = load_config()
-    key_secret = cfg.get("razorpay_key_secret", "1Ktgu63RiXsb2gGH8iTPaHKK")
+    if shop:
+        key_secret = shop.get("razorpay_key_secret") or cfg.get("razorpay_key_secret")
+        rate_bw = float(shop.get("rate_bw", 5.0))
+        rate_color = float(shop.get("rate_color", 10.0))
+    else:
+        key_secret = cfg.get("razorpay_key_secret", "1Ktgu63RiXsb2gGH8iTPaHKK")
+        rate_bw = float(cfg.get("rate_bw", 5.0))
+        rate_color = float(cfg.get("rate_color", 10.0))
     
     msg = f"{order_id}|{payment_id}".encode("utf-8")
     expected = hmac.new(key_secret.encode("utf-8"), msg, hashlib.sha256).hexdigest()
@@ -1068,8 +1273,6 @@ def api_razorpay_verify_payment():
         return jsonify({"error": "Invalid signature verification failed"}), 400
         
     utr_string = f"RZP:{payment_id}"
-    rate_bw = float(cfg.get("rate_bw", 5.0))
-    rate_color = float(cfg.get("rate_color", 10.0))
     rate = rate_bw if print_type == "bw" else rate_color
     
     conn = sqlite3.connect(DB_FILE)
@@ -1094,9 +1297,9 @@ def api_razorpay_verify_payment():
             total_cost += cost
             c.execute("""
                 UPDATE jobs
-                SET batch_id = ?, customer_name = ?, print_type = ?, copies = ?, page_range = ?, total_price = ?, status = 'pending_kiosk_sync', utr = ?
+                SET batch_id = ?, customer_name = ?, print_type = ?, copies = ?, page_range = ?, total_price = ?, status = 'pending_kiosk_sync', utr = ?, shop_slug = ?
                 WHERE id = ?
-            """, (batch_id, customer_name, print_type, copies, page_range, cost, utr_string, job_id))
+            """, (batch_id, customer_name, print_type, copies, page_range, cost, utr_string, shop_slug, job_id))
     else:
         target_job_id = data.get("job_id")
         page_range = str(data.get("page_range", "all")).strip() or "all"
@@ -1109,9 +1312,9 @@ def api_razorpay_verify_payment():
             total_cost = cost
             c.execute("""
                 UPDATE jobs
-                SET customer_name = ?, print_type = ?, copies = ?, page_range = ?, total_price = ?, status = 'pending_kiosk_sync', utr = ?
+                SET customer_name = ?, print_type = ?, copies = ?, page_range = ?, total_price = ?, status = 'pending_kiosk_sync', utr = ?, shop_slug = ?
                 WHERE id = ?
-            """, (customer_name, print_type, copies, page_range, cost, utr_string, target_job_id))
+            """, (customer_name, print_type, copies, page_range, cost, utr_string, shop_slug, target_job_id))
             
     conn.commit()
     conn.close()
@@ -1147,7 +1350,7 @@ def api_track_order(query_id):
     conn.row_factory = sqlite3.Row
     c = conn.cursor()
     c.execute("""
-        SELECT id, batch_id, customer_name, filename, original_type, page_count, print_type, copies, page_range, total_price, status, utr, created_at
+        SELECT id, batch_id, customer_name, filename, original_type, page_count, print_type, copies, page_range, total_price, status, utr, created_at, shop_slug
         FROM jobs
         WHERE id = ? 
            OR id LIKE ?
@@ -1173,44 +1376,250 @@ def api_track_order(query_id):
     data["found"] = True
     return jsonify(data)
 
+# ==================== Super Admin SaaS Routes ====================
+
+@app.route("/super-admin")
+def super_admin_page():
+    is_auth = bool(session.get("super_admin_auth"))
+    return render_template("super_admin.html", is_authenticated=is_auth)
+
+@app.route("/api/super/login", methods=["POST"])
+def api_super_login():
+    data = request.get_json(silent=True) or {}
+    pwd = (data.get("password") or "").strip()
+    if pwd == SUPER_ADMIN_PASSWORD:
+        session["super_admin_auth"] = True
+        return jsonify({"success": True})
+    return jsonify({"success": False, "error": "Invalid Master Password"}), 401
+
+@app.route("/api/super/logout", methods=["POST"])
+def api_super_logout():
+    session.pop("super_admin_auth", None)
+    return jsonify({"success": True})
+
+def require_super_admin(f):
+    def wrapper(*args, **kwargs):
+        if not session.get("super_admin_auth"):
+            return jsonify({"error": "Unauthorized"}), 401
+        return f(*args, **kwargs)
+    wrapper.__name__ = f.__name__
+    return wrapper
+
+@app.route("/api/super/shops", methods=["GET"])
+@require_super_admin
+def api_super_get_shops():
+    conn = sqlite3.connect(DB_FILE)
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    c.execute("SELECT * FROM shops ORDER BY id ASC")
+    shops = [dict(r) for r in c.fetchall()]
+    
+    today = datetime.now().date()
+    for s in shops:
+        slug = s["slug"]
+        c.execute("SELECT COUNT(*), COALESCE(SUM(total_price), 0) FROM jobs WHERE shop_slug = ?", (slug,))
+        row = c.fetchone()
+        s["total_jobs"] = row[0] if row else 0
+        s["total_revenue"] = round(row[1], 2) if row else 0.0
+        
+        exp_str = s.get("subscription_expiry")
+        if exp_str and exp_str != "2099-12-31":
+            try:
+                exp_date = datetime.strptime(exp_str, "%Y-%m-%d").date()
+                days_left = (exp_date - today).days
+                s["days_remaining"] = days_left
+                s["is_expired"] = bool(days_left < 0)
+            except Exception:
+                s["days_remaining"] = 9999
+                s["is_expired"] = False
+        else:
+            s["days_remaining"] = 99999
+            s["is_expired"] = False
+            
+    conn.close()
+    return jsonify({"success": True, "shops": shops})
+
+@app.route("/api/super/shops/create", methods=["POST"])
+@require_super_admin
+def api_super_create_shop():
+    data = request.get_json(silent=True) or {}
+    shop_name = (data.get("shop_name") or "").strip()
+    raw_slug = (data.get("slug") or "").strip()
+    if not shop_name:
+        return jsonify({"success": False, "error": "Shop name is required"}), 400
+        
+    slug = "".join(c if c.isalnum() or c == "-" else "-" for c in (raw_slug or shop_name).lower()).strip("-")
+    if not slug:
+        slug = f"shop-{uuid.uuid4().hex[:6]}"
+        
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+    c.execute("SELECT id FROM shops WHERE slug = ?", (slug,))
+    if c.fetchone():
+        conn.close()
+        return jsonify({"success": False, "error": f"Shop slug '{slug}' already exists. Choose a different one."}), 400
+
+    owner_name = (data.get("owner_name") or "").strip()
+    phone = (data.get("phone") or "").strip()
+    upi_id = (data.get("upi_id") or "").strip()
+    upi_name = (data.get("upi_name") or "").strip()
+    rate_bw = float(data.get("rate_bw") or 5.0)
+    rate_color = float(data.get("rate_color") or 10.0)
+    enable_cash = 1 if data.get("enable_cash_payment", True) else 0
+    razorpay_enabled = 1 if data.get("razorpay_enabled", True) else 0
+    razorpay_key_id = (data.get("razorpay_key_id") or "").strip()
+    razorpay_key_secret = (data.get("razorpay_key_secret") or "").strip()
+    plan_type = data.get("plan_type") or "yearly"
+    validity_days = int(data.get("validity_days") or 365)
+    
+    if plan_type == "lifetime":
+        expiry_date = "2099-12-31"
+    else:
+        expiry_date = (datetime.now() + timedelta(days=validity_days)).strftime("%Y-%m-%d")
+        
+    kiosk_api_key = f"qp_kiosk_{uuid.uuid4().hex[:12]}"
+    created_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    c.execute("""
+        INSERT INTO shops (
+            slug, shop_name, owner_name, phone, upi_id, upi_name,
+            razorpay_enabled, razorpay_key_id, razorpay_key_secret,
+            rate_bw, rate_color, enable_cash_payment, counter_name,
+            kiosk_api_key, plan_type, subscription_expiry, is_active, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """, (
+        slug, shop_name, owner_name, phone, upi_id, upi_name,
+        razorpay_enabled, razorpay_key_id, razorpay_key_secret,
+        rate_bw, rate_color, enable_cash, "Counter 1",
+        kiosk_api_key, plan_type, expiry_date, 1, created_at
+    ))
+    conn.commit()
+    conn.close()
+    return jsonify({"success": True, "slug": slug, "kiosk_api_key": kiosk_api_key})
+
+@app.route("/api/super/shops/<slug>/renew", methods=["POST"])
+@require_super_admin
+def api_super_renew_shop(slug):
+    data = request.get_json(silent=True) or {}
+    duration = data.get("duration", "365")
+    
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+    c.execute("SELECT subscription_expiry FROM shops WHERE slug = ?", (slug,))
+    row = c.fetchone()
+    if not row:
+        conn.close()
+        return jsonify({"success": False, "error": "Shop not found"}), 404
+        
+    current_exp = row[0]
+    today = datetime.now().date()
+    
+    if duration == "lifetime":
+        new_expiry = "2099-12-31"
+    else:
+        days = int(duration)
+        base_date = today
+        if current_exp and current_exp != "2099-12-31":
+            try:
+                c_date = datetime.strptime(current_exp, "%Y-%m-%d").date()
+                if c_date > today:
+                    base_date = c_date
+            except Exception:
+                pass
+        new_expiry = (base_date + timedelta(days=days)).strftime("%Y-%m-%d")
+        
+    c.execute("UPDATE shops SET subscription_expiry = ?, is_active = 1 WHERE slug = ?", (new_expiry, slug))
+    conn.commit()
+    conn.close()
+    return jsonify({"success": True, "new_expiry": new_expiry})
+
+@app.route("/api/super/shops/<slug>/toggle", methods=["POST"])
+@require_super_admin
+def api_super_toggle_shop(slug):
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+    c.execute("SELECT is_active FROM shops WHERE slug = ?", (slug,))
+    row = c.fetchone()
+    if not row:
+        conn.close()
+        return jsonify({"success": False, "error": "Shop not found"}), 404
+    new_state = 0 if row[0] else 1
+    c.execute("UPDATE shops SET is_active = ? WHERE slug = ?", (new_state, slug))
+    conn.commit()
+    conn.close()
+    return jsonify({"success": True, "is_active": new_state})
+
+@app.route("/api/super/shops/<slug>", methods=["DELETE"])
+@require_super_admin
+def api_super_delete_shop(slug):
+    if slug == "karnataka-one":
+        return jsonify({"success": False, "error": "Cannot delete primary kiosk 'karnataka-one'"}), 400
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+    c.execute("DELETE FROM shops WHERE slug = ?", (slug,))
+    conn.commit()
+    conn.close()
+    return jsonify({"success": True})
+
 # ==================== Kiosk Sync API (For Shop PC) ====================
 
 @app.route("/api/kiosk/pending_jobs", methods=["GET"])
 def kiosk_pending_jobs():
-    """Returns list of all paid/confirmed orders waiting to be synced & printed by the shop PC."""
-    cfg = load_config()
-    kiosk_key = cfg.get("kiosk_api_key", "k1_quickprint_secret_2026")
+    """Returns list of pending orders specifically for the calling shop."""
     req_key = request.headers.get("x-api-key") or request.args.get("api_key")
-    if req_key != kiosk_key:
+    if not req_key:
         return jsonify({"error": "Unauthorized"}), 401
-        
+
+    shop = get_shop_by_api_key(req_key)
+    if not shop:
+        return jsonify({"error": "Unauthorized: Invalid kiosk key"}), 401
+
+    if not shop.get("is_active"):
+        return jsonify({"error": "Shop license suspended", "suspended": True, "pending_jobs": []}), 403
+
+    exp_str = shop.get("subscription_expiry")
+    if exp_str and exp_str != "2099-12-31":
+        try:
+            exp_date = datetime.strptime(exp_str, "%Y-%m-%d").date()
+            if datetime.now().date() > exp_date:
+                return jsonify({"error": "Shop license expired", "expired": True, "pending_jobs": []}), 403
+        except Exception:
+            pass
+
     conn = sqlite3.connect(DB_FILE)
     conn.row_factory = sqlite3.Row
     c = conn.cursor()
     c.execute("""
         SELECT id, batch_id, customer_name, filename, original_type, page_count, print_type, copies, page_range, total_price, status, utr, created_at, color_pages
         FROM jobs
-        WHERE status IN ('pending_kiosk_sync', 'paid')
+        WHERE status IN ('pending_kiosk_sync', 'paid') AND shop_slug = ?
         ORDER BY created_at ASC
-    """)
+    """, (shop["slug"],))
     rows = [dict(r) for r in c.fetchall()]
     conn.close()
-    return jsonify({"pending_jobs": rows, "count": len(rows)})
+    return jsonify({
+        "pending_jobs": rows,
+        "count": len(rows),
+        "shop_slug": shop["slug"],
+        "shop_name": shop["shop_name"]
+    })
 
 @app.route("/api/kiosk/download/<job_id>", methods=["GET"])
 def kiosk_download_job(job_id):
     """Allows the shop PC to download the PDF for printing."""
-    cfg = load_config()
-    kiosk_key = cfg.get("kiosk_api_key", "k1_quickprint_secret_2026")
     req_key = request.headers.get("x-api-key") or request.args.get("api_key")
-    if req_key != kiosk_key:
+    if not req_key:
         return jsonify({"error": "Unauthorized"}), 401
+
+    shop = get_shop_by_api_key(req_key)
+    if not shop:
+        return jsonify({"error": "Unauthorized: Invalid kiosk key"}), 401
         
     fpath = UPLOAD_FOLDER / f"{job_id}.pdf"
     if not fpath.exists():
         conn = sqlite3.connect(DB_FILE)
         c = conn.cursor()
-        c.execute("SELECT pdf_path, filename FROM jobs WHERE id = ?", (job_id,))
+        c.execute("SELECT pdf_path, filename, shop_slug FROM jobs WHERE id = ?", (job_id,))
         row = c.fetchone()
         conn.close()
         if row and row[0] and os.path.exists(row[0]):
@@ -1222,11 +1631,13 @@ def kiosk_download_job(job_id):
 @app.route("/api/kiosk/ack_job/<job_id>", methods=["POST"])
 def kiosk_ack_job(job_id):
     """Shop PC acknowledges receipt and printing of the job."""
-    cfg = load_config()
-    kiosk_key = cfg.get("kiosk_api_key", "k1_quickprint_secret_2026")
     req_key = request.headers.get("x-api-key") or request.args.get("api_key")
-    if req_key != kiosk_key:
+    if not req_key:
         return jsonify({"error": "Unauthorized"}), 401
+
+    shop = get_shop_by_api_key(req_key)
+    if not shop:
+        return jsonify({"error": "Unauthorized: Invalid kiosk key"}), 401
         
     data = request.json or {}
     new_status = data.get("status", "printed")
