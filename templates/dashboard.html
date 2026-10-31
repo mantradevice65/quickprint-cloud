@@ -855,14 +855,13 @@
         const queueGrid = document.getElementById('queueGrid');
         const historyBody = document.getElementById('historyTableBody');
 
-        // Show jobs where customer clicked 'I Have Paid' OR chose 'Pay Cash at Counter'
-        const pendingJobs = (jobs || []).filter(j => j.status === 'paid' || (j.status === 'pending' && j.utr === 'CASH AT COUNTER'));
+        // Show jobs where customer paid via Razorpay OR chose 'Pay Cash at Counter'
+        const pendingJobs = (jobs || []).filter(j => j.status === 'paid' || j.status === 'pending_cash' || (j.status === 'pending' && j.utr === 'CASH AT COUNTER'));
         const completedJobs = (jobs || []).filter(j => j.status === 'printed' || j.status === 'cancelled');
 
         // Check for newly confirmed paid/cash jobs to trigger voice alert
         let hasNewOrder = false;
         let hasNewCashOrder = false;
-        let hasNewOrder = false;
         pendingJobs.forEach(j => {
           if (!knownJobIds.has(j.id)) {
             knownJobIds.add(j.id);
