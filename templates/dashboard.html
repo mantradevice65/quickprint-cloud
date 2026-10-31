@@ -590,22 +590,6 @@
         <button style="border:none; background:none; font-size:20px; cursor:pointer;" onclick="closeSettings()">&times;</button>
       </div>
 
-      <div class="form-group">
-        <label class="form-label">Shop Name</label>
-        <input type="text" class="form-input" id="cfgShopName" value="{{ config.shop_name }}">
-      </div>
-
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Your UPI ID (VPA)</label>
-          <input type="text" class="form-input" id="cfgUpiId" value="{{ config.upi_id }}" placeholder="yourname@upi">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Shop/Payee Name</label>
-          <input type="text" class="form-input" id="cfgUpiName" value="{{ config.upi_name }}">
-        </div>
-      </div>
-
       <div class="form-row">
         <div class="form-group">
           <label class="form-label">B/W Rate (₹/page)</label>
@@ -633,16 +617,6 @@
           <option value="{{ p }}" {% if p == config.default_color_printer %}selected{% endif %}>{{ p }}</option>
           {% endfor %}
         </select>
-      </div>
-
-      <div class="form-group" style="margin-top: 10px;">
-        <label style="display:flex; align-items:center; gap:8px; font-weight:700; font-size:13px; cursor:pointer;">
-          <input type="checkbox" id="cfgAutoPrint" {% if config.auto_print %}checked{% endif %}>
-          <span>Auto-Print immediately when paid (Zero Click)</span>
-        </label>
-        <span style="font-size:11px; color:var(--muted); display:block; margin-left:24px;">
-          Unchecked: You click "Approve & Print" after checking payment. Checked: System directly prints.
-        </span>
       </div>
 
       <!-- 1. SOUND & VOICE ALERTS -->
@@ -1206,14 +1180,11 @@
 
     function saveSettings() {
       const payload = {
-        shop_name: document.getElementById('cfgShopName').value.trim(),
-        upi_id: document.getElementById('cfgUpiId').value.trim(),
-        upi_name: document.getElementById('cfgUpiName').value.trim(),
         rate_bw: parseFloat(document.getElementById('cfgRateBw').value),
         rate_color: parseFloat(document.getElementById('cfgRateColor').value),
         default_bw_printer: document.getElementById('cfgPrinterBw').value,
         default_color_printer: document.getElementById('cfgPrinterColor').value,
-        auto_print: document.getElementById('cfgAutoPrint').checked,
+        auto_print: true,
         launch_mode: document.getElementById('cfgLaunchMode') ? document.getElementById('cfgLaunchMode').value : 'desktop',
         enable_cash_payment: document.getElementById('cfgCashEnabled') ? document.getElementById('cfgCashEnabled').checked : true,
         razorpay_enabled: document.getElementById('cfgRazorpayEnabled') ? document.getElementById('cfgRazorpayEnabled').checked : false,
@@ -1223,6 +1194,9 @@
         cloud_server_url: document.getElementById('cfgCloudServerUrl') ? document.getElementById('cfgCloudServerUrl').value.trim() : 'https://print.fruitsgenerator.co.in',
         cloud_sync_enabled: true
       };
+      if (document.getElementById('cfgShopName')) payload.shop_name = document.getElementById('cfgShopName').value.trim();
+      if (document.getElementById('cfgUpiId')) payload.upi_id = document.getElementById('cfgUpiId').value.trim();
+      if (document.getElementById('cfgUpiName')) payload.upi_name = document.getElementById('cfgUpiName').value.trim();
 
       fetch('/api/config', {
         method: 'POST',

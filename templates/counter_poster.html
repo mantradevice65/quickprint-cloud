@@ -2,245 +2,612 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>{{ shop.shop_name }} - Counter QR Poster</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ (shop.shop_name if shop and shop.shop_name else config.shop_name) or 'Karnataka One' }} - Official Counter QR Poster</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    @page {
+      size: A4 portrait;
+      margin: 0;
+    }
+
     body {
-      font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
-      background: #f1f5f9;
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #0f172a;
       display: flex;
       justify-content: center;
-      padding: 24px;
+      align-items: flex-start;
+      padding: 30px 15px;
       color: #0f172a;
+      -webkit-font-smoothing: antialiased;
     }
+
+    /* A4 Poster Dimensions */
     .poster-sheet {
       width: 210mm;
-      min-height: 297mm;
-      background: white;
-      padding: 20mm 18mm;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.15);
-      border-radius: 12px;
+      height: 297mm;
+      max-height: 297mm;
+      background: #ffffff;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.45);
+      border-radius: 8px;
+      position: relative;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
+      padding: 12mm 14mm 10mm 14mm;
+      overflow: hidden;
+    }
+
+    /* Official Framing Border */
+    .poster-inner-frame {
+      position: absolute;
+      top: 6mm;
+      left: 6mm;
+      right: 6mm;
+      bottom: 6mm;
+      border: 2px solid #1e3a8a;
+      border-radius: 6px;
+      pointer-events: none;
+    }
+
+    .poster-inner-frame::after {
+      content: "";
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      right: 3px;
+      bottom: 3px;
+      border: 1px dashed #93c5fd;
+      border-radius: 4px;
+    }
+
+    /* Top Header Bar */
+    .header-section {
       text-align: center;
       position: relative;
+      z-index: 2;
     }
-    .top-badge {
-      display: inline-block;
-      background: #1e3a8a;
-      color: white;
-      font-size: 13px;
+
+    .official-badge-wrap {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .official-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
+      color: #ffffff;
+      font-size: 12px;
       font-weight: 800;
       text-transform: uppercase;
-      letter-spacing: 2px;
-      padding: 8px 24px;
+      letter-spacing: 2.2px;
+      padding: 6px 20px;
       border-radius: 50px;
-      margin-bottom: 12px;
+      box-shadow: 0 4px 12px rgba(30, 58, 138, 0.25);
     }
+
+    .official-badge span.sparkle {
+      color: #fbbf24;
+      font-size: 14px;
+    }
+
     .shop-title {
-      font-size: 38px;
+      font-size: 36px;
       font-weight: 900;
       color: #0f172a;
       letter-spacing: -0.5px;
-      line-height: 1.1;
-      margin-bottom: 8px;
+      line-height: 1.15;
+      margin-top: 4px;
+      text-transform: uppercase;
     }
-    .shop-subtitle {
-      font-size: 16px;
-      color: #475569;
+
+    .shop-tagline {
+      font-size: 14px;
+      font-weight: 700;
+      color: #2563eb;
+      margin-top: 4px;
+      letter-spacing: 0.3px;
+    }
+
+    .shop-desc {
+      font-size: 12px;
       font-weight: 600;
-      margin-bottom: 24px;
+      color: #64748b;
+      margin-top: 2px;
     }
-    .qr-container {
-      background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-      border: 3px dashed #2563eb;
-      border-radius: 28px;
-      padding: 24px;
-      display: inline-block;
-      margin: 0 auto;
-      max-width: 320px;
+
+    /* Hero QR Scanner Box */
+    .hero-qr-container {
+      background: linear-gradient(180deg, #f8fafc 0%, #eff6ff 100%);
+      border: 2px solid #bfdbfe;
+      border-radius: 22px;
+      padding: 16px 20px;
+      text-align: center;
+      margin: 10px auto;
+      width: 100%;
+      max-width: 480px;
+      position: relative;
+      box-shadow: 0 8px 24px rgba(37, 99, 235, 0.08);
+      z-index: 2;
     }
-    .qr-image {
-      width: 240px;
-      height: 240px;
-      border-radius: 16px;
-      background: white;
-      padding: 12px;
-      box-shadow: 0 8px 20px rgba(37,99,235,0.15);
-      display: block;
-      margin: 0 auto;
-    }
-    .scan-hint {
-      margin-top: 14px;
-      font-size: 15px;
+
+    .qr-banner-title {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #1e40af;
+      color: #ffffff;
+      font-size: 13px;
       font-weight: 800;
-      color: #1e40af;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      padding: 6px 16px;
+      border-radius: 50px;
+      margin-bottom: 12px;
+    }
+
+    /* QR Code Display with Scanner Brackets */
+    .qr-bracket-box {
+      position: relative;
+      display: inline-block;
+      padding: 12px;
+      background: #ffffff;
+      border-radius: 20px;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.09);
+    }
+
+    /* Optical Focus Corner Brackets */
+    .qr-bracket-box::before,
+    .qr-bracket-box::after {
+      content: "";
+      position: absolute;
+      width: 24px;
+      height: 24px;
+      border-color: #2563eb;
+      border-style: solid;
+      pointer-events: none;
+    }
+
+    .qr-bracket-box::before {
+      top: 4px;
+      left: 4px;
+      border-width: 4px 0 0 4px;
+      border-top-left-radius: 12px;
+    }
+
+    .qr-bracket-box::after {
+      bottom: 4px;
+      right: 4px;
+      border-width: 0 4px 4px 0;
+      border-bottom-right-radius: 12px;
+    }
+
+    .qr-bracket-box .corner-tr {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      width: 24px;
+      height: 24px;
+      border-top: 4px solid #2563eb;
+      border-right: 4px solid #2563eb;
+      border-top-right-radius: 12px;
+      pointer-events: none;
+    }
+
+    .qr-bracket-box .corner-bl {
+      position: absolute;
+      bottom: 4px;
+      left: 4px;
+      width: 24px;
+      height: 24px;
+      border-bottom: 4px solid #2563eb;
+      border-left: 4px solid #2563eb;
+      border-bottom-left-radius: 12px;
+      pointer-events: none;
+    }
+
+    .qr-img {
+      width: 220px;
+      height: 220px;
+      display: block;
+      border-radius: 10px;
+    }
+
+    .scan-support-strip {
+      margin-top: 10px;
       display: flex;
       align-items: center;
       justify-content: center;
+      flex-wrap: wrap;
       gap: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #1e3a8a;
     }
-    .url-pill {
+
+    .support-pill {
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      padding: 3px 8px;
+      border-radius: 20px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      color: #334155;
+    }
+
+    .url-display {
       margin-top: 6px;
-      font-size: 12px;
+      font-size: 11px;
       color: #64748b;
       font-weight: 600;
-      font-family: monospace;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      word-break: break-all;
     }
-    .steps-grid {
+
+    /* 3-Step Instruction Cards */
+    .steps-section {
+      margin: 8px 0;
+      z-index: 2;
+    }
+
+    .steps-header {
+      text-align: center;
+      font-size: 11px;
+      font-weight: 800;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-bottom: 8px;
+    }
+
+    .steps-row {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 14px;
-      margin: 28px 0;
-      text-align: left;
+      gap: 10px;
     }
+
     .step-card {
-      background: #f8fafc;
+      background: #ffffff;
       border: 1.5px solid #e2e8f0;
-      border-radius: 16px;
-      padding: 16px 14px;
+      border-radius: 14px;
+      padding: 10px 12px;
+      text-align: left;
+      position: relative;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
     }
-    .step-num {
-      width: 28px;
-      height: 28px;
+
+    .step-badge {
+      width: 24px;
+      height: 24px;
       background: #2563eb;
       color: white;
       border-radius: 50%;
+      font-size: 12px;
+      font-weight: 800;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-weight: 800;
-      font-size: 14px;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
     }
-    .step-title {
-      font-size: 14px;
+
+    .step-card-title {
+      font-size: 12px;
       font-weight: 800;
       color: #0f172a;
-      margin-bottom: 4px;
+      margin-bottom: 2px;
     }
-    .step-desc {
-      font-size: 11px;
+
+    .step-card-desc {
+      font-size: 10px;
       color: #64748b;
-      line-height: 1.4;
+      line-height: 1.35;
+      font-weight: 500;
     }
-    .pricing-bar {
-      background: #f0fdf4;
-      border: 2px solid #86efac;
-      border-radius: 16px;
-      padding: 14px 20px;
+
+    /* Supported Formats Row */
+    .supported-services-bar {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 6px 12px;
       display: flex;
-      justify-content: space-around;
       align-items: center;
-      margin-bottom: 16px;
+      justify-content: space-around;
+      font-size: 10.5px;
+      font-weight: 700;
+      color: #334155;
+      margin: 4px 0 8px 0;
+      z-index: 2;
     }
-    .price-item {
-      font-size: 16px;
-      font-weight: 800;
-      color: #166534;
-    }
-    .price-val {
-      font-size: 22px;
-      font-weight: 900;
-      color: #15803d;
-      margin-left: 4px;
-    }
-    .footer {
-      font-size: 12px;
-      color: #94a3b8;
-      font-weight: 600;
+
+    .service-tag {
       display: flex;
-      justify-content: space-between;
-      border-top: 1px solid #f1f5f9;
-      padding-top: 12px;
+      align-items: center;
+      gap: 4px;
     }
-    .print-bar {
+
+    /* High Visibility Pricing Banner */
+    .pricing-card {
+      background: linear-gradient(135deg, #064e3b 0%, #047857 100%);
+      color: #ffffff;
+      border-radius: 16px;
+      padding: 12px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 8px 20px rgba(4, 120, 87, 0.2);
+      margin-bottom: 8px;
+      z-index: 2;
+    }
+
+    .pricing-header {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .pricing-title {
+      font-size: 14px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #a7f3d0;
+    }
+
+    .pricing-subtitle {
+      font-size: 10.5px;
+      font-weight: 600;
+      color: #d1fae5;
+    }
+
+    .pricing-tags {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .price-box {
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      padding: 6px 14px;
+      border-radius: 10px;
+      text-align: center;
+    }
+
+    .price-label {
+      font-size: 10px;
+      font-weight: 700;
+      color: #e6fffa;
+      text-transform: uppercase;
+    }
+
+    .price-amount {
+      font-size: 20px;
+      font-weight: 900;
+      color: #ffffff;
+    }
+
+    /* Privacy & Security Footer */
+    .footer-section {
+      border-top: 1.5px solid #e2e8f0;
+      padding-top: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 10px;
+      color: #64748b;
+      font-weight: 600;
+      z-index: 2;
+    }
+
+    .security-badge {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      color: #15803d;
+      font-weight: 700;
+    }
+
+    /* Floating Print Button for Screen View */
+    .screen-actions {
       position: fixed;
-      bottom: 20px;
+      bottom: 24px;
       left: 50%;
       transform: translateX(-50%);
       background: #0f172a;
-      padding: 12px 24px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      padding: 10px 24px;
       border-radius: 50px;
       display: flex;
+      align-items: center;
       gap: 12px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-      z-index: 999;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
+      z-index: 9999;
     }
-    .print-btn {
+
+    .btn-print {
       background: #2563eb;
-      color: white;
+      color: #ffffff;
       border: none;
-      padding: 10px 20px;
-      border-radius: 30px;
+      padding: 10px 22px;
+      border-radius: 50px;
       font-size: 14px;
       font-weight: 800;
       cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s;
     }
+
+    .btn-print:hover {
+      background: #1d4ed8;
+      transform: scale(1.02);
+    }
+
+    /* Print Media Query */
     @media print {
-      body { background: white; padding: 0; }
-      .poster-sheet { box-shadow: none; border-radius: 0; padding: 15mm 15mm; width: 100%; min-height: 100vh; }
-      .print-bar { display: none !important; }
+      body {
+        background: transparent !important;
+        padding: 0 !important;
+        margin: 0 !important;
+      }
+      .screen-actions {
+        display: none !important;
+      }
+      .poster-sheet {
+        width: 210mm !important;
+        height: 297mm !important;
+        max-height: 297mm !important;
+        box-shadow: none !important;
+        border-radius: 0 !important;
+        padding: 10mm 12mm 8mm 12mm !important;
+        page-break-after: avoid !important;
+        page-break-inside: avoid !important;
+      }
     }
   </style>
 </head>
 <body>
 
-  <div class="print-bar">
-    <button class="print-btn" onclick="window.print()">🖨️ Print Poster (A4)</button>
+  <!-- Floating Print Controls (Hidden on Print) -->
+  <div class="screen-actions">
+    <button class="btn-print" onclick="window.print()">
+      🖨️ Print Poster (A4)
+    </button>
   </div>
 
+  <!-- Main A4 Poster Sheet -->
   <div class="poster-sheet">
-    <div>
-      <div class="top-badge">⚡ Self-Service Print Kiosk</div>
-      <h1 class="shop-title">{{ shop.shop_name }}</h1>
-      <p class="shop-subtitle">Upload &bull; Pay Instant Online/Cash &bull; Get Instant Print</p>
+    
+    <!-- Outer Decorative Border -->
+    <div class="poster-inner-frame"></div>
 
-      <div class="qr-container">
-        <img src="/s/{{ shop.slug }}/qr" alt="Scan QR to Print" class="qr-image">
-        <div class="scan-hint">
-          <span>📷</span> Scan with Any Phone Camera or Lens
+    <!-- 1. OFFICIAL HEADER -->
+    <div class="header-section">
+      <div class="official-badge-wrap">
+        <div class="official-badge">
+          <span class="sparkle">✦</span>
+          <span>OFFICIAL SMART SELF-SERVICE KIOSK</span>
+          <span class="sparkle">✦</span>
         </div>
-        <div class="url-pill">{{ portal_url }}</div>
+      </div>
+      
+      {% set display_shop_name = (shop.shop_name if shop and shop.shop_name else config.shop_name) or 'Karnataka One' %}
+      <h1 class="shop-title">{{ display_shop_name }}</h1>
+      <div class="shop-tagline">⚡ INSTANT WIRELESS MOBILE PRINTING ⚡</div>
+      <div class="shop-desc">No cables • No WhatsApp sharing • Print directly from your phone in 10 seconds</div>
+    </div>
+
+    <!-- 2. HERO QR CODE SCANNER SECTION -->
+    <div class="hero-qr-container">
+      <div class="qr-banner-title">
+        <span>📷</span>
+        <span>SCAN QR TO PRINT NOW</span>
+      </div>
+
+      <div>
+        <div class="qr-bracket-box">
+          <div class="corner-tr"></div>
+          <div class="corner-bl"></div>
+          
+          {% set display_qr_src = ('/s/' + shop.slug + '/qr') if shop and shop.slug else '/api/qr' %}
+          <img src="{{ display_qr_src }}" alt="Scan QR to Print" class="qr-img">
+        </div>
+      </div>
+
+      <div class="scan-support-strip">
+        <span style="font-weight:800; color:#1e40af;">Open Camera / Lens &amp; Scan:</span>
+        <span class="support-pill">📸 Camera</span>
+        <span class="support-pill">🔍 Google Lens</span>
+        <span class="support-pill">⚡ GPay</span>
+        <span class="support-pill">🟣 PhonePe</span>
+        <span class="support-pill"> Paytm</span>
+      </div>
+
+      {% set display_url = portal_url if portal_url else server_url %}
+      <div class="url-display">{{ display_url }}</div>
+    </div>
+
+    <!-- 3. HOW IT WORKS (3 SIMPLE STEPS) -->
+    <div class="steps-section">
+      <div class="steps-header">⚡ HOW TO PRINT IN 3 EASY STEPS ⚡</div>
+      <div class="steps-row">
+        
+        <div class="step-card">
+          <div class="step-badge">1</div>
+          <div class="step-card-title">Scan QR Code</div>
+          <div class="step-card-desc">Open Phone Camera or Google Lens and point at the QR code above.</div>
+        </div>
+
+        <div class="step-card">
+          <div class="step-badge">2</div>
+          <div class="step-card-title">Select Document</div>
+          <div class="step-card-desc">Choose PDF, Photos, or ID Card (Front+Back auto-combined on 1 sheet).</div>
+        </div>
+
+        <div class="step-card">
+          <div class="step-badge">3</div>
+          <div class="step-card-title">Pay &amp; Collect</div>
+          <div class="step-card-desc">Pay instantly via UPI or choose Cash at Counter. Document prints immediately!</div>
+        </div>
+
       </div>
     </div>
 
-    <!-- Steps Grid -->
-    <div class="steps-grid">
-      <div class="step-card">
-        <div class="step-num">1</div>
-        <div class="step-title">Scan QR Code</div>
-        <div class="step-desc">Open phone camera or Google Lens and tap the link to open portal.</div>
+    <!-- 4. SUPPORTED DOCUMENTS BAR -->
+    <div class="supported-services-bar">
+      <div class="service-tag">📄 <b>PDF &amp; Word Docs</b></div>
+      <div class="service-tag">📸 <b>Photos &amp; Images</b></div>
+      <div class="service-tag">🪪 <b>Aadhaar &amp; PAN Card</b></div>
+      <div class="service-tag">📑 <b>2-in-1 Document Fit</b></div>
+      <div class="service-tag">🔓 <b>Password PDF Unlock</b></div>
+    </div>
+
+    <!-- 5. OFFICIAL PRINTING RATES RIBBON -->
+    {% set display_rate_bw = (shop.rate_bw if shop and shop.rate_bw else config.rate_bw) or 2.0 %}
+    {% set display_rate_color = (shop.rate_color if shop and shop.rate_color else config.rate_color) or 10.0 %}
+    <div class="pricing-card">
+      <div class="pricing-header">
+        <div class="pricing-title">Official Print Rates</div>
+        <div class="pricing-subtitle">High-Speed Laser Printing • Standard A4 Size</div>
       </div>
-      <div class="step-card">
-        <div class="step-num">2</div>
-        <div class="step-title">Select Document</div>
-        <div class="step-desc">Upload PDF, Photos, ID Card (Front+Back), or 2-in-1 print.</div>
-      </div>
-      <div class="step-card">
-        <div class="step-num">3</div>
-        <div class="step-title">Pay &amp; Collect</div>
-        <div class="step-desc">Pay via UPI (GPay/PhonePe) or Cash, collect print right here.</div>
+      <div class="pricing-tags">
+        <div class="price-box">
+          <div class="price-label">Black &amp; White</div>
+          <div class="price-amount">₹{{ display_rate_bw }}<span style="font-size:11px; font-weight:600;">/pg</span></div>
+        </div>
+        <div class="price-box">
+          <div class="price-label">Full Colour</div>
+          <div class="price-amount">₹{{ display_rate_color }}<span style="font-size:11px; font-weight:600;">/pg</span></div>
+        </div>
       </div>
     </div>
 
-    <div>
-      <!-- Pricing Bar -->
-      <div class="pricing-bar">
-        <div class="price-item">Black &amp; White: <span class="price-val">₹{{ shop.rate_bw }}</span>/pg</div>
-        <div style="width:2px; height:24px; background:#bbf7d0;"></div>
-        <div class="price-item">Color Print: <span class="price-val">₹{{ shop.rate_color }}</span>/pg</div>
+    <!-- 6. SECURITY GUARANTEE & FOOTER -->
+    <div class="footer-section">
+      <div class="security-badge">
+        <span>🔒</span>
+        <span>ZERO-DATA PRIVACY: Files automatically shredded immediately after printing.</span>
       </div>
-
-      <div class="footer">
-        <span>Powered by QuickPrint Self-Service Kiosk</span>
-        <span>Secure &bull; 100% Encrypted &bull; Instant Auto-Print</span>
+      <div>
+        <span>QuickPrint Kiosk System</span>
       </div>
     </div>
+
   </div>
 
 </body>
