@@ -526,6 +526,97 @@
     </div>
   </div>
 
+  <!-- EDIT SHOP MODAL -->
+  <div class="modal-backdrop" id="editShopModal" style="display: none;">
+    <div class="modal">
+      <div class="modal-title">
+        <span>✏️ Edit Kiosk &amp; Razorpay Keys</span>
+        <button onclick="closeModal('editShopModal')" style="background:none; border:none; color:var(--muted); font-size:20px; cursor:pointer;">&times;</button>
+      </div>
+
+      <form onsubmit="submitEditShop(event)">
+        <input type="hidden" id="editShopSlug">
+
+        <div class="grid-2">
+          <div class="form-group">
+            <label class="form-label">Shop Name *</label>
+            <input type="text" id="editShopName" class="form-input" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Shop Slug (Read Only)</label>
+            <input type="text" id="editShopSlugDisplay" class="form-input" readonly style="opacity:0.6; cursor:not-allowed;">
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="form-group">
+            <label class="form-label">Owner Name</label>
+            <input type="text" id="editOwnerName" class="form-input">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Mobile Number</label>
+            <input type="text" id="editPhone" class="form-input">
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="form-group">
+            <label class="form-label">B&amp;W Rate (₹/Page)</label>
+            <input type="number" step="0.5" id="editRateBw" class="form-input" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Color Rate (₹/Page)</label>
+            <input type="number" step="0.5" id="editRateColor" class="form-input" required>
+          </div>
+        </div>
+
+        <!-- Payment Settings -->
+        <div style="background:#1e293b; border-radius:12px; padding:14px; margin-bottom:14px; border:1px solid #334155;">
+          <div style="font-size:12px; font-weight:800; color:#38bdf8; text-transform:uppercase; margin-bottom:10px;">Payment Gateway Settings</div>
+          <div class="grid-2">
+            <div class="form-group">
+              <label class="form-label">UPI ID</label>
+              <input type="text" id="editUpiId" class="form-input" placeholder="e.g. khan@ybl">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Payee Name</label>
+              <input type="text" id="editUpiName" class="form-input" placeholder="e.g. Ameen Khan">
+            </div>
+          </div>
+
+          <div style="background:#0f172a; border:1px solid #3b82f6; border-radius:10px; padding:10px; margin-bottom:10px;">
+            <div style="font-size:11px; color:#93c5fd; font-weight:700;">🔒 Strict Shop Isolation Active:</div>
+            <div style="font-size:11px; color:#cbd5e1; margin-top:2px;">Enter this shop's own Razorpay keys. Customer payments go 100% directly to this shop's bank account. If left empty, online payment is safely disabled.</div>
+          </div>
+
+          <div class="grid-2">
+            <div class="form-group">
+              <label class="form-label">Razorpay Key ID</label>
+              <input type="text" id="editRazorpayKeyId" class="form-input" placeholder="rzp_live_...">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Razorpay Key Secret</label>
+              <input type="password" id="editRazorpayKeySecret" class="form-input" placeholder="Key Secret">
+            </div>
+          </div>
+          <div style="display:flex; gap:16px; margin-top:6px;">
+            <label style="display:flex; align-items:center; gap:6px; font-size:12px; cursor:pointer;">
+              <input type="checkbox" id="editRazorpayEnabled"> Enable Razorpay
+            </label>
+            <label style="display:flex; align-items:center; gap:6px; font-size:12px; cursor:pointer;">
+              <input type="checkbox" id="editEnableCash"> Enable Cash at Counter
+            </label>
+          </div>
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; gap:10px;">
+          <button type="button" class="action-btn" onclick="closeModal('editShopModal')">Cancel</button>
+          <button type="submit" class="btn-primary" id="btnSubmitEditShop">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- RENEW MODAL -->
   <div class="modal-backdrop" id="renewModal" style="display: none;">
     <div class="modal" style="max-width: 400px;">
@@ -662,8 +753,8 @@
             </td>
             <td>
               <div>B&amp;W: <b>₹${s.rate_bw}</b> &bull; Color: <b>₹${s.rate_color}</b></div>
-              <div style="font-size:11px; color:#94a3b8; margin-top:2px;">
-                ${s.razorpay_enabled ? '⚡ Razorpay' : 'No RZP'} &bull; ${s.enable_cash_payment ? '💵 Cash' : 'No Cash'}
+              <div style="font-size:11px; margin-top:2px;">
+                ${s.razorpay_enabled && s.razorpay_key_id ? '<span style="color:#34d399; font-weight:700;">⚡ RZP Active</span>' : (s.razorpay_enabled ? '<span style="color:#fbbf24; font-weight:700;">⚠️ No Key (Cash Only)</span>' : '<span style="color:#94a3b8;">No RZP</span>')} &bull; ${s.enable_cash_payment ? '<span style="color:#38bdf8;">💵 Cash</span>' : '<span style="color:#94a3b8;">No Cash</span>'}
               </div>
             </td>
             <td>
@@ -679,6 +770,9 @@
                 <a href="/s/${s.slug}/poster" target="_blank" class="action-btn" title="Print Poster">
                   📄 Poster
                 </a>
+                <button type="button" class="action-btn" onclick="openEditShopModal('${s.slug}')" title="Edit Kiosk & Razorpay Keys" style="color:#60a5fa; font-weight:700;">
+                  ✏️ Edit
+                </button>
                 <button type="button" class="action-btn" onclick="openRenewModal('${s.slug}', '${escapeHtml(s.shop_name)}', '${s.subscription_expiry}')" title="Renew License">
                   ⏳ Renew
                 </button>
@@ -782,6 +876,70 @@
         btn.disabled = false;
         btn.innerText = 'Create Kiosk';
         alert('Network error while creating shop.');
+      });
+    }
+
+    function openEditShopModal(slug) {
+      const s = allShops.find(item => item.slug === slug);
+      if (!s) return;
+      document.getElementById('editShopSlug').value = s.slug;
+      document.getElementById('editShopSlugDisplay').value = `/s/${s.slug}`;
+      document.getElementById('editShopName').value = s.shop_name || '';
+      document.getElementById('editOwnerName').value = s.owner_name || '';
+      document.getElementById('editPhone').value = s.phone || '';
+      document.getElementById('editRateBw').value = s.rate_bw || 5.0;
+      document.getElementById('editRateColor').value = s.rate_color || 10.0;
+      document.getElementById('editUpiId').value = s.upi_id || '';
+      document.getElementById('editUpiName').value = s.upi_name || '';
+      document.getElementById('editRazorpayKeyId').value = s.razorpay_key_id || '';
+      document.getElementById('editRazorpayKeySecret').value = s.razorpay_key_secret || '';
+      document.getElementById('editRazorpayEnabled').checked = Boolean(s.razorpay_enabled);
+      document.getElementById('editEnableCash').checked = Boolean(s.enable_cash_payment !== 0);
+      document.getElementById('editShopModal').style.display = 'flex';
+    }
+
+    function submitEditShop(e) {
+      e.preventDefault();
+      const slug = document.getElementById('editShopSlug').value;
+      const btn = document.getElementById('btnSubmitEditShop');
+      btn.disabled = true;
+      btn.innerText = 'Saving...';
+
+      const payload = {
+        shop_name: document.getElementById('editShopName').value.trim(),
+        owner_name: document.getElementById('editOwnerName').value.trim(),
+        phone: document.getElementById('editPhone').value.trim(),
+        rate_bw: parseFloat(document.getElementById('editRateBw').value),
+        rate_color: parseFloat(document.getElementById('editRateColor').value),
+        upi_id: document.getElementById('editUpiId').value.trim(),
+        upi_name: document.getElementById('editUpiName').value.trim(),
+        razorpay_key_id: document.getElementById('editRazorpayKeyId').value.trim(),
+        razorpay_key_secret: document.getElementById('editRazorpayKeySecret').value.trim(),
+        razorpay_enabled: document.getElementById('editRazorpayEnabled').checked,
+        enable_cash_payment: document.getElementById('editEnableCash').checked
+      };
+
+      fetch(`/api/super/shops/${slug}/update`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+      .then(res => res.json())
+      .then(data => {
+        btn.disabled = false;
+        btn.innerText = 'Save Changes';
+        if (data.success) {
+          closeModal('editShopModal');
+          loadShops();
+          alert('Shop and Razorpay credentials updated successfully!');
+        } else {
+          alert('Error: ' + (data.error || 'Failed to update shop.'));
+        }
+      })
+      .catch(() => {
+        btn.disabled = false;
+        btn.innerText = 'Save Changes';
+        alert('Network request failed.');
       });
     }
 

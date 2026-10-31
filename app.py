@@ -495,6 +495,9 @@ def customer_page(shop_slug=None):
         except Exception:
             pass
             
+    has_rzp_keys = bool((shop.get("razorpay_key_id") or "").strip() and (shop.get("razorpay_key_secret") or "").strip())
+    rzp_enabled = bool(shop.get("razorpay_enabled", 1)) and has_rzp_keys
+    
     cfg = {
         "shop_slug": shop["slug"],
         "shop_name": shop["shop_name"],
@@ -503,8 +506,8 @@ def customer_page(shop_slug=None):
         "rate_bw": float(shop.get("rate_bw", 5.0)),
         "rate_color": float(shop.get("rate_color", 10.0)),
         "counter_name": shop.get("counter_name", "Counter 1"),
-        "razorpay_enabled": bool(shop.get("razorpay_enabled", 1)),
-        "razorpay_key_id": shop.get("razorpay_key_id", ""),
+        "razorpay_enabled": rzp_enabled,
+        "razorpay_key_id": shop.get("razorpay_key_id", "").strip() if rzp_enabled else "",
         "enable_cash_payment": bool(shop.get("enable_cash_payment", 1))
     }
     return render_template("customer.html", config=cfg)
@@ -539,19 +542,11 @@ def api_get_config():
     shop_slug = request.args.get("shop_slug") or "karnataka-one"
     shop = get_shop_by_slug(shop_slug)
     if not shop:
-        cfg = load_config()
-        return jsonify({
-            "shop_slug": "karnataka-one",
-            "shop_name": cfg.get("shop_name", "Karnataka One"),
-            "upi_id": cfg.get("upi_id", "k1afzalpur@ybl"),
-            "upi_name": cfg.get("upi_name", "Ameer Solapur"),
-            "rate_bw": cfg.get("rate_bw", 5.0),
-            "rate_color": cfg.get("rate_color", 10.0),
-            "counter_name": cfg.get("counter_name", "Counter 1"),
-            "razorpay_enabled": cfg.get("razorpay_enabled", True),
-            "razorpay_key_id": cfg.get("razorpay_key_id", "rzp_live_TtMiUNzNPJvQ0W"),
-            "enable_cash_payment": cfg.get("enable_cash_payment", True)
-        })
+        return jsonify({"error": "Shop not found"}), 404
+        
+    has_rzp_keys = bool((shop.get("razorpay_key_id") or "").strip() and (shop.get("razorpay_key_secret") or "").strip())
+    rzp_enabled = bool(shop.get("razorpay_enabled", 1)) and has_rzp_keys
+    
     return jsonify({
         "shop_slug": shop["slug"],
         "shop_name": shop["shop_name"],
@@ -560,8 +555,8 @@ def api_get_config():
         "rate_bw": float(shop.get("rate_bw", 5.0)),
         "rate_color": float(shop.get("rate_color", 10.0)),
         "counter_name": shop.get("counter_name", "Counter 1"),
-        "razorpay_enabled": bool(shop.get("razorpay_enabled", 1)),
-        "razorpay_key_id": shop.get("razorpay_key_id", ""),
+        "razorpay_enabled": rzp_enabled,
+        "razorpay_key_id": shop.get("razorpay_key_id", "").strip() if rzp_enabled else "",
         "enable_cash_payment": bool(shop.get("enable_cash_payment", 1))
     })
 
@@ -1201,15 +1196,16 @@ def api_razorpay_create_order():
         return jsonify({"error": "Invalid payment amount"}), 400
         
     shop = get_shop_by_slug(shop_slug)
-    cfg = load_config()
-    if shop:
-        key_id = shop.get("razorpay_key_id") or cfg.get("razorpay_key_id")
-        key_secret = shop.get("razorpay_key_secret") or cfg.get("razorpay_key_secret")
-        shop_title = shop.get("shop_name", "QuickPrint Kiosk")
-    else:
-        key_id = cfg.get("razorpay_key_id", "rzp_live_TtMiUNzNPJvQ0W")
-        key_secret = cfg.get("razorpay_key_secret", "1Ktgu63RiXsb2gGH8iTPaHKK")
-        shop_title = cfg.get("shop_name", "Karnataka One")
+    if not shop:
+        return jsonify({"error": "Shop not found"}), 404
+        
+    key_id = (shop.get("razorpay_key_id") or "").strip()
+    key_secret = (shop.get("razorpay_key_secret") or "").strip()
+    
+    if not key_id or not key_secret:
+        return jsonify({"error": "Online payment is not configured for this shop. Please choose Pay Cash at Counter."}), 400
+        
+    shop_title = shop.get("shop_name", "QuickPrint Kiosk")
     
     amount_paise = int(round(amount_inr * 100))
     receipt_id = f"rcpt_{job_id[:14]}" if job_id else f"rcpt_{uuid.uuid4().hex[:10]}"
@@ -1272,15 +1268,15 @@ def api_razorpay_verify_payment():
         return jsonify({"error": "Missing Razorpay verification parameters"}), 400
         
     shop = get_shop_by_slug(shop_slug)
-    cfg = load_config()
-    if shop:
-        key_secret = shop.get("razorpay_key_secret") or cfg.get("razorpay_key_secret")
-        rate_bw = float(shop.get("rate_bw", 5.0))
-        rate_color = float(shop.get("rate_color", 10.0))
-    else:
-        key_secret = cfg.get("razorpay_key_secret", "1Ktgu63RiXsb2gGH8iTPaHKK")
-        rate_bw = float(cfg.get("rate_bw", 5.0))
-        rate_color = float(cfg.get("rate_color", 10.0))
+    if not shop:
+        return jsonify({"error": "Shop not found"}), 404
+        
+    key_secret = (shop.get("razorpay_key_secret") or "").strip()
+    if not key_secret:
+        return jsonify({"error": "Online payment credentials not configured for this shop"}), 400
+        
+    rate_bw = float(shop.get("rate_bw", 5.0))
+    rate_color = float(shop.get("rate_color", 10.0))
     
     msg = f"{order_id}|{payment_id}".encode("utf-8")
     expected = hmac.new(key_secret.encode("utf-8"), msg, hashlib.sha256).hexdigest()
@@ -1563,6 +1559,43 @@ def api_super_toggle_shop(slug):
     conn.commit()
     conn.close()
     return jsonify({"success": True, "is_active": new_state})
+
+@app.route("/api/super/shops/<slug>/update", methods=["POST"])
+@require_super_admin
+def api_super_update_shop(slug):
+    data = request.get_json(silent=True) or {}
+    shop_name = (data.get("shop_name") or "").strip()
+    if not shop_name:
+        return jsonify({"success": False, "error": "Shop name is required"}), 400
+        
+    owner_name = (data.get("owner_name") or "").strip()
+    phone = (data.get("phone") or "").strip()
+    upi_id = (data.get("upi_id") or "").strip()
+    upi_name = (data.get("upi_name") or "").strip()
+    rate_bw = float(data.get("rate_bw") or 5.0)
+    rate_color = float(data.get("rate_color") or 10.0)
+    enable_cash = 1 if data.get("enable_cash_payment", True) else 0
+    razorpay_enabled = 1 if data.get("razorpay_enabled", True) else 0
+    razorpay_key_id = (data.get("razorpay_key_id") or "").strip()
+    razorpay_key_secret = (data.get("razorpay_key_secret") or "").strip()
+    
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+    c.execute("SELECT id FROM shops WHERE slug = ?", (slug,))
+    if not c.fetchone():
+        conn.close()
+        return jsonify({"success": False, "error": "Shop not found"}), 404
+
+    c.execute("""
+        UPDATE shops
+        SET shop_name = ?, owner_name = ?, phone = ?, upi_id = ?, upi_name = ?,
+            rate_bw = ?, rate_color = ?, enable_cash_payment = ?,
+            razorpay_enabled = ?, razorpay_key_id = ?, razorpay_key_secret = ?
+        WHERE slug = ?
+    """, (shop_name, owner_name, phone, upi_id, upi_name, rate_bw, rate_color, enable_cash, razorpay_enabled, razorpay_key_id, razorpay_key_secret, slug))
+    conn.commit()
+    conn.close()
+    return jsonify({"success": True, "message": "Shop and Razorpay credentials updated successfully"})
 
 @app.route("/api/super/shops/<slug>", methods=["DELETE"])
 @require_super_admin
