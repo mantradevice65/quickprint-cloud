@@ -321,19 +321,61 @@ def find_perspective_coeffs(dst_pts, src_pts):
     return solve_linear_8(A, B)
 
 def remove_shadows_and_whiten(im):
-    """CamScanner-Style Background Whitening & Shadow Removal."""
+    """
+    CamScanner-Style Background Whitening & Full Shadow Elimination:
+    1. Multi-scale macro illumination surface estimation per RGB channel.
+       Downsampling eliminates text stroke interference without halos.
+    2. Per-channel division removes both luminance shadows and ambient color casts (yellow/blue lighting).
+    3. Adaptive White Point Normalization:
+       Forces all paper background pixels to pure snow-white (255, 255, 255).
+    4. Text Contrast Anchor: Keeps ink deep, legible, and dark.
+    """
+    if im.mode != "RGB":
+        im = im.convert("RGB")
+    
     if not HAS_NUMPY:
         gray = im.convert("L")
         enh = ImageEnhance.Contrast(im).enhance(1.25)
         return enh
+
+    w, h = im.size
     im_arr = np.array(im, dtype=np.float32)
-    gray = im.convert("L")
-    bg = gray.filter(ImageFilter.GaussianBlur(radius=35))
-    bg_arr = np.array(bg, dtype=np.float32) + 1.0 # avoid div by 0
-    norm_arr = np.zeros_like(im_arr)
+
+    # 1. Macro Illumination Surface Estimation
+    scale = max(w, h) / 100.0
+    sw, sh = max(30, int(w / scale)), max(30, int(h / scale))
+
+    norm_channels = []
     for c in range(3):
-        norm_arr[:, :, c] = np.clip((im_arr[:, :, c] / bg_arr) * 255.0, 0, 255)
-    return Image.fromarray(norm_arr.astype(np.uint8))
+        ch_img = Image.fromarray(im_arr[:, :, c].astype(np.uint8))
+        s_ch = ch_img.resize((sw, sh), Image.BILINEAR)
+        # MaxFilter removes dark text lines and small dark details
+        d_ch = s_ch.filter(ImageFilter.MaxFilter(size=5))
+        # GaussianBlur creates smooth macro lighting plane
+        b_ch = d_ch.filter(ImageFilter.GaussianBlur(radius=8))
+        bg_full = b_ch.resize((w, h), Image.BICUBIC)
+        bg_arr = np.array(bg_full, dtype=np.float32) + 1.0
+
+        # Channel division: (pixel / background) * 255
+        div = (im_arr[:, :, c] / bg_arr) * 255.0
+        norm_channels.append(div)
+
+    merged = np.stack(norm_channels, axis=2)
+
+    # 2. Adaptive Paper Whitening & Black Point Contrast
+    lum = 0.299 * merged[:, :, 0] + 0.587 * merged[:, :, 1] + 0.114 * merged[:, :, 2]
+    p50 = float(np.percentile(lum, 50))
+
+    # White point clamp: forces shadowed paper (which reaches ~190) directly to 255 pure white
+    white_pt = min(205.0, max(150.0, p50 * 0.82))
+    black_pt = 35.0
+
+    stretched = (merged - black_pt) / (white_pt - black_pt) * 255.0
+    cleaned = np.clip(stretched, 0, 255).astype(np.uint8)
+
+    out = Image.fromarray(cleaned)
+    out = out.filter(ImageFilter.UnsharpMask(radius=1.8, percent=140, threshold=2))
+    return out
 
 def enhance_image(im, preset="magic", brightness=1.0, contrast=1.0, sharpness=1.0):
     if im.mode != "RGB":
@@ -341,18 +383,21 @@ def enhance_image(im, preset="magic", brightness=1.0, contrast=1.0, sharpness=1.
     out = im
     if preset == "magic":
         out = remove_shadows_and_whiten(out)
-        out = ImageEnhance.Contrast(out).enhance(1.22)
-        out = out.filter(ImageFilter.UnsharpMask(radius=2, percent=150, threshold=2))
-        out = ImageEnhance.Sharpness(out).enhance(1.8)
+        out = ImageEnhance.Contrast(out).enhance(1.15)
+        out = ImageEnhance.Sharpness(out).enhance(1.5)
     elif preset == "bw":
         out = remove_shadows_and_whiten(out)
         gray = out.convert("L")
-        out = ImageEnhance.Contrast(gray).enhance(1.8)
+        if HAS_NUMPY:
+            arr = np.array(gray, dtype=np.float32)
+            bw_arr = np.clip((arr - 110.0) / (185.0 - 110.0) * 255.0, 0, 255).astype(np.uint8)
+            out = Image.fromarray(bw_arr).convert("RGB")
+        else:
+            out = ImageEnhance.Contrast(gray).enhance(2.0).convert("RGB")
         out = out.filter(ImageFilter.UnsharpMask(radius=1.5, percent=170, threshold=1))
-        out = out.convert("RGB")
     elif preset == "color":
         out = remove_shadows_and_whiten(out)
-        out = ImageEnhance.Color(out).enhance(1.35)
+        out = ImageEnhance.Color(out).enhance(1.4)
         out = ImageEnhance.Contrast(out).enhance(1.15)
         out = out.filter(ImageFilter.UnsharpMask(radius=1.5, percent=130, threshold=2))
     elif preset == "original":
