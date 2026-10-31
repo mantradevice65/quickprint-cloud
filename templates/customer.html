@@ -836,12 +836,13 @@
         </div>
 
         <div class="item-preview-box" id="previewBoxIdFront">
-          <img class="item-preview-img" id="imgIdFront" alt="Front Preview">
-          <div style="flex:1;">
+          <img class="item-preview-img" id="imgIdFront" alt="Front Preview" style="cursor:pointer;" onclick="viewSidePreview('id_front', '🪪 Front Side ID Card')" title="Click to view full preview">
+          <div style="flex:1; cursor:pointer;" onclick="viewSidePreview('id_front', '🪪 Front Side ID Card')">
             <div style="font-size:12px; font-weight:700; color:#166534;">✅ Front Ready (Enlarged)</div>
-            <div style="font-size:11px; color:var(--muted);">Standard clear card frame</div>
+            <div style="font-size:11px; color:var(--muted);">Click to view preview</div>
           </div>
           <div style="display:flex; gap:6px;">
+            <button type="button" class="action-btn" style="padding:4px 8px; font-size:11px; color:#0284c7; background:#f0f9ff; border-color:#bae6fd; font-weight:700;" onclick="viewSidePreview('id_front', '🪪 Front Side ID Card')">👁️ View</button>
             <button class="action-btn" style="padding:4px 8px; font-size:11px;" onclick="reCrop('id_front')">✂️ Re-crop</button>
             <button class="action-btn" style="padding:4px 8px; font-size:11px; color:#dc2626;" onclick="resetIdSide('front')">✕</button>
           </div>
@@ -868,12 +869,13 @@
         </div>
 
         <div class="item-preview-box" id="previewBoxIdBack">
-          <img class="item-preview-img" id="imgIdBack" alt="Back Preview">
-          <div style="flex:1;">
+          <img class="item-preview-img" id="imgIdBack" alt="Back Preview" style="cursor:pointer;" onclick="viewSidePreview('id_back', '🪪 Back Side ID Card')" title="Click to view full preview">
+          <div style="flex:1; cursor:pointer;" onclick="viewSidePreview('id_back', '🪪 Back Side ID Card')">
             <div style="font-size:12px; font-weight:700; color:#166534;">✅ Back Ready (Enlarged)</div>
-            <div style="font-size:11px; color:var(--muted);">Standard clear card frame</div>
+            <div style="font-size:11px; color:var(--muted);">Click to view preview</div>
           </div>
           <div style="display:flex; gap:6px;">
+            <button type="button" class="action-btn" style="padding:4px 8px; font-size:11px; color:#0284c7; background:#f0f9ff; border-color:#bae6fd; font-weight:700;" onclick="viewSidePreview('id_back', '🪪 Back Side ID Card')">👁️ View</button>
             <button class="action-btn" style="padding:4px 8px; font-size:11px;" onclick="reCrop('id_back')">✂️ Re-crop</button>
             <button class="action-btn" style="padding:4px 8px; font-size:11px; color:#dc2626;" onclick="resetIdSide('back')">✕</button>
           </div>
@@ -917,12 +919,13 @@
         </div>
 
         <div class="item-preview-box" id="previewBox2in1Top">
-          <img class="item-preview-img" id="img2in1Top" alt="Top Document">
-          <div style="flex:1;">
+          <img class="item-preview-img" id="img2in1Top" alt="Top Document" style="cursor:pointer;" onclick="viewSidePreview('2in1_top', '📄 Top Half Document')" title="Click to view full preview">
+          <div style="flex:1; cursor:pointer;" onclick="viewSidePreview('2in1_top', '📄 Top Half Document')">
             <div style="font-size:12px; font-weight:700; color:#166534;">✅ Top Document Ready</div>
-            <div style="font-size:11px; color:var(--muted);">Fitted for Top Half</div>
+            <div style="font-size:11px; color:var(--muted);">Fitted for Top Half • Click to view</div>
           </div>
           <div style="display:flex; gap:6px;">
+            <button type="button" class="action-btn" style="padding:4px 8px; font-size:11px; color:#0284c7; background:#f0f9ff; border-color:#bae6fd; font-weight:700;" onclick="viewSidePreview('2in1_top', '📄 Top Half Document')">👁️ View</button>
             <button class="action-btn" style="padding:4px 8px; font-size:11px;" onclick="reCrop('2in1_top')">✂️ Re-crop</button>
             <button class="action-btn" style="padding:4px 8px; font-size:11px; color:#dc2626;" onclick="reset2in1Side('top')">✕</button>
           </div>
@@ -949,12 +952,13 @@
         </div>
 
         <div class="item-preview-box" id="previewBox2in1Bottom">
-          <img class="item-preview-img" id="img2in1Bottom" alt="Bottom Document">
-          <div style="flex:1;">
+          <img class="item-preview-img" id="img2in1Bottom" alt="Bottom Document" style="cursor:pointer;" onclick="viewSidePreview('2in1_bottom', '📄 Bottom Half Document')" title="Click to view full preview">
+          <div style="flex:1; cursor:pointer;" onclick="viewSidePreview('2in1_bottom', '📄 Bottom Half Document')">
             <div style="font-size:12px; font-weight:700; color:#166534;">✅ Bottom Document Ready</div>
-            <div style="font-size:11px; color:var(--muted);">Fitted for Bottom Half</div>
+            <div style="font-size:11px; color:var(--muted);">Fitted for Bottom Half • Click to view</div>
           </div>
           <div style="display:flex; gap:6px;">
+            <button type="button" class="action-btn" style="padding:4px 8px; font-size:11px; color:#0284c7; background:#f0f9ff; border-color:#bae6fd; font-weight:700;" onclick="viewSidePreview('2in1_bottom', '📄 Bottom Half Document')">👁️ View</button>
             <button class="action-btn" style="padding:4px 8px; font-size:11px;" onclick="reCrop('2in1_bottom')">✂️ Re-crop</button>
             <button class="action-btn" style="padding:4px 8px; font-size:11px; color:#dc2626;" onclick="reset2in1Side('bottom')">✕</button>
           </div>
@@ -977,6 +981,23 @@
       <div class="card-title">
         <span class="step-number">2</span>
         <span>Choose Print Settings</span>
+      </div>
+
+      <!-- Merged Final Document Preview (for ID Card & 2-in-1) -->
+      <div id="mergedDocPreviewCard" style="display:none; background:#f0fdf4; border:1.5px solid #86efac; border-radius:14px; padding:12px; margin-bottom:16px;">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+          <div style="display:flex; align-items:center; gap:10px; min-width:0; cursor:pointer;" onclick="previewMergedDoc()">
+            <img id="mergedDocThumb" src="" style="width:44px; height:58px; object-fit:contain; border-radius:6px; border:1px solid #86efac; background:white;" onerror="this.style.display='none'">
+            <div style="min-width:0;">
+              <div id="mergedDocTitle" style="font-weight:800; font-size:13px; color:#14532d;">1-Page Merged Print</div>
+              <div style="font-size:11px; color:#15803d; font-weight:700;">✅ Ready to Print on 1 Page</div>
+              <div style="font-size:10px; color:#64748b;">Click to view full A4 preview</div>
+            </div>
+          </div>
+          <button type="button" class="action-btn" onclick="previewMergedDoc()" style="background:#dcfce7; color:#15803d; border-color:#86efac; padding:6px 12px; font-size:12px; font-weight:800; white-space:nowrap;">
+            👁️ View Print Preview
+          </button>
+        </div>
       </div>
 
       <!-- Color Selection -->
@@ -1531,6 +1552,8 @@
       currentMode = mode;
       ['tabDoc', 'tabId', 'tab2in1'].forEach(id => document.getElementById(id).classList.remove('active'));
       ['uploadDocCard', 'uploadIdCard', 'upload2in1Card'].forEach(id => document.getElementById(id).style.display = 'none');
+      const mergedCard = document.getElementById('mergedDocPreviewCard');
+      if (mergedCard) mergedCard.style.display = 'none';
 
       if (mode === 'doc') {
         document.getElementById('tabDoc').classList.add('active');
@@ -2566,6 +2589,13 @@
         document.getElementById('optionsCard').style.display = 'block';
         document.getElementById('pageRangeGroup').style.display = 'none';
 
+        const mergedCard = document.getElementById('mergedDocPreviewCard');
+        if (mergedCard) {
+          mergedCard.style.display = 'block';
+          document.getElementById('mergedDocTitle').innerText = '🪪 1-Page Enlarged ID Print';
+          document.getElementById('mergedDocThumb').src = `/thumbnails/${currentJobId}.png?t=${Date.now()}`;
+        }
+
         calculateTotal();
       })
       .catch(() => {
@@ -2605,6 +2635,13 @@
         document.querySelector('.mode-tabs').style.display = 'none';
         document.getElementById('optionsCard').style.display = 'block';
         document.getElementById('pageRangeGroup').style.display = 'none';
+
+        const mergedCard = document.getElementById('mergedDocPreviewCard');
+        if (mergedCard) {
+          mergedCard.style.display = 'block';
+          document.getElementById('mergedDocTitle').innerText = '📄 2-in-1 Merged A4 Print';
+          document.getElementById('mergedDocThumb').src = `/thumbnails/${currentJobId}.png?t=${Date.now()}`;
+        }
 
         calculateTotal();
       })
@@ -3167,6 +3204,62 @@
       }
     }
 
+    function previewMergedDoc() {
+      if (currentJobId) {
+        const title = currentMode === 'id_card' ? '🪪 Enlarged ID Card A4 Print' : '📄 2-in-1 Document A4 Print';
+        openDocPreview(currentJobId, title, 1);
+      }
+    }
+
+    function viewSidePreview(target, title) {
+      let blob = null;
+      if (target === 'id_front') blob = idFrontBlob;
+      else if (target === 'id_back') blob = idBackBlob;
+      else if (target === '2in1_top') blob = twoInOneTopBlob;
+      else if (target === '2in1_bottom') blob = twoInOneBottomBlob;
+
+      let url = null;
+      if (blob) {
+        url = URL.createObjectURL(blob);
+      } else {
+        if (target === 'id_front') url = idRawFrontUrl;
+        else if (target === 'id_back') url = idRawBackUrl;
+        else if (target === '2in1_top') url = twoInOneRawTopUrl;
+        else if (target === '2in1_bottom') url = twoInOneRawBottomUrl;
+      }
+
+      if (!url) return;
+
+      const modal = document.getElementById('docPreviewModal');
+      const img = document.getElementById('previewDocImg');
+      const loader = document.getElementById('previewLoading');
+      const indicator = document.getElementById('previewPageIndicator');
+      const badge = document.getElementById('previewPageSelectedBadge');
+      const skipBtn = document.getElementById('previewTogglePageBtn');
+      const stripContainer = document.getElementById('previewPageStripContainer');
+      const prevBtn = document.getElementById('prevPageBtn');
+      const nextBtn = document.getElementById('nextPageBtn');
+      const openPdf = document.getElementById('openFullPdfLink');
+
+      document.getElementById('previewDocTitle').innerText = title || 'Document Preview';
+      if (openPdf) openPdf.style.display = 'none';
+      if (indicator) indicator.innerText = 'Document Preview';
+      if (badge) {
+        badge.style.display = 'inline-flex';
+        badge.style.background = '#16a34a';
+        badge.innerHTML = '✓ Ready to Print';
+      }
+      if (skipBtn) skipBtn.style.display = 'none';
+      if (stripContainer) stripContainer.style.display = 'none';
+      if (prevBtn) prevBtn.style.display = 'none';
+      if (nextBtn) nextBtn.style.display = 'none';
+      if (loader) loader.style.display = 'none';
+
+      img.style.display = 'block';
+      img.src = url;
+      modal.style.display = 'flex';
+    }
+
     // Document Preview Controller - ONLY Selected Pages Preview
     let previewState = {
       jobId: null,
@@ -3211,6 +3304,8 @@
 
     function closeDocPreview() {
       document.getElementById('docPreviewModal').style.display = 'none';
+      const openPdf = document.getElementById('openFullPdfLink');
+      if (openPdf) openPdf.style.display = '';
     }
 
     function changePreviewPage(delta) {
