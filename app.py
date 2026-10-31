@@ -325,10 +325,10 @@ def remove_shadows_and_whiten(im):
     CamScanner-Style Background Whitening & Full Shadow Elimination:
     1. Multi-scale macro illumination surface estimation per RGB channel.
        Downsampling eliminates text stroke interference without halos.
-    2. Per-channel division removes both luminance shadows and ambient color casts (yellow/blue lighting).
-    3. Adaptive White Point Normalization:
-       Forces all paper background pixels to pure snow-white (255, 255, 255).
-    4. Text Contrast Anchor: Keeps ink deep, legible, and dark.
+    2. Per-channel division removes both luminance shadows and ambient color casts.
+    3. Balanced Paper Whitening with Ink Protection Gamma (1.15):
+       Forces paper background to snow-white (255, 255, 255) while keeping
+       text ink dark, solid, and completely protected from wash-out.
     """
     if im.mode != "RGB":
         im = im.convert("RGB")
@@ -342,17 +342,17 @@ def remove_shadows_and_whiten(im):
     im_arr = np.array(im, dtype=np.float32)
 
     # 1. Macro Illumination Surface Estimation
-    scale = max(w, h) / 100.0
+    scale = max(w, h) / 120.0
     sw, sh = max(30, int(w / scale)), max(30, int(h / scale))
 
     norm_channels = []
     for c in range(3):
         ch_img = Image.fromarray(im_arr[:, :, c].astype(np.uint8))
         s_ch = ch_img.resize((sw, sh), Image.BILINEAR)
-        # MaxFilter removes dark text lines and small dark details
-        d_ch = s_ch.filter(ImageFilter.MaxFilter(size=5))
-        # GaussianBlur creates smooth macro lighting plane
-        b_ch = d_ch.filter(ImageFilter.GaussianBlur(radius=8))
+        # MaxFilter wipes out dark text lines
+        d_ch = s_ch.filter(ImageFilter.MaxFilter(size=3))
+        # Smooth macro lighting plane
+        b_ch = d_ch.filter(ImageFilter.GaussianBlur(radius=3))
         bg_full = b_ch.resize((w, h), Image.BICUBIC)
         bg_arr = np.array(bg_full, dtype=np.float32) + 1.0
 
@@ -362,19 +362,15 @@ def remove_shadows_and_whiten(im):
 
     merged = np.stack(norm_channels, axis=2)
 
-    # 2. Adaptive Paper Whitening & Black Point Contrast
-    lum = 0.299 * merged[:, :, 0] + 0.587 * merged[:, :, 1] + 0.114 * merged[:, :, 2]
-    p50 = float(np.percentile(lum, 50))
-
-    # White point clamp: forces shadowed paper (which reaches ~190) directly to 255 pure white
-    white_pt = min(205.0, max(150.0, p50 * 0.82))
-    black_pt = 35.0
-
-    stretched = (merged - black_pt) / (white_pt - black_pt) * 255.0
-    cleaned = np.clip(stretched, 0, 255).astype(np.uint8)
+    # 2. Balanced Paper Whitening with Ink Protection:
+    # Any paper background >= 220 becomes pure 255 white.
+    # Gamma 1.15 keeps text ink deep, thick, and rich black without over-brightening.
+    norm = np.clip((merged - 25.0) / (220.0 - 25.0), 0.0, 1.0)
+    norm = np.power(norm, 1.15)
+    cleaned = (norm * 255.0).astype(np.uint8)
 
     out = Image.fromarray(cleaned)
-    out = out.filter(ImageFilter.UnsharpMask(radius=1.8, percent=140, threshold=2))
+    out = out.filter(ImageFilter.UnsharpMask(radius=1.2, percent=120, threshold=1))
     return out
 
 def enhance_image(im, preset="magic", brightness=1.0, contrast=1.0, sharpness=1.0):
@@ -383,23 +379,22 @@ def enhance_image(im, preset="magic", brightness=1.0, contrast=1.0, sharpness=1.
     out = im
     if preset == "magic":
         out = remove_shadows_and_whiten(out)
-        out = ImageEnhance.Contrast(out).enhance(1.15)
-        out = ImageEnhance.Sharpness(out).enhance(1.5)
+        # Natural balanced contrast - text stays solid dark, paper stays white
+        out = ImageEnhance.Contrast(out).enhance(1.08)
     elif preset == "bw":
         out = remove_shadows_and_whiten(out)
         gray = out.convert("L")
         if HAS_NUMPY:
             arr = np.array(gray, dtype=np.float32)
-            bw_arr = np.clip((arr - 110.0) / (185.0 - 110.0) * 255.0, 0, 255).astype(np.uint8)
+            bw_arr = np.clip((arr - 100.0) / (185.0 - 100.0) * 255.0, 0, 255).astype(np.uint8)
             out = Image.fromarray(bw_arr).convert("RGB")
         else:
             out = ImageEnhance.Contrast(gray).enhance(2.0).convert("RGB")
-        out = out.filter(ImageFilter.UnsharpMask(radius=1.5, percent=170, threshold=1))
+        out = out.filter(ImageFilter.UnsharpMask(radius=1.2, percent=150, threshold=1))
     elif preset == "color":
         out = remove_shadows_and_whiten(out)
-        out = ImageEnhance.Color(out).enhance(1.4)
-        out = ImageEnhance.Contrast(out).enhance(1.15)
-        out = out.filter(ImageFilter.UnsharpMask(radius=1.5, percent=130, threshold=2))
+        out = ImageEnhance.Color(out).enhance(1.3)
+        out = ImageEnhance.Contrast(out).enhance(1.08)
     elif preset == "original":
         out = im
 
