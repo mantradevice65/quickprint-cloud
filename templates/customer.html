@@ -688,7 +688,30 @@
     .crop-ratio-btn:hover {
       background: rgba(255,255,255,0.25);
     }
-    .crop-ratio-btn.active {
+        .enhance-preset-btn {
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.25);
+      color: #e2e8f0;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.15s ease;
+    }
+    .enhance-preset-btn:hover {
+      background: rgba(255,255,255,0.22);
+    }
+    .enhance-preset-btn.active {
+      background: #2563eb;
+      border-color: #60a5fa;
+      color: #ffffff;
+      box-shadow: 0 0 10px rgba(37,99,235,0.4);
+    }
+.crop-ratio-btn.active {
       background: #2563eb;
       border-color: #60a5fa;
       color: white;
@@ -1408,6 +1431,43 @@
       <canvas id="perspectiveCanvas" style="max-width:100%; max-height:100%; border-radius:8px; box-shadow:0 10px 30px rgba(0,0,0,0.8); cursor:crosshair; touch-action:none;"></canvas>
       <div id="cornerLoupe" style="display:none; position:absolute; width:90px; height:90px; border-radius:50%; border:3px solid #38bdf8; box-shadow:0 6px 20px rgba(0,0,0,0.7); overflow:hidden; pointer-events:none; z-index:10000; background:#000;">
         <canvas id="loupeCanvas" width="90" height="90"></canvas>
+      </div>
+    </div>
+        <!-- Quality Enhancement & Shadow Removal Toolbar -->
+    <div style="padding: 6px 12px; background: rgba(15,23,42,0.92); border-radius: 12px; margin-top: 6px; border: 1px solid rgba(255,255,255,0.18);">
+      <div style="display:flex; gap:6px; justify-content:center; flex-wrap:wrap; align-items:center;">
+        <span style="font-size:11px; font-weight:800; color:#38bdf8;">✨ Clean &amp; Quality:</span>
+        <button type="button" class="enhance-preset-btn active" id="btnPresetMagic" onclick="selectEnhancePreset('magic', this)" title="Remove phone shadows, whiten paper, and sharpen text">🪄 Magic Clean</button>
+        <button type="button" class="enhance-preset-btn" id="btnPresetBw" onclick="selectEnhancePreset('bw', this)" title="High-contrast pure black and white scan">📄 Deep B&amp;W</button>
+        <button type="button" class="enhance-preset-btn" id="btnPresetColor" onclick="selectEnhancePreset('color', this)" title="Vibrant color boost with clean paper">🌈 Color Boost</button>
+        <button type="button" class="enhance-preset-btn" id="btnPresetOriginal" onclick="selectEnhancePreset('original', this)" title="No filters, raw original">🔄 Original</button>
+        <button type="button" class="enhance-preset-btn" id="btnToggleSliders" onclick="toggleFineTuneSliders()" style="border-color:#fbbf24; color:#fbbf24;" title="Adjust brightness and contrast sliders">⚙️ Sliders</button>
+      </div>
+
+      <div id="fineTuneDrawer" style="display:none; margin-top:8px; padding-top:8px; border-top:1px dashed rgba(255,255,255,0.2);">
+        <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px; font-size:11px; color:#e2e8f0;">
+          <div>
+            <div style="display:flex; justify-content:space-between; margin-bottom:2px;">
+              <span>☀️ Brightness</span>
+              <span id="valBrightness" style="color:#38bdf8; font-weight:700;">Normal</span>
+            </div>
+            <input type="range" id="sliderBrightness" min="0.6" max="1.4" step="0.05" value="1.0" oninput="onEnhanceSliderChange()" style="width:100%; accent-color:#38bdf8; cursor:pointer;">
+          </div>
+          <div>
+            <div style="display:flex; justify-content:space-between; margin-bottom:2px;">
+              <span>🌓 Contrast</span>
+              <span id="valContrast" style="color:#38bdf8; font-weight:700;">Normal</span>
+            </div>
+            <input type="range" id="sliderContrast" min="0.6" max="1.8" step="0.05" value="1.0" oninput="onEnhanceSliderChange()" style="width:100%; accent-color:#38bdf8; cursor:pointer;">
+          </div>
+          <div>
+            <div style="display:flex; justify-content:space-between; margin-bottom:2px;">
+              <span>🔍 Sharpness</span>
+              <span id="valSharpness" style="color:#38bdf8; font-weight:700;">Boost</span>
+            </div>
+            <input type="range" id="sliderSharpness" min="0.8" max="2.2" step="0.1" value="1.5" oninput="onEnhanceSliderChange()" style="width:100%; accent-color:#38bdf8; cursor:pointer;">
+          </div>
+        </div>
       </div>
     </div>
     <div class="crop-footer">
@@ -2192,6 +2252,58 @@
       ctx.restore();
     }
 
+    
+    // ================= ✨ DOCUMENT ENHANCEMENT & SHADOW REMOVAL =================
+    let currentEnhancePreset = 'magic';
+    let currentBrightness = 1.0;
+    let currentContrast = 1.0;
+    let currentSharpness = 1.5;
+
+    function selectEnhancePreset(preset, btn) {
+      currentEnhancePreset = preset;
+      document.querySelectorAll('.enhance-preset-btn').forEach(b => {
+        if (b.id !== 'btnToggleSliders') b.classList.remove('active');
+      });
+      if (btn) btn.classList.add('active');
+      updateCanvasFilterPreview();
+    }
+
+    function toggleFineTuneSliders() {
+      const drawer = document.getElementById('fineTuneDrawer');
+      if (!drawer) return;
+      const isOpen = drawer.style.display !== 'none';
+      drawer.style.display = isOpen ? 'none' : 'block';
+      const btn = document.getElementById('btnToggleSliders');
+      if (btn) {
+        btn.style.background = isOpen ? 'rgba(255,255,255,0.12)' : 'rgba(251, 191, 36, 0.28)';
+      }
+    }
+
+    function onEnhanceSliderChange() {
+      currentBrightness = parseFloat(document.getElementById('sliderBrightness').value);
+      currentContrast = parseFloat(document.getElementById('sliderContrast').value);
+      currentSharpness = parseFloat(document.getElementById('sliderSharpness').value);
+
+      const briPct = Math.round((currentBrightness - 1.0) * 100);
+      const conPct = Math.round((currentContrast - 1.0) * 100);
+      document.getElementById('valBrightness').innerText = (briPct > 0 ? '+' : '') + briPct + '%';
+      document.getElementById('valContrast').innerText = (conPct > 0 ? '+' : '') + conPct + '%';
+      document.getElementById('valSharpness').innerText = currentSharpness > 1.2 ? 'High' : (currentSharpness < 0.9 ? 'Low' : 'Normal');
+
+      updateCanvasFilterPreview();
+    }
+
+    function updateCanvasFilterPreview() {
+      const canvas = document.getElementById('perspectiveCanvas');
+      if (!canvas) return;
+      let filterStr = '';
+      if (currentEnhancePreset === 'bw') {
+        filterStr += 'grayscale(100%) ';
+      }
+      filterStr += 'brightness(' + currentBrightness + ') contrast(' + currentContrast + ')';
+      canvas.style.filter = filterStr;
+    }
+
     function finishPerspectiveCrop() {
       if (!perspectiveImg) return;
       const doneBtn = document.getElementById('btnFinishCrop');
@@ -2206,6 +2318,10 @@
         const fd = new FormData();
         fd.append('job_id', jobId);
         fd.append('points', JSON.stringify(pPoints));
+        fd.append('preset', currentEnhancePreset);
+        fd.append('brightness', currentBrightness);
+        fd.append('contrast', currentContrast);
+        fd.append('sharpness', currentSharpness);
 
         fetch('/api/image/crop', { method: 'POST', body: fd })
           .then(res => res.json())
@@ -2235,6 +2351,10 @@
       fd.append('image_data', perspectiveRawUrl);
       fd.append('points', JSON.stringify(pPoints));
       fd.append('target_type', activeTarget);
+      fd.append('preset', currentEnhancePreset);
+      fd.append('brightness', currentBrightness);
+      fd.append('contrast', currentContrast);
+      fd.append('sharpness', currentSharpness);
 
       fetch('/api/image/perspective_crop', { method: 'POST', body: fd })
         .then(res => res.json())

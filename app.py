@@ -16,7 +16,12 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from flask import Flask, request, jsonify, render_template, send_from_directory, send_file, session, redirect, url_for, make_response
 from werkzeug.utils import secure_filename
-from PIL import Image, ImageDraw, ImageOps, ImageEnhance
+from PIL import Image, ImageDraw, ImageOps, ImageEnhance, ImageFilter
+try:
+    import numpy as np
+    HAS_NUMPY = True
+except ImportError:
+    HAS_NUMPY = False
 
 os.environ["PYMUPDF_DISABLE_LAYOUT"] = "1"
 import fitz  # PyMuPDF
@@ -314,6 +319,52 @@ def find_perspective_coeffs(dst_pts, src_pts):
         A.append([0, 0, 0, xd, yd, 1, -ys*xd, -ys*yd])
         B.append(ys)
     return solve_linear_8(A, B)
+
+def remove_shadows_and_whiten(im):
+    """CamScanner-Style Background Whitening & Shadow Removal."""
+    if not HAS_NUMPY:
+        gray = im.convert("L")
+        enh = ImageEnhance.Contrast(im).enhance(1.25)
+        return enh
+    im_arr = np.array(im, dtype=np.float32)
+    gray = im.convert("L")
+    bg = gray.filter(ImageFilter.GaussianBlur(radius=35))
+    bg_arr = np.array(bg, dtype=np.float32) + 1.0 # avoid div by 0
+    norm_arr = np.zeros_like(im_arr)
+    for c in range(3):
+        norm_arr[:, :, c] = np.clip((im_arr[:, :, c] / bg_arr) * 255.0, 0, 255)
+    return Image.fromarray(norm_arr.astype(np.uint8))
+
+def enhance_image(im, preset="magic", brightness=1.0, contrast=1.0, sharpness=1.0):
+    if im.mode != "RGB":
+        im = im.convert("RGB")
+    out = im
+    if preset == "magic":
+        out = remove_shadows_and_whiten(out)
+        out = ImageEnhance.Contrast(out).enhance(1.22)
+        out = out.filter(ImageFilter.UnsharpMask(radius=2, percent=150, threshold=2))
+        out = ImageEnhance.Sharpness(out).enhance(1.8)
+    elif preset == "bw":
+        out = remove_shadows_and_whiten(out)
+        gray = out.convert("L")
+        out = ImageEnhance.Contrast(gray).enhance(1.8)
+        out = out.filter(ImageFilter.UnsharpMask(radius=1.5, percent=170, threshold=1))
+        out = out.convert("RGB")
+    elif preset == "color":
+        out = remove_shadows_and_whiten(out)
+        out = ImageEnhance.Color(out).enhance(1.35)
+        out = ImageEnhance.Contrast(out).enhance(1.15)
+        out = out.filter(ImageFilter.UnsharpMask(radius=1.5, percent=130, threshold=2))
+    elif preset == "original":
+        out = im
+
+    if abs(brightness - 1.0) > 0.01:
+        out = ImageEnhance.Brightness(out).enhance(brightness)
+    if abs(contrast - 1.0) > 0.01:
+        out = ImageEnhance.Contrast(out).enhance(contrast)
+    if abs(sharpness - 1.0) > 0.01:
+        out = ImageEnhance.Sharpness(out).enhance(sharpness)
+    return out
 
 def analyze_pdf_color(pdf_path):
     """High-speed color vs black/white detection for PDF pages."""
@@ -1133,6 +1184,16 @@ def api_crop_image():
                     im = raw_im.transform((out_w, out_h), Image.PERSPECTIVE, coeffs, Image.BICUBIC)
                 else:
                     im = raw_im
+                
+                # Apply Document Enhancement & Shadow Removal
+                preset = request.form.get("preset", "magic")
+                try:
+                    bri = float(request.form.get("brightness", 1.0))
+                    con = float(request.form.get("contrast", 1.0))
+                    sha = float(request.form.get("sharpness", 1.0))
+                except Exception:
+                    bri, con, sha = 1.0, 1.0, 1.0
+                im = enhance_image(im, preset=preset, brightness=bri, contrast=con, sharpness=sha)
 
         if im is None and "image" in request.files:
             cropped_file = request.files["image"]
@@ -1242,6 +1303,15 @@ def api_perspective_crop():
         cropped_im = raw_im.transform((out_w, out_h), Image.PERSPECTIVE, coeffs, Image.BICUBIC)
     else:
         cropped_im = raw_im
+
+    preset = request.form.get("preset", "magic")
+    try:
+        bri = float(request.form.get("brightness", 1.0))
+        con = float(request.form.get("contrast", 1.0))
+        sha = float(request.form.get("sharpness", 1.0))
+    except Exception:
+        bri, con, sha = 1.0, 1.0, 1.0
+    cropped_im = enhance_image(cropped_im, preset=preset, brightness=bri, contrast=con, sharpness=sha)
 
     buf = io.BytesIO()
     cropped_im.save(buf, format="PNG")
