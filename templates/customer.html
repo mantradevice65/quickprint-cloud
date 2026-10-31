@@ -1419,55 +1419,56 @@
       </div>
       
       <!-- Ratio & Perspective Selector Bar -->
-      <div class="crop-ratio-bar" id="cropRatioBar">
+      <div class="crop-ratio-bar" id="cropRatioBar" style="margin-bottom:6px;">
         <button type="button" class="crop-ratio-btn active" id="btnRatioPerspective" onclick="setPerspectiveMode('free', this)">🎯 8-Point Freeform</button>
         <button type="button" class="crop-ratio-btn" id="btnRatioIdCard" onclick="setPerspectiveMode('id', this)">💳 ID Card (3:2)</button>
         <button type="button" class="crop-ratio-btn" id="btnRatioA4" onclick="setPerspectiveMode('a4', this)">📄 A4 Document</button>
         <button type="button" class="crop-ratio-btn" onclick="resetPerspectiveQuad()">🔲 Full Reset</button>
         <button type="button" class="crop-ratio-btn" onclick="rotatePerspectiveImage()">🔄 Rotate 90°</button>
       </div>
+
+      <!-- Quality Enhancement & Shadow Removal Toolbar (MOVED TO TOP) -->
+      <div style="padding: 6px 10px; background: rgba(15,23,42,0.88); border-radius: 10px; border: 1px solid rgba(255,255,255,0.18); margin-top:2px;">
+        <div style="display:flex; gap:6px; justify-content:center; flex-wrap:wrap; align-items:center;">
+          <span style="font-size:11px; font-weight:800; color:#38bdf8;">✨ Clean &amp; Quality:</span>
+          <button type="button" class="enhance-preset-btn active" id="btnPresetOriginal" onclick="selectEnhancePreset('original', this)" title="No filters, raw original">🔄 Original</button>
+          <button type="button" class="enhance-preset-btn" id="btnPresetMagic" onclick="selectEnhancePreset('magic', this)" title="Remove phone shadows, whiten paper, and sharpen text">🪄 Magic Clean</button>
+          <button type="button" class="enhance-preset-btn" id="btnPresetBw" onclick="selectEnhancePreset('bw', this)" title="High-contrast pure black and white scan">📄 Deep B&amp;W</button>
+          <button type="button" class="enhance-preset-btn" id="btnPresetColor" onclick="selectEnhancePreset('color', this)" title="Vibrant color boost with clean paper">🌈 Color Boost</button>
+          <button type="button" class="enhance-preset-btn" id="btnToggleSliders" onclick="toggleFineTuneSliders()" style="border-color:#fbbf24; color:#fbbf24;" title="Adjust brightness and contrast sliders">⚙️ Sliders</button>
+        </div>
+
+        <div id="fineTuneDrawer" style="display:none; margin-top:8px; padding-top:8px; border-top:1px dashed rgba(255,255,255,0.2);">
+          <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px; font-size:11px; color:#e2e8f0;">
+            <div>
+              <div style="display:flex; justify-content:space-between; margin-bottom:2px;">
+                <span>☀️ Brightness</span>
+                <span id="valBrightness" style="color:#38bdf8; font-weight:700;">Normal</span>
+              </div>
+              <input type="range" id="sliderBrightness" min="0.6" max="1.4" step="0.05" value="1.0" oninput="onEnhanceSliderChange()" style="width:100%; accent-color:#38bdf8; cursor:pointer;">
+            </div>
+            <div>
+              <div style="display:flex; justify-content:space-between; margin-bottom:2px;">
+                <span>🌓 Contrast</span>
+                <span id="valContrast" style="color:#38bdf8; font-weight:700;">Normal</span>
+              </div>
+              <input type="range" id="sliderContrast" min="0.6" max="1.8" step="0.05" value="1.0" oninput="onEnhanceSliderChange()" style="width:100%; accent-color:#38bdf8; cursor:pointer;">
+            </div>
+            <div>
+              <div style="display:flex; justify-content:space-between; margin-bottom:2px;">
+                <span>🔍 Sharpness</span>
+                <span id="valSharpness" style="color:#38bdf8; font-weight:700;">Normal</span>
+              </div>
+              <input type="range" id="sliderSharpness" min="0.8" max="2.2" step="0.1" value="1.0" oninput="onEnhanceSliderChange()" style="width:100%; accent-color:#38bdf8; cursor:pointer;">
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
     <div class="crop-body" id="cropBodyContainer" style="position:relative; width:100%; height:100%; display:flex; align-items:center; justify-content:center; touch-action:none; user-select:none; overflow:hidden;">
       <canvas id="perspectiveCanvas" style="max-width:100%; max-height:100%; border-radius:8px; box-shadow:0 10px 30px rgba(0,0,0,0.8); cursor:crosshair; touch-action:none;"></canvas>
       <div id="cornerLoupe" style="display:none; position:absolute; width:90px; height:90px; border-radius:50%; border:3px solid #38bdf8; box-shadow:0 6px 20px rgba(0,0,0,0.7); overflow:hidden; pointer-events:none; z-index:10000; background:#000;">
         <canvas id="loupeCanvas" width="90" height="90"></canvas>
-      </div>
-    </div>
-        <!-- Quality Enhancement & Shadow Removal Toolbar -->
-    <div style="padding: 6px 12px; background: rgba(15,23,42,0.92); border-radius: 12px; margin-top: 6px; border: 1px solid rgba(255,255,255,0.18);">
-      <div style="display:flex; gap:6px; justify-content:center; flex-wrap:wrap; align-items:center;">
-        <span style="font-size:11px; font-weight:800; color:#38bdf8;">✨ Clean &amp; Quality:</span>
-        <button type="button" class="enhance-preset-btn active" id="btnPresetMagic" onclick="selectEnhancePreset('magic', this)" title="Remove phone shadows, whiten paper, and sharpen text">🪄 Magic Clean</button>
-        <button type="button" class="enhance-preset-btn" id="btnPresetBw" onclick="selectEnhancePreset('bw', this)" title="High-contrast pure black and white scan">📄 Deep B&amp;W</button>
-        <button type="button" class="enhance-preset-btn" id="btnPresetColor" onclick="selectEnhancePreset('color', this)" title="Vibrant color boost with clean paper">🌈 Color Boost</button>
-        <button type="button" class="enhance-preset-btn" id="btnPresetOriginal" onclick="selectEnhancePreset('original', this)" title="No filters, raw original">🔄 Original</button>
-        <button type="button" class="enhance-preset-btn" id="btnToggleSliders" onclick="toggleFineTuneSliders()" style="border-color:#fbbf24; color:#fbbf24;" title="Adjust brightness and contrast sliders">⚙️ Sliders</button>
-      </div>
-
-      <div id="fineTuneDrawer" style="display:none; margin-top:8px; padding-top:8px; border-top:1px dashed rgba(255,255,255,0.2);">
-        <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px; font-size:11px; color:#e2e8f0;">
-          <div>
-            <div style="display:flex; justify-content:space-between; margin-bottom:2px;">
-              <span>☀️ Brightness</span>
-              <span id="valBrightness" style="color:#38bdf8; font-weight:700;">Normal</span>
-            </div>
-            <input type="range" id="sliderBrightness" min="0.6" max="1.4" step="0.05" value="1.0" oninput="onEnhanceSliderChange()" style="width:100%; accent-color:#38bdf8; cursor:pointer;">
-          </div>
-          <div>
-            <div style="display:flex; justify-content:space-between; margin-bottom:2px;">
-              <span>🌓 Contrast</span>
-              <span id="valContrast" style="color:#38bdf8; font-weight:700;">Normal</span>
-            </div>
-            <input type="range" id="sliderContrast" min="0.6" max="1.8" step="0.05" value="1.0" oninput="onEnhanceSliderChange()" style="width:100%; accent-color:#38bdf8; cursor:pointer;">
-          </div>
-          <div>
-            <div style="display:flex; justify-content:space-between; margin-bottom:2px;">
-              <span>🔍 Sharpness</span>
-              <span id="valSharpness" style="color:#38bdf8; font-weight:700;">Boost</span>
-            </div>
-            <input type="range" id="sliderSharpness" min="0.8" max="2.2" step="0.1" value="1.5" oninput="onEnhanceSliderChange()" style="width:100%; accent-color:#38bdf8; cursor:pointer;">
-          </div>
-        </div>
       </div>
     </div>
     <div class="crop-footer">
@@ -1782,6 +1783,23 @@
       perspectiveRawUrl = dataUrl;
       const modal = document.getElementById('cropModal');
       modal.style.display = 'flex';
+
+      // Default to Original (Customer can choose Magic Clean or other filters if desired)
+      currentEnhancePreset = 'original';
+      document.querySelectorAll('.enhance-preset-btn').forEach(b => {
+        if (b.id !== 'btnToggleSliders') b.classList.remove('active');
+      });
+      const btnOrig = document.getElementById('btnPresetOriginal');
+      if (btnOrig) btnOrig.classList.add('active');
+      currentBrightness = 1.0; currentContrast = 1.0; currentSharpness = 1.0;
+      const slB = document.getElementById('sliderBrightness'); if (slB) slB.value = 1.0;
+      const slC = document.getElementById('sliderContrast'); if (slC) slC.value = 1.0;
+      const slS = document.getElementById('sliderSharpness'); if (slS) slS.value = 1.0;
+      const vb = document.getElementById('valBrightness'); if (vb) vb.innerText = 'Normal';
+      const vc = document.getElementById('valContrast'); if (vc) vc.innerText = 'Normal';
+      const vs = document.getElementById('valSharpness'); if (vs) vs.innerText = 'Normal';
+      const drawer = document.getElementById('fineTuneDrawer'); if (drawer) drawer.style.display = 'none';
+      const canvasEl = document.getElementById('perspectiveCanvas'); if (canvasEl) canvasEl.style.filter = 'none';
 
       let title = '✂️ 8-Point Perspective & Freeform Crop';
       const ratioBar = document.getElementById('cropRatioBar');
@@ -2254,10 +2272,10 @@
 
     
     // ================= ✨ DOCUMENT ENHANCEMENT & SHADOW REMOVAL =================
-    let currentEnhancePreset = 'magic';
+    let currentEnhancePreset = 'original';
     let currentBrightness = 1.0;
     let currentContrast = 1.0;
-    let currentSharpness = 1.5;
+    let currentSharpness = 1.0;
 
     function selectEnhancePreset(preset, btn) {
       currentEnhancePreset = preset;

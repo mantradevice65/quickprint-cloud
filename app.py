@@ -373,7 +373,7 @@ def remove_shadows_and_whiten(im):
     out = out.filter(ImageFilter.UnsharpMask(radius=1.2, percent=120, threshold=1))
     return out
 
-def enhance_image(im, preset="magic", brightness=1.0, contrast=1.0, sharpness=1.0):
+def enhance_image(im, preset="original", brightness=1.0, contrast=1.0, sharpness=1.0):
     if im.mode != "RGB":
         im = im.convert("RGB")
     out = im
@@ -1226,7 +1226,7 @@ def api_crop_image():
                     im = raw_im
                 
                 # Apply Document Enhancement & Shadow Removal
-                preset = request.form.get("preset", "magic")
+                preset = request.form.get("preset", "original")
                 try:
                     bri = float(request.form.get("brightness", 1.0))
                     con = float(request.form.get("contrast", 1.0))
@@ -1344,7 +1344,7 @@ def api_perspective_crop():
     else:
         cropped_im = raw_im
 
-    preset = request.form.get("preset", "magic")
+    preset = request.form.get("preset", "original")
     try:
         bri = float(request.form.get("brightness", 1.0))
         con = float(request.form.get("contrast", 1.0))
