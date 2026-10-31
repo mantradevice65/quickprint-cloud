@@ -462,7 +462,7 @@ def process_uploaded_document(raw_path, final_pdf_path, thumbnail_path, ext):
             else:
                 page_count = len(doc)
                 if page_count > 0:
-                    pix = doc[0].get_pixmap(dpi=75)
+                    pix = doc[0].get_pixmap(dpi=150)
                     pix.save(str(thumbnail_path))
                 doc.close()
                 _, bw_count, color_count, color_pages = analyze_pdf_color(final_pdf_path)
@@ -477,10 +477,11 @@ def process_uploaded_document(raw_path, final_pdf_path, thumbnail_path, ext):
             im = Image.open(str(raw_path))
             if im.mode != "RGB":
                 im = im.convert("RGB")
-            im.save(str(final_pdf_path), "PDF", resolution=150.0)
+            # Preserve 100% pristine camera & document quality at 300 DPI
+            im.save(str(final_pdf_path), "PDF", resolution=300.0, quality=100)
             
             thumb_im = im.copy()
-            thumb_im.thumbnail((400, 400))
+            thumb_im.thumbnail((800, 800))
             thumb_im.save(str(thumbnail_path), "PNG")
             
             # Fast color check on image
@@ -508,7 +509,7 @@ def process_uploaded_document(raw_path, final_pdf_path, thumbnail_path, ext):
                         cim = Image.open(io.BytesIO(z.read(cand)))
                         if cim.mode != "RGB":
                             cim = cim.convert("RGB")
-                        cim.save(str(final_pdf_path), "PDF", resolution=150.0)
+                        cim.save(str(final_pdf_path), "PDF", resolution=300.0, quality=100)
                         cim.thumbnail((400, 400))
                         cim.save(str(thumbnail_path), "PNG")
                         return 1, False, True, 1, 0, []
@@ -1140,16 +1141,16 @@ def api_magic_filter():
             
             im = Image.open(filtered_img_path).convert("RGB")
             thumb_im = im.copy()
-            thumb_im.thumbnail((400, 400))
+            thumb_im.thumbnail((800, 800))
             thumb_im.save(str(thumbnail_path), "PNG")
-            im.save(str(final_pdf_path), "PDF", resolution=150.0)
+            im.save(str(final_pdf_path), "PDF", resolution=300.0, quality=100)
             is_filtered = 1
         else:
             im = Image.open(raw_path).convert("RGB")
             thumb_im = im.copy()
-            thumb_im.thumbnail((400, 400))
+            thumb_im.thumbnail((800, 800))
             thumb_im.save(str(thumbnail_path), "PNG")
-            im.save(str(final_pdf_path), "PDF", resolution=150.0)
+            im.save(str(final_pdf_path), "PDF", resolution=300.0, quality=100)
             is_filtered = 0
 
         conn = sqlite3.connect(DB_FILE)
@@ -1243,7 +1244,7 @@ def api_crop_image():
             return jsonify({"success": False, "error": "No image or perspective points provided"}), 400
 
         thumb_im = im.copy()
-        thumb_im.thumbnail((400, 400))
+        thumb_im.thumbnail((800, 800))
         thumb_im.save(str(thumbnail_path), "PNG")
 
         save_im = im.copy()
@@ -1256,7 +1257,7 @@ def api_crop_image():
         pdf_im = im.copy()
         if pdf_im.mode != "RGB":
             pdf_im = pdf_im.convert("RGB")
-        pdf_im.save(str(final_pdf_path), "PDF", resolution=150.0)
+        pdf_im.save(str(final_pdf_path), "PDF", resolution=300.0, quality=100)
 
         ts = int(time.time())
         return jsonify({
@@ -2273,6 +2274,49 @@ def serve_thumbnail(filename):
     resp = send_from_directory(str(THUMBNAIL_FOLDER), filename)
     resp.headers["Access-Control-Allow-Origin"] = "*"
     return resp
+
+
+@app.route("/api/preview/<job_id>/<int:page_num>")
+def api_document_page_preview(job_id, page_num):
+    """Renders a specific page of an uploaded PDF or image at high resolution (DPI 180) for crystal clear preview."""
+    try:
+        pdf_path = UPLOAD_FOLDER / f"{job_id}.pdf"
+        if pdf_path.exists():
+            doc = fitz.open(str(pdf_path))
+            total = len(doc)
+            if total == 0:
+                doc.close()
+                return jsonify({"error": "Empty PDF"}), 404
+            
+            idx = max(0, min(page_num - 1, total - 1))
+            page = doc[idx]
+            pix = page.get_pixmap(dpi=180)
+            png_bytes = pix.tobytes("png")
+            doc.close()
+            
+            resp = make_response(png_bytes)
+            resp.headers["Content-Type"] = "image/png"
+            resp.headers["Cache-Control"] = "public, max-age=300"
+            resp.headers["Access-Control-Allow-Origin"] = "*"
+            return resp
+
+        for ext in ["png", "jpg", "jpeg", "webp", "bmp"]:
+            raw_path = UPLOAD_FOLDER / f"{job_id}_raw.{ext}"
+            if raw_path.exists():
+                resp = send_file(str(raw_path), mimetype=f"image/{ext}")
+                resp.headers["Access-Control-Allow-Origin"] = "*"
+                return resp
+
+        thumb_path = THUMBNAIL_FOLDER / f"{job_id}.png"
+        if thumb_path.exists():
+            resp = send_file(str(thumb_path), mimetype="image/png")
+            resp.headers["Access-Control-Allow-Origin"] = "*"
+            return resp
+
+        return jsonify({"error": "Document not found"}), 404
+    except Exception as ex:
+        print(f"[-] Preview render error for {job_id} pg {page_num}:", ex)
+        return jsonify({"error": str(ex)}), 500
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))

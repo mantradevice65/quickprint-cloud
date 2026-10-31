@@ -1133,34 +1133,52 @@
 
   <!-- DOCUMENT PREVIEW MODAL -->
   <div class="crop-modal-backdrop" id="docPreviewModal" style="display:none; z-index:9999; background:rgba(15,23,42,0.85); align-items:center; justify-content:center; padding:12px;">
-    <div style="background:white; width:100%; max-width:480px; max-height:90vh; border-radius:16px; overflow:hidden; display:flex; flex-direction:column; box-shadow:0 20px 25px -5px rgba(0,0,0,0.4);">
+    <div style="background:white; width:100%; max-width:520px; max-height:92vh; border-radius:16px; overflow:hidden; display:flex; flex-direction:column; box-shadow:0 20px 25px -5px rgba(0,0,0,0.4);">
       
       <!-- Modal Header -->
       <div style="padding:12px 16px; background:#0f172a; color:white; display:flex; justify-content:space-between; align-items:center;">
         <div style="min-width:0; padding-right:10px;">
           <div id="previewDocTitle" style="font-weight:700; font-size:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Document Preview</div>
-          <div id="previewPageIndicator" style="font-size:12px; color:#94a3b8; margin-top:2px;">Page 1 of 1</div>
+          <div style="display:flex; align-items:center; gap:8px; margin-top:3px; flex-wrap:wrap;">
+            <span id="previewPageIndicator" style="font-size:12px; color:#cbd5e1; font-weight:600;">Page 1 of 1</span>
+            <span id="previewPageSelectedBadge" style="font-size:11px; font-weight:800; padding:2px 8px; border-radius:999px;"></span>
+          </div>
         </div>
         <button type="button" onclick="closeDocPreview()" style="background:#334155; border:none; color:white; border-radius:50%; width:32px; height:32px; font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center;">✕</button>
       </div>
 
+      <!-- Multi-Page Quick Navigation Strip -->
+      <div id="previewPageStripContainer" style="display:none; padding:8px 12px; background:#f8fafc; border-bottom:1px solid #e2e8f0; overflow-x:auto; white-space:nowrap;">
+        <div style="font-size:11px; font-weight:700; color:#475569; margin-bottom:4px;">Pages in Document (Tap to jump):</div>
+        <div id="previewPageChips" style="display:flex; gap:6px; align-items:center; overflow-x:auto; padding-bottom:4px;"></div>
+      </div>
+
       <!-- Preview Canvas -->
-      <div style="flex:1; overflow-y:auto; background:#f1f5f9; padding:14px; text-align:center; display:flex; align-items:center; justify-content:center; min-height:260px; max-height:60vh;">
+      <div style="flex:1; overflow-y:auto; background:#f1f5f9; padding:12px; text-align:center; display:flex; align-items:center; justify-content:center; min-height:260px; max-height:55vh;">
         <div id="previewLoading" style="display:none; color:#64748b; font-weight:600; font-size:13px;">
           <span class="loader" style="border-top-color:#0284c7; width:22px; height:22px; display:inline-block; vertical-align:middle; margin-right:8px;"></span> Loading page...
         </div>
-        <img id="previewDocImg" src="" alt="Page Preview" style="max-width:100%; max-height:55vh; object-fit:contain; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.12); background:white;">
+        <img id="previewDocImg" src="" alt="Page Preview" style="max-width:100%; max-height:52vh; object-fit:contain; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.12); background:white;">
       </div>
 
       <!-- Modal Footer -->
-      <div style="padding:10px 14px; background:white; border-top:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center; gap:8px;">
-        <button type="button" id="prevPageBtn" class="action-btn" style="padding:8px 14px; font-size:13px; font-weight:700;" onclick="changePreviewPage(-1)">◀ Prev</button>
-        
-        <a id="openFullPdfLink" href="#" target="_blank" class="action-btn" style="padding:8px 12px; font-size:12px; text-decoration:none; color:#0284c7; border-color:#bae6fd; background:#f0f9ff; font-weight:600;">
-          📄 Open Full PDF
-        </a>
+      <div style="padding:10px 14px; background:white; border-top:1px solid #e2e8f0; display:flex; flex-direction:column; gap:8px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+          <button type="button" id="prevPageBtn" class="action-btn" style="padding:7px 12px; font-size:12px; font-weight:700;" onclick="changePreviewPage(-1)">◀ Prev</button>
+          
+          <button type="button" id="previewTogglePageBtn" class="action-btn" style="flex:1; max-width:210px; padding:7px 10px; font-size:12px; font-weight:800;" onclick="toggleCurrentPreviewPage()">
+            Toggle Selection
+          </button>
 
-        <button type="button" id="nextPageBtn" class="action-btn" style="padding:8px 14px; font-size:13px; font-weight:700;" onclick="changePreviewPage(1)">Next ▶</button>
+          <button type="button" id="nextPageBtn" class="action-btn" style="padding:7px 12px; font-size:12px; font-weight:700;" onclick="changePreviewPage(1)">Next ▶</button>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; font-size:11px; color:#64748b; padding-top:4px; border-top:1px dashed #e2e8f0;">
+          <span id="previewSelectedSummary" style="font-weight:700; color:#1e293b;"></span>
+          <a id="openFullPdfLink" href="#" target="_blank" style="text-decoration:none; color:#0284c7; font-weight:700;">
+            📄 Open Full PDF ↗
+          </a>
+        </div>
       </div>
 
     </div>
@@ -3175,27 +3193,147 @@
       }
     }
 
+    function goToPreviewPage(pg) {
+      if (pg >= 1 && pg <= previewState.totalPages) {
+        previewState.currentPage = pg;
+        updatePreviewPageDisplay();
+      }
+    }
+
+    function toggleCurrentPreviewPage() {
+      const file = uploadedBatch.find(f => f.job_id === previewState.jobId);
+      if (!file) return;
+
+      if (file.page_mode !== 'custom') {
+        file.page_mode = 'custom';
+        file.selected_pages = Array.from({ length: file.page_count }, (_, i) => i + 1);
+      }
+
+      const pg = previewState.currentPage;
+      const idx = file.selected_pages.indexOf(pg);
+      if (idx > -1) {
+        file.selected_pages.splice(idx, 1);
+      } else {
+        file.selected_pages.push(pg);
+        file.selected_pages.sort((a, b) => a - b);
+      }
+
+      file.page_range = file.selected_pages.length > 0 ? formatPageRanges(file.selected_pages) : '';
+      file.active_pages = file.selected_pages.length;
+
+      renderUploadedBatch();
+      calculateTotal();
+      updatePreviewPageDisplay();
+    }
+
     function updatePreviewPageDisplay() {
       const img = document.getElementById('previewDocImg');
       const loader = document.getElementById('previewLoading');
       const indicator = document.getElementById('previewPageIndicator');
+      const badge = document.getElementById('previewPageSelectedBadge');
+      const toggleBtn = document.getElementById('previewTogglePageBtn');
+      const stripContainer = document.getElementById('previewPageStripContainer');
+      const chipsContainer = document.getElementById('previewPageChips');
+      const summary = document.getElementById('previewSelectedSummary');
       const prevBtn = document.getElementById('prevPageBtn');
       const nextBtn = document.getElementById('nextPageBtn');
 
+      const file = uploadedBatch.find(f => f.job_id === previewState.jobId);
+      const isMulti = previewState.totalPages > 1;
+
       indicator.innerText = `Page ${previewState.currentPage} of ${previewState.totalPages}`;
-      
-      if (previewState.totalPages <= 1) {
-        prevBtn.style.display = 'none';
-        nextBtn.style.display = 'none';
-      } else {
-        prevBtn.style.display = 'inline-block';
-        nextBtn.style.display = 'inline-block';
-        prevBtn.disabled = previewState.currentPage <= 1;
-        nextBtn.disabled = previewState.currentPage >= previewState.totalPages;
-        prevBtn.style.opacity = previewBtn.disabled ? '0.4' : '1';
-        nextBtn.style.opacity = nextBtn.disabled ? '0.4' : '1';
+
+      // Determine if current page is selected
+      let isCurrentSelected = true;
+      if (file) {
+        if (file.page_mode === 'custom') {
+          isCurrentSelected = (file.selected_pages || []).includes(previewState.currentPage);
+        } else {
+          isCurrentSelected = true;
+        }
       }
 
+      // Badge
+      if (badge) {
+        badge.style.display = 'inline-flex';
+        if (isCurrentSelected) {
+          badge.style.background = '#16a34a'; // Green
+          badge.style.color = '#ffffff';
+          badge.innerHTML = '✓ Selected to Print';
+        } else {
+          badge.style.background = '#dc2626'; // Red
+          badge.style.color = '#ffffff';
+          badge.innerHTML = '✗ Skipped (Will NOT Print)';
+        }
+      }
+
+      // Toggle button
+      if (toggleBtn) {
+        if (isMulti) {
+          toggleBtn.style.display = 'inline-block';
+          if (isCurrentSelected) {
+            toggleBtn.style.background = '#fee2e2';
+            toggleBtn.style.color = '#b91c1c';
+            toggleBtn.style.borderColor = '#fca5a5';
+            toggleBtn.innerText = '❌ Skip This Page';
+          } else {
+            toggleBtn.style.background = '#dcfce7';
+            toggleBtn.style.color = '#15803d';
+            toggleBtn.style.borderColor = '#86efac';
+            toggleBtn.innerText = '✅ Print This Page';
+          }
+        } else {
+          toggleBtn.style.display = 'none';
+        }
+      }
+
+      // Navigation buttons
+      if (!isMulti) {
+        if (prevBtn) prevBtn.style.display = 'none';
+        if (nextBtn) nextBtn.style.display = 'none';
+        if (stripContainer) stripContainer.style.display = 'none';
+      } else {
+        if (prevBtn) {
+          prevBtn.style.display = 'inline-block';
+          prevBtn.disabled = previewState.currentPage <= 1;
+          prevBtn.style.opacity = prevBtn.disabled ? '0.4' : '1';
+        }
+        if (nextBtn) {
+          nextBtn.style.display = 'inline-block';
+          nextBtn.disabled = previewState.currentPage >= previewState.totalPages;
+          nextBtn.style.opacity = nextBtn.disabled ? '0.4' : '1';
+        }
+
+        if (stripContainer && chipsContainer) {
+          stripContainer.style.display = 'block';
+          let chipsHtml = '';
+          const selPages = (file && file.selected_pages) ? file.selected_pages : Array.from({length: previewState.totalPages}, (_, i) => i + 1);
+          for (let p = 1; p <= previewState.totalPages; p++) {
+            const isSel = file ? (file.page_mode === 'all' || selPages.includes(p)) : true;
+            const isCur = (p === previewState.currentPage);
+            chipsHtml += `
+              <button type="button" onclick="goToPreviewPage(${p})" style="
+                padding:4px 9px; border-radius:6px; font-size:11px; font-weight:800; cursor:pointer; flex-shrink:0;
+                border: ${isCur ? '2px solid #0284c7' : (isSel ? '1px solid #86efac' : '1px solid #cbd5e1')};
+                background: ${isCur ? (isSel ? '#0284c7' : '#475569') : (isSel ? '#dcfce7' : '#f1f5f9')};
+                color: ${isCur ? '#ffffff' : (isSel ? '#15803d' : '#94a3b8')};
+                box-shadow: ${isCur ? '0 0 0 2px rgba(2,132,199,0.3)' : 'none'};
+              ">
+                Pg ${p} ${isSel ? '✓' : '✗'}
+              </button>
+            `;
+          }
+          chipsContainer.innerHTML = chipsHtml;
+        }
+      }
+
+      // Summary
+      if (summary && file) {
+        const count = file.page_mode === 'all' ? file.page_count : (file.selected_pages ? file.selected_pages.length : file.page_count);
+        summary.innerHTML = `Printing <b>${count}</b> of <b>${file.page_count}</b> pages`;
+      }
+
+      // Load high-res preview image
       loader.style.display = 'block';
       img.style.display = 'none';
 
