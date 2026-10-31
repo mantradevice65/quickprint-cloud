@@ -1099,30 +1099,46 @@ def api_crop_image():
 
     try:
         pts_json = request.form.get("points")
-        if "image" in request.files:
+        im = None
+
+        if pts_json:
+            pts = json.loads(pts_json) # 4 normalized points: TL, TR, BR, BL
+            raw_im = None
+            if orig_ext.lower() == "pdf" and final_pdf_path.exists():
+                doc = fitz.open(str(final_pdf_path))
+                if len(doc) > 0:
+                    pix = doc[0].get_pixmap(dpi=200)
+                    raw_im = Image.open(io.BytesIO(pix.tobytes("png")))
+                doc.close()
+            elif raw_path.exists():
+                raw_im = Image.open(str(raw_path))
+
+            if raw_im:
+                if raw_im.mode != "RGB":
+                    raw_im = raw_im.convert("RGB")
+                iw, ih = raw_im.size
+                src_pts = [(p["x"] * iw, p["y"] * ih) for p in pts]
+                
+                w_top = ((src_pts[1][0] - src_pts[0][0])**2 + (src_pts[1][1] - src_pts[0][1])**2)**0.5
+                w_bot = ((src_pts[2][0] - src_pts[3][0])**2 + (src_pts[2][1] - src_pts[3][1])**2)**0.5
+                h_left = ((src_pts[3][0] - src_pts[0][0])**2 + (src_pts[3][1] - src_pts[0][1])**2)**0.5
+                h_right = ((src_pts[2][0] - src_pts[1][0])**2 + (src_pts[2][1] - src_pts[1][1])**2)**0.5
+                
+                out_w = max(100, int(max(w_top, w_bot)))
+                out_h = max(100, int(max(h_left, h_right)))
+                dst_pts = [(0, 0), (out_w, 0), (out_w, out_h), (0, out_h)]
+                
+                coeffs = find_perspective_coeffs(dst_pts, src_pts)
+                if coeffs:
+                    im = raw_im.transform((out_w, out_h), Image.PERSPECTIVE, coeffs, Image.BICUBIC)
+                else:
+                    im = raw_im
+
+        if im is None and "image" in request.files:
             cropped_file = request.files["image"]
             im = Image.open(cropped_file.stream)
-        elif pts_json and raw_path.exists():
-            pts = json.loads(pts_json) # 4 normalized points: TL, TR, BR, BL
-            raw_im = Image.open(str(raw_path))
-            iw, ih = raw_im.size
-            src_pts = [(p["x"] * iw, p["y"] * ih) for p in pts]
-            
-            w_top = ((src_pts[1][0] - src_pts[0][0])**2 + (src_pts[1][1] - src_pts[0][1])**2)**0.5
-            w_bot = ((src_pts[2][0] - src_pts[3][0])**2 + (src_pts[2][1] - src_pts[3][1])**2)**0.5
-            h_left = ((src_pts[3][0] - src_pts[0][0])**2 + (src_pts[3][1] - src_pts[0][1])**2)**0.5
-            h_right = ((src_pts[2][0] - src_pts[1][0])**2 + (src_pts[2][1] - src_pts[1][1])**2)**0.5
-            
-            out_w = max(100, int(max(w_top, w_bot)))
-            out_h = max(100, int(max(h_left, h_right)))
-            dst_pts = [(0, 0), (out_w, 0), (out_w, out_h), (0, out_h)]
-            
-            coeffs = find_perspective_coeffs(dst_pts, src_pts)
-            if coeffs:
-                im = raw_im.transform((out_w, out_h), Image.PERSPECTIVE, coeffs, Image.BICUBIC)
-            else:
-                im = raw_im
-        else:
+
+        if im is None:
             return jsonify({"success": False, "error": "No image or perspective points provided"}), 400
 
         thumb_im = im.copy()
@@ -1151,6 +1167,93 @@ def api_crop_image():
     except Exception as ex:
         print("[-] Perspective Crop Error:", ex)
         return jsonify({"success": False, "error": str(ex)}), 500
+
+# --- Standalone High-Precision Perspective Cropper (for ID Card & 2-in-1) ---
+@app.route("/api/image/perspective_crop", methods=["POST"])
+def api_perspective_crop():
+    pts_json = request.form.get("points")
+    if not pts_json:
+        return jsonify({"success": False, "error": "No points provided"}), 400
+
+    try:
+        pts = json.loads(pts_json) # 4 points: TL, TR, BR, BL in [0..1]
+    except Exception as ex:
+        return jsonify({"success": False, "error": f"Invalid points: {str(ex)}"}), 400
+
+    raw_im = None
+    job_id = request.form.get("job_id", "").strip()
+    if job_id:
+        for ext in ["png", "jpg", "jpeg", "webp"]:
+            p = UPLOAD_FOLDER / f"{job_id}_raw.{ext}"
+            if p.exists():
+                raw_im = Image.open(str(p))
+                break
+        if not raw_im:
+            pdf_p = UPLOAD_FOLDER / f"{job_id}.pdf"
+            if pdf_p.exists():
+                doc = fitz.open(str(pdf_p))
+                if len(doc) > 0:
+                    pix = doc[0].get_pixmap(dpi=200)
+                    raw_im = Image.open(io.BytesIO(pix.tobytes("png")))
+                doc.close()
+    elif "file" in request.files:
+        file = request.files["file"]
+        ext = file.filename.split(".")[-1].lower() if "." in file.filename else ""
+        if ext == "pdf":
+            doc = fitz.open(stream=file.read(), filetype="pdf")
+            if len(doc) > 0:
+                pix = doc[0].get_pixmap(dpi=200)
+                raw_im = Image.open(io.BytesIO(pix.tobytes("png")))
+            doc.close()
+        else:
+            raw_im = Image.open(file.stream)
+    elif "image_data" in request.form:
+        data_str = request.form["image_data"]
+        if "," in data_str:
+            data_str = data_str.split(",", 1)[1]
+        raw_im = Image.open(io.BytesIO(base64.b64decode(data_str)))
+
+    if not raw_im:
+        return jsonify({"success": False, "error": "No source image available"}), 400
+
+    if raw_im.mode != "RGB":
+        raw_im = raw_im.convert("RGB")
+
+    iw, ih = raw_im.size
+    src_pts = [(p["x"] * iw, p["y"] * ih) for p in pts]
+
+    target_type = request.form.get("target_type", "")
+    if target_type.startswith("id_"):
+        out_w, out_h = 1550, 980
+    elif target_type.startswith("2in1_"):
+        out_w, out_h = 2200, 1550
+    else:
+        w_top = ((src_pts[1][0] - src_pts[0][0])**2 + (src_pts[1][1] - src_pts[0][1])**2)**0.5
+        w_bot = ((src_pts[2][0] - src_pts[3][0])**2 + (src_pts[2][1] - src_pts[3][1])**2)**0.5
+        h_left = ((src_pts[3][0] - src_pts[0][0])**2 + (src_pts[3][1] - src_pts[0][1])**2)**0.5
+        h_right = ((src_pts[2][0] - src_pts[1][0])**2 + (src_pts[2][1] - src_pts[1][1])**2)**0.5
+        out_w = max(100, int(max(w_top, w_bot)))
+        out_h = max(100, int(max(h_left, h_right)))
+
+    dst_pts = [(0, 0), (out_w, 0), (out_w, out_h), (0, out_h)]
+    coeffs = find_perspective_coeffs(dst_pts, src_pts)
+
+    if coeffs:
+        cropped_im = raw_im.transform((out_w, out_h), Image.PERSPECTIVE, coeffs, Image.BICUBIC)
+    else:
+        cropped_im = raw_im
+
+    buf = io.BytesIO()
+    cropped_im.save(buf, format="PNG")
+    buf.seek(0)
+    b64_out = "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode("ascii")
+
+    return jsonify({
+        "success": True,
+        "data_url": b64_out,
+        "width": out_w,
+        "height": out_h
+    })
 
 # --- Password-Protected PDF Unlock ---
 @app.route("/api/pdf/unlock", methods=["POST"])

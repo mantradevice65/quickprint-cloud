@@ -2200,111 +2200,101 @@
         doneBtn.innerText = '⏳ Straightening...';
       }
 
-      const iw = perspectiveImg.naturalWidth || perspectiveImg.width;
-      const ih = perspectiveImg.naturalHeight || perspectiveImg.height;
-      const s0 = { x: pPoints[0].x * iw, y: pPoints[0].y * ih };
-      const s1 = { x: pPoints[1].x * iw, y: pPoints[1].y * ih };
-      const s2 = { x: pPoints[2].x * iw, y: pPoints[2].y * ih };
-      const s3 = { x: pPoints[3].x * iw, y: pPoints[3].y * ih };
+      // Case 1: Existing Document in Batch (doc_image_<jobId>)
+      if (activeTarget && activeTarget.startsWith('doc_image_')) {
+        const jobId = activeTarget.replace('doc_image_', '');
+        const fd = new FormData();
+        fd.append('job_id', jobId);
+        fd.append('points', JSON.stringify(pPoints));
 
-      let outW, outH;
-      if (activeTarget.startsWith('id_')) {
-        outW = 1550;
-        outH = 980; // Standard ID Card Proportion
-      } else if (activeTarget.startsWith('2in1_')) {
-        outW = 2200;
-        outH = 1550; // Balanced 2-in-1 Proportion
-      } else {
-        const wTop = Math.hypot(s1.x - s0.x, s1.y - s0.y);
-        const wBot = Math.hypot(s2.x - s3.x, s2.y - s3.y);
-        const hLeft = Math.hypot(s3.x - s0.x, s3.y - s0.y);
-        const hRight = Math.hypot(s2.x - s1.x, s2.y - s1.y);
-        outW = Math.max(200, Math.round(Math.max(wTop, wBot)));
-        outH = Math.max(200, Math.round(Math.max(hLeft, hRight)));
+        fetch('/api/image/crop', { method: 'POST', body: fd })
+          .then(res => res.json())
+          .then(data => {
+            if (doneBtn) { doneBtn.disabled = false; doneBtn.innerText = '✅ Straighten & Done'; }
+            if (data.success) {
+              const file = uploadedBatch.find(f => f.job_id === jobId);
+              if (file) {
+                file.thumbnail_url = data.thumbnail_url;
+                file.raw_url = data.raw_url || data.thumbnail_url;
+              }
+              closeCropperModal();
+              renderUploadedBatch();
+            } else {
+              alert('Crop error: ' + (data.error || 'Unknown error'));
+            }
+          })
+          .catch(() => {
+            if (doneBtn) { doneBtn.disabled = false; doneBtn.innerText = '✅ Straighten & Done'; }
+            alert('Network error while saving cropped image.');
+          });
+        return;
       }
 
-      const warpedCanvas = warpPerspectiveCanvas(perspectiveImg, pPoints[0], pPoints[1], pPoints[2], pPoints[3], outW, outH);
+      // Case 2: ID Card (Front/Back) or 2-in-1 (Top/Bottom)
+      const fd = new FormData();
+      fd.append('image_data', perspectiveRawUrl);
+      fd.append('points', JSON.stringify(pPoints));
+      fd.append('target_type', activeTarget);
 
-      warpedCanvas.toBlob((blob) => {
-        if (!blob) {
-          alert('Crop failed. Please try again.');
+      fetch('/api/image/perspective_crop', { method: 'POST', body: fd })
+        .then(res => res.json())
+        .then(async data => {
           if (doneBtn) { doneBtn.disabled = false; doneBtn.innerText = '✅ Straighten & Done'; }
-          return;
-        }
+          if (data.success && data.data_url) {
+            const blobRes = await fetch(data.data_url);
+            const blob = await blobRes.blob();
+            const previewUrl = data.data_url;
 
-        if (activeTarget && activeTarget.startsWith('doc_image_')) {
-          const jobId = activeTarget.replace('doc_image_', '');
-          const fd = new FormData();
-          fd.append('job_id', jobId);
-          fd.append('image', blob, 'cropped.png');
-          fd.append('points', JSON.stringify(pPoints));
+            if (activeTarget === 'id_front') {
+              idFrontBlob = blob;
+              document.getElementById('btnGroupIdFront').style.display = 'none';
+              document.getElementById('previewBoxIdFront').style.display = 'flex';
+              const img = document.getElementById('previewImgIdFront') || document.getElementById('imgIdFront');
+              if (img) img.src = previewUrl;
+              document.getElementById('panelIdFront').classList.add('ready');
+              const tag = document.getElementById('tagIdFront');
+              if (tag) { tag.innerText = '✅ Ready'; tag.className = 'tag-status done'; }
+            } else if (activeTarget === 'id_back') {
+              idBackBlob = blob;
+              document.getElementById('btnGroupIdBack').style.display = 'none';
+              document.getElementById('previewBoxIdBack').style.display = 'flex';
+              const img = document.getElementById('previewImgIdBack') || document.getElementById('imgIdBack');
+              if (img) img.src = previewUrl;
+              document.getElementById('panelIdBack').classList.add('ready');
+              const tag = document.getElementById('tagIdBack');
+              if (tag) { tag.innerText = '✅ Ready'; tag.className = 'tag-status done'; }
+            } else if (activeTarget === '2in1_top') {
+              twoInOneTopBlob = blob;
+              document.getElementById('btnGroup2in1Top').style.display = 'none';
+              document.getElementById('previewBox2in1Top').style.display = 'flex';
+              const img = document.getElementById('previewImg2in1Top') || document.getElementById('img2in1Top');
+              if (img) img.src = previewUrl;
+              document.getElementById('panel2in1Top').classList.add('ready');
+              const tag = document.getElementById('tag2in1Top');
+              if (tag) { tag.innerText = '✅ Ready'; tag.className = 'tag-status done'; }
+            } else if (activeTarget === '2in1_bottom') {
+              twoInOneBottomBlob = blob;
+              document.getElementById('btnGroup2in1Bottom').style.display = 'none';
+              document.getElementById('previewBox2in1Bottom').style.display = 'flex';
+              const img = document.getElementById('previewImg2in1Bottom') || document.getElementById('img2in1Bottom');
+              if (img) img.src = previewUrl;
+              document.getElementById('panel2in1Bottom').classList.add('ready');
+              const tag = document.getElementById('tag2in1Bottom');
+              if (tag) { tag.innerText = '✅ Ready'; tag.className = 'tag-status done'; }
+            }
 
-          fetch('/api/image/crop', { method: 'POST', body: fd })
-            .then(res => res.json())
-            .then(data => {
-              if (doneBtn) { doneBtn.disabled = false; doneBtn.innerText = '✅ Straighten & Done'; }
-              if (data.success) {
-                const file = uploadedBatch.find(f => f.job_id === jobId);
-                if (file) {
-                  file.thumbnail_url = data.thumbnail_url;
-                  file.raw_url = data.raw_url || data.thumbnail_url;
-                }
-                closeCropperModal();
-                renderUploadedBatch();
-              } else {
-                alert('Crop error: ' + (data.error || 'Unknown error'));
-              }
-            })
-            .catch(() => {
-              if (doneBtn) { doneBtn.disabled = false; doneBtn.innerText = '✅ Straighten & Done'; }
-              alert('Network error while saving cropped image.');
-            });
-          return;
-        }
-
-        const previewUrl = URL.createObjectURL(blob);
-        if (activeTarget === 'id_front') {
-          idFrontBlob = blob;
-          document.getElementById('btnGroupIdFront').style.display = 'none';
-          document.getElementById('previewBoxIdFront').style.display = 'flex';
-          document.getElementById('imgIdFront').src = previewUrl;
-          document.getElementById('panelIdFront').classList.add('ready');
-          document.getElementById('tagIdFront').innerText = '✅ Ready';
-          document.getElementById('tagIdFront').className = 'tag-status done';
-        } else if (activeTarget === 'id_back') {
-          idBackBlob = blob;
-          document.getElementById('btnGroupIdBack').style.display = 'none';
-          document.getElementById('previewBoxIdBack').style.display = 'flex';
-          document.getElementById('imgIdBack').src = previewUrl;
-          document.getElementById('panelIdBack').classList.add('ready');
-          document.getElementById('tagIdBack').innerText = '✅ Ready';
-          document.getElementById('tagIdBack').className = 'tag-status done';
-        } else if (activeTarget === '2in1_top') {
-          twoInOneTopBlob = blob;
-          document.getElementById('btnGroup2in1Top').style.display = 'none';
-          document.getElementById('previewBox2in1Top').style.display = 'flex';
-          document.getElementById('img2in1Top').src = previewUrl;
-          document.getElementById('panel2in1Top').classList.add('ready');
-          document.getElementById('tag2in1Top').innerText = '✅ Ready';
-          document.getElementById('tag2in1Top').className = 'tag-status done';
-        } else if (activeTarget === '2in1_bottom') {
-          twoInOneBottomBlob = blob;
-          document.getElementById('btnGroup2in1Bottom').style.display = 'none';
-          document.getElementById('previewBox2in1Bottom').style.display = 'flex';
-          document.getElementById('img2in1Bottom').src = previewUrl;
-          document.getElementById('panel2in1Bottom').classList.add('ready');
-          document.getElementById('tag2in1Bottom').innerText = '✅ Ready';
-          document.getElementById('tag2in1Bottom').className = 'tag-status done';
-        }
-
-        if (doneBtn) { doneBtn.disabled = false; doneBtn.innerText = '✅ Straighten & Done'; }
-        closeCropperModal();
-
-        if (idFrontBlob && idBackBlob) document.getElementById('btnMergeId').disabled = false;
-        if (twoInOneTopBlob && twoInOneBottomBlob) document.getElementById('btnMerge2in1').disabled = false;
-      }, 'image/png');
+            closeCropperModal();
+            if (idFrontBlob && idBackBlob) document.getElementById('btnMergeId').disabled = false;
+            if (twoInOneTopBlob && twoInOneBottomBlob) document.getElementById('btnMerge2in1').disabled = false;
+          } else {
+            alert('Perspective crop failed: ' + (data.error || 'Server error'));
+          }
+        })
+        .catch(err => {
+          if (doneBtn) { doneBtn.disabled = false; doneBtn.innerText = '✅ Straighten & Done'; }
+          alert('Network error while processing perspective crop.');
+        });
     }
-
     function openDocImageCropper(jobId) {
       const file = uploadedBatch.find(f => f.job_id === jobId);
       if (!file) return;
