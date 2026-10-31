@@ -981,13 +981,21 @@ def upload_2in1():
 # --- PDF Page Rendering for Mobile Cropping ---
 @app.route("/api/render_pdf_page", methods=["POST"])
 def render_pdf_page():
-    if "file" not in request.files:
-        return jsonify({"error": "No file uploaded"}), 400
-    file = request.files["file"]
+    job_id = request.form.get("job_id", "").strip()
     page_num = int(request.form.get("page", 0))
+    doc = None
+    if job_id:
+        pdf_path = UPLOAD_FOLDER / f"{job_id}.pdf"
+        if not pdf_path.exists():
+            return jsonify({"error": "Document not found"}), 404
+        doc = fitz.open(str(pdf_path))
+    elif "file" in request.files:
+        file = request.files["file"]
+        doc = fitz.open(stream=file.read(), filetype="pdf")
+    else:
+        return jsonify({"error": "No file or job_id provided"}), 400
     
     try:
-        doc = fitz.open(stream=file.read(), filetype="pdf")
         if len(doc) == 0:
             return jsonify({"error": "Empty PDF"}), 400
         page_idx = min(page_num, len(doc) - 1)
@@ -1001,6 +1009,11 @@ def render_pdf_page():
             "total_pages": len(doc)
         })
     except Exception as e:
+        if doc:
+            try:
+                doc.close()
+            except Exception:
+                pass
         return jsonify({"error": f"Failed to render PDF: {str(e)}"}), 500
 
 # --- CamScanner Magic Filter ---
@@ -1117,19 +1130,23 @@ def api_crop_image():
         thumb_im.save(str(thumbnail_path), "PNG")
 
         save_im = im.copy()
-        if orig_ext.lower() in ("jpg", "jpeg") and save_im.mode in ("RGBA", "P"):
+        raw_ext = "png" if orig_ext.lower() == "pdf" else orig_ext
+        effective_raw_path = UPLOAD_FOLDER / f"{job_id}_raw.{raw_ext}"
+        if raw_ext.lower() in ("jpg", "jpeg") and save_im.mode in ("RGBA", "P"):
             save_im = save_im.convert("RGB")
-        save_im.save(str(raw_path))
+        save_im.save(str(effective_raw_path))
 
         pdf_im = im.copy()
         if pdf_im.mode != "RGB":
             pdf_im = pdf_im.convert("RGB")
         pdf_im.save(str(final_pdf_path), "PDF", resolution=150.0)
 
+        ts = int(time.time())
         return jsonify({
             "success": True,
             "job_id": job_id,
-            "thumbnail_url": f"/thumbnails/{job_id}.png?t={int(time.time())}"
+            "thumbnail_url": f"/thumbnails/{job_id}.png?t={ts}",
+            "raw_url": f"/uploads/{job_id}_raw.{raw_ext}?t={ts}"
         })
     except Exception as ex:
         print("[-] Perspective Crop Error:", ex)
@@ -2034,11 +2051,15 @@ def health_check():
 
 @app.route("/uploads/<path:filename>")
 def serve_upload(filename):
-    return send_from_directory(str(UPLOAD_FOLDER), filename)
+    resp = send_from_directory(str(UPLOAD_FOLDER), filename)
+    resp.headers["Access-Control-Allow-Origin"] = "*"
+    return resp
 
 @app.route("/thumbnails/<path:filename>")
 def serve_thumbnail(filename):
-    return send_from_directory(str(THUMBNAIL_FOLDER), filename)
+    resp = send_from_directory(str(THUMBNAIL_FOLDER), filename)
+    resp.headers["Access-Control-Allow-Origin"] = "*"
+    return resp
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))

@@ -1405,7 +1405,7 @@
       </div>
     </div>
     <div class="crop-body" id="cropBodyContainer" style="position:relative; width:100%; height:100%; display:flex; align-items:center; justify-content:center; touch-action:none; user-select:none; overflow:hidden;">
-      <canvas id="perspectiveCanvas" style="max-width:100%; max-height:100%; border-radius:8px; box-shadow:0 10px 30px rgba(0,0,0,0.8); cursor:crosshair;"></canvas>
+      <canvas id="perspectiveCanvas" style="max-width:100%; max-height:100%; border-radius:8px; box-shadow:0 10px 30px rgba(0,0,0,0.8); cursor:crosshair; touch-action:none;"></canvas>
       <div id="cornerLoupe" style="display:none; position:absolute; width:90px; height:90px; border-radius:50%; border:3px solid #38bdf8; box-shadow:0 6px 20px rgba(0,0,0,0.7); overflow:hidden; pointer-events:none; z-index:10000; background:#000;">
         <canvas id="loupeCanvas" width="90" height="90"></canvas>
       </div>
@@ -2160,6 +2160,21 @@
       return outCanvas;
     }
 
+    function solveAffine(s0, s1, s2, d0, d1, d2) {
+      const D = s0.x * (s1.y - s2.y) + s1.x * (s2.y - s0.y) + s2.x * (s0.y - s1.y);
+      if (Math.abs(D) < 1e-6) return null;
+
+      const a = (d0.x * (s1.y - s2.y) + d1.x * (s2.y - s0.y) + d2.x * (s0.y - s1.y)) / D;
+      const c = (d0.x * (s2.x - s1.x) + d1.x * (s0.x - s2.x) + d2.x * (s1.x - s0.x)) / D;
+      const e = (d0.x * (s1.x * s2.y - s2.x * s1.y) + d1.x * (s2.x * s0.y - s0.x * s2.y) + d2.x * (s0.x * s1.y - s1.x * s0.y)) / D;
+
+      const b = (d0.y * (s1.y - s2.y) + d1.y * (s2.y - s0.y) + d2.y * (s0.y - s1.y)) / D;
+      const d = (d0.y * (s2.x - s1.x) + d1.y * (s0.x - s2.x) + d2.x * (s1.x - s0.x)) / D;
+      const f = (d0.y * (s1.x * s2.y - s2.x * s1.y) + d1.y * (s2.x * s0.y - s0.x * s2.y) + d2.y * (s0.x * s1.y - s1.x * s0.y)) / D;
+
+      return { a, b, c, d, e, f };
+    }
+
     function drawTriangleAffine(ctx, img, s0, s1, s2, d0, d1, d2) {
       ctx.save();
       ctx.beginPath();
@@ -2169,16 +2184,9 @@
       ctx.closePath();
       ctx.clip();
 
-      const denom = (s0.x * (s1.y - s2.y) - s1.x * (s0.y - s2.y) + s2.x * (s0.y - s1.y));
-      if (Math.abs(denom) > 1e-6) {
-        const m11 = - (s0.y * (d1.x - d2.x) - s1.y * (d0.x - d2.x) + s2.y * (d0.x - d1.x)) / denom;
-        const m12 =   (s0.y * (d1.y - d2.y) - s1.y * (d0.y - d2.y) + s2.y * (d0.y - d1.y)) / denom;
-        const m21 =   (s0.x * (d1.x - d2.x) - s1.x * (d0.x - d2.x) + s2.x * (d0.x - d1.x)) / denom;
-        const m22 = - (s0.x * (d1.y - d2.y) - s1.x * (d0.y - d2.y) + s2.x * (d0.y - d1.y)) / denom;
-        const dx  =   (s0.x * (s1.y * d2.x - s2.y * d1.x) - s1.x * (s0.y * d2.x - s2.y * d0.x) + s2.x * (s0.y * d1.x - s1.y * d0.x)) / denom;
-        const dy  =   (s0.x * (s1.y * d2.y - s2.y * d1.y) - s1.x * (s0.y * d2.y - s2.y * d0.y) + s2.x * (s0.y * d1.x - s1.y * d0.y)) / denom;
-
-        ctx.transform(m11, m12, m21, m22, dx, dy);
+      const m = solveAffine(s0, s1, s2, d0, d1, d2);
+      if (m) {
+        ctx.transform(m.a, m.b, m.c, m.d, m.e, m.f);
         ctx.drawImage(img, 0, 0);
       }
       ctx.restore();
@@ -2239,7 +2247,7 @@
                 const file = uploadedBatch.find(f => f.job_id === jobId);
                 if (file) {
                   file.thumbnail_url = data.thumbnail_url;
-                  file.raw_url = data.thumbnail_url;
+                  file.raw_url = data.raw_url || data.thumbnail_url;
                 }
                 closeCropperModal();
                 renderUploadedBatch();
@@ -2302,8 +2310,24 @@
       if (!file) return;
 
       activeTarget = 'doc_image_' + jobId;
-      const targetUrl = file.raw_url || file.thumbnail_url || `/uploads/${file.job_id}_raw.${file.original_type}`;
-      openCropperModal(targetUrl);
+      if (file.is_image) {
+        const targetUrl = file.raw_url || file.thumbnail_url || `/uploads/${file.job_id}_raw.${file.original_type}`;
+        openCropperModal(targetUrl);
+      } else {
+        const fd = new FormData();
+        fd.append('job_id', file.job_id);
+        fd.append('page', 0);
+        fetch('/api/render_pdf_page', { method: 'POST', body: fd })
+          .then(res => res.json())
+          .then(data => {
+            if (data && data.data_url) {
+              openCropperModal(data.data_url);
+            } else {
+              openCropperModal(file.thumbnail_url);
+            }
+          })
+          .catch(() => openCropperModal(file.thumbnail_url));
+      }
     }
 
     function resetIdSide(side) {
@@ -2528,7 +2552,7 @@
                 </div>
               </div>
               <div style="display:flex; align-items:center; gap:6px;">
-                ${f.is_image ? `
+                ${(f.is_image || f.page_count === 1) ? `
                   <button type="button" class="action-btn" style="color:#2563eb; border-color:#bfdbfe; background:#eff6ff; padding:6px 10px; font-size:12px; font-weight:700;" onclick="openDocImageCropper('${f.job_id}')" title="Free Style Crop">✂️ Crop</button>
                 ` : ''}
                 <button type="button" class="action-btn" style="color:#0284c7; border-color:#bae6fd; background:#f0f9ff; padding:6px 10px; font-size:12px; font-weight:700;" onclick="openDocPreview('${f.job_id}', '${escapeHtml(f.filename)}', ${f.page_count})" title="Document Preview">👁️ View</button>
@@ -2537,7 +2561,7 @@
             </div>
 
             <!-- Free-Style Crop for Images -->
-            ${f.is_image ? `
+            ${(f.is_image || f.page_count === 1) ? `
               <div style="margin-top:8px; padding-top:8px; border-top:1px dashed #e2e8f0; background:#f8fafc; border-radius:8px; padding:6px 10px; display:flex; flex-direction:column; gap:6px;">
                 <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
                   <div style="display:flex; align-items:center; gap:6px;">
