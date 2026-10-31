@@ -1853,7 +1853,7 @@
               </div>
             </div>
 
-            <!-- CamScanner Magic Filter & Free-Style Crop for Images -->
+            <!-- Free-Style Crop for Images -->
             ${f.is_image ? `
               <div style="margin-top:8px; padding-top:8px; border-top:1px dashed #e2e8f0; background:#f8fafc; border-radius:8px; padding:6px 10px; display:flex; flex-direction:column; gap:6px;">
                 <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
@@ -1861,23 +1861,11 @@
                     <span style="font-size:14px;">✂️</span>
                     <div>
                       <div style="font-size:12px; font-weight:700; color:#1e293b;">Free-Style Image Crop</div>
-                      <div style="font-size:10px; color:#64748b;">Drag corners to freely crop image</div>
+                      <div style="font-size:10px; color:#64748b;">Drag corners to crop image if needed</div>
                     </div>
                   </div>
                   <button type="button" class="action-btn" onclick="openDocImageCropper('${f.job_id}')" style="background:#eff6ff; color:#2563eb; border-color:#93c5fd; padding:4px 10px; font-size:11px; font-weight:700;">
                     ✂️ Crop Image
-                  </button>
-                </div>
-                <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; padding-top:6px; border-top:1px solid #f1f5f9;">
-                  <div style="display:flex; align-items:center; gap:6px;">
-                    <span style="font-size:14px;">✨</span>
-                    <div>
-                      <div style="font-size:12px; font-weight:700; color:#1e293b;">Magic CamScanner Filter</div>
-                      <div style="font-size:10px; color:#64748b;">Shadow hataye, white paper & ink bachaye</div>
-                    </div>
-                  </div>
-                  <button type="button" class="action-btn" id="btnMagic_${f.job_id}" onclick="toggleMagicFilter('${f.job_id}')" style="padding:4px 10px; font-size:11px; font-weight:700; ${f.is_magic_filtered ? 'background:#16a34a; color:white; border-color:#15803d;' : 'background:#e2e8f0; color:#334155;'}">
-                    ${f.is_magic_filtered ? '✅ Magic ON' : 'Magic OFF'}
                   </button>
                 </div>
               </div>
@@ -2676,7 +2664,7 @@
       const modal = document.getElementById('trackOrderModal');
       if (modal) {
         modal.style.display = 'flex';
-        const input = document.getElementById('trackQueryInput');
+        const input = document.getElementById('trackIdInput') || document.getElementById('trackQueryInput');
         if (input) input.focus();
       }
     }
@@ -2687,7 +2675,7 @@
     }
 
     function executeTrackOrder() {
-      const input = document.getElementById('trackQueryInput');
+      const input = document.getElementById('trackIdInput') || document.getElementById('trackQueryInput');
       const raw = input ? input.value.trim() : '';
       if (!raw) {
         alert('Please enter your Tracking ID or Order ID.');
@@ -2706,7 +2694,7 @@
               <div style="background:#fef2f2; border:1px solid #fecaca; border-radius:12px; padding:14px; text-align:center; color:#991b1b; font-size:13px;">
                 <div style="font-size:24px; margin-bottom:4px;">❌</div>
                 <b>Order Not Found</b>
-                <p style="margin:4px 0 0; font-size:12px; color:#b91c1c;">No print order found matching "${raw}". Please check your Tracking ID and try again.</p>
+                <p style="margin:4px 0 0; font-size:12px; color:#b91c1c;">No print order found matching "${escapeHtml(raw)}". Please check your Tracking ID and try again.</p>
               </div>
             `;
             return;
@@ -2731,6 +2719,12 @@
             statusIcon = '🖨️';
             statusLabel = 'Sending to Printer';
             statusHelp = 'Payment verified! Order is being transmitted to the printer right now.';
+          } else if (st === 'pending_cash') {
+            statusColor = '#d97706';
+            statusBg = '#fffbeb';
+            statusIcon = '💵';
+            statusLabel = 'Cash Payment Pending at Counter';
+            statusHelp = 'Your order is pending cash payment. Please pay the store assistant at the counter to start printing.';
           } else if (st === 'awaiting_payment' || st === 'pending_payment') {
             statusColor = '#d97706';
             statusBg = '#fffbeb';

@@ -1,0 +1,1276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ config.shop_name }} - Shopkeeper Dashboard</title>
+  <meta name="theme-color" content="#0f172a">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --success: #16a34a;
+      --danger: #dc2626;
+      --warning: #d97706;
+      --bg: #0f172a;
+      --sidebar: #1e293b;
+      --card: #ffffff;
+      --text: #0f172a;
+      --muted: #64748b;
+      --border: #e2e8f0;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+
+    body {
+      background: #f1f5f9;
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* TOP NAVBAR */
+    .navbar {
+      background: #0f172a;
+      color: white;
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-icon {
+      background: var(--primary);
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+    }
+
+    .brand-title {
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: -0.3px;
+    }
+
+    .brand-subtitle {
+      font-size: 12px;
+      color: #94a3b8;
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .btn {
+      padding: 8px 16px;
+      border-radius: 8px;
+      border: none;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+
+    .btn-outline-white {
+      background: rgba(255,255,255,0.1);
+      color: white;
+      border: 1px solid rgba(255,255,255,0.2);
+    }
+
+    .btn-outline-white:hover {
+      background: rgba(255,255,255,0.2);
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+    }
+
+    .btn-success {
+      background: var(--success);
+      color: white;
+    }
+
+    .btn-danger {
+      background: var(--danger);
+      color: white;
+    }
+
+    /* STATS BAR */
+    .stats-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      padding: 24px 24px 0;
+      max-width: 1400px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .stat-card {
+      background: white;
+      border-radius: 14px;
+      padding: 18px 20px;
+      border: 1px solid var(--border);
+      box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+    }
+
+    .stat-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .stat-value {
+      font-size: 26px;
+      font-weight: 800;
+      margin-top: 6px;
+      color: #0f172a;
+    }
+
+    /* MAIN CONTENT */
+    .main {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 24px;
+      width: 100%;
+      flex: 1;
+    }
+
+    .section-title {
+      font-size: 18px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .badge-count {
+      background: #ef4444;
+      color: white;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    /* QUEUE CARDS */
+    .queue-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 18px;
+      margin-bottom: 36px;
+    }
+
+    .job-card {
+      background: white;
+      border-radius: 16px;
+      border: 2px solid #bfdbfe;
+      box-shadow: 0 4px 20px -2px rgba(37, 99, 235, 0.1);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: all 0.2s;
+    }
+
+    .job-card.auto-printed {
+      border-color: #bbf7d0;
+    }
+
+    .job-header {
+      padding: 14px 18px;
+      background: #eff6ff;
+      border-bottom: 1px solid #dbeafe;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .job-id {
+      font-weight: 800;
+      font-size: 14px;
+      color: #1e3a8a;
+    }
+
+    .job-time {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .job-body {
+      padding: 16px 18px;
+      display: flex;
+      gap: 14px;
+      flex: 1;
+    }
+
+    .thumb-wrap {
+      width: 90px;
+      height: 110px;
+      border-radius: 10px;
+      overflow: hidden;
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      flex-shrink: 0;
+      cursor: pointer;
+    }
+
+    .thumb-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .job-details {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .cust-name {
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--text);
+    }
+
+    .job-meta-row {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 4px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .pill {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .pill-bw {
+      background: #e2e8f0;
+      color: #334155;
+    }
+
+    .pill-color {
+      background: #fce7f3;
+      color: #be185d;
+    }
+
+    .pill-paid {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .job-price {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--success);
+      margin-top: 8px;
+    }
+
+    .printer-select {
+      width: 100%;
+      padding: 8px 10px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      font-size: 12px;
+      font-weight: 600;
+      margin-top: 10px;
+      background: #f8fafc;
+    }
+
+    .job-actions {
+      padding: 12px 18px;
+      background: #f8fafc;
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn-print {
+      flex: 1;
+      padding: 12px;
+      font-size: 14px;
+      font-weight: 800;
+      background: #16a34a;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      box-shadow: 0 4px 10px rgba(22, 163, 74, 0.2);
+    }
+
+    .btn-print:hover {
+      background: #15803d;
+    }
+
+    .btn-cancel {
+      padding: 12px;
+      background: white;
+      border: 1px solid #cbd5e1;
+      color: #dc2626;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    /* EMPTY STATE */
+    .empty-state {
+      background: white;
+      border-radius: 16px;
+      padding: 50px 20px;
+      text-align: center;
+      border: 2px dashed #cbd5e1;
+      grid-column: 1 / -1;
+    }
+
+    .empty-icon {
+      font-size: 48px;
+      margin-bottom: 12px;
+    }
+
+    /* TABLE */
+    .history-card {
+      background: white;
+      border-radius: 16px;
+      padding: 20px;
+      border: 1px solid var(--border);
+      box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    th {
+      text-align: left;
+      padding: 12px;
+      background: #f8fafc;
+      color: var(--muted);
+      font-weight: 700;
+      border-bottom: 1px solid var(--border);
+    }
+
+    td {
+      padding: 12px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+
+    /* MODAL */
+    .modal-backdrop {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .modal {
+      background: white;
+      border-radius: 18px;
+      width: 90%;
+      max-width: 540px;
+      max-height: 88vh;
+      overflow-y: auto;
+      padding: 24px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+    }
+
+    /* Modal Scrollbar */
+    .modal::-webkit-scrollbar {
+      width: 8px;
+    }
+    .modal::-webkit-scrollbar-track {
+      background: #f1f5f9;
+      border-radius: 8px;
+    }
+    .modal::-webkit-scrollbar-thumb {
+      background: #94a3b8;
+      border-radius: 8px;
+    }
+    .modal::-webkit-scrollbar-thumb:hover {
+      background: #64748b;
+    }
+
+    .modal-title {
+      font-size: 18px;
+      font-weight: 800;
+      margin-bottom: 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .form-group {
+      margin-bottom: 14px;
+    }
+
+    .form-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: #334155;
+      margin-bottom: 4px;
+      display: block;
+    }
+
+    .form-input, .form-select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 14px;
+      outline: none;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- TOP NAVBAR -->
+  <div class="navbar">
+    <div class="brand">
+      <div class="brand-icon">🖨️</div>
+      <div>
+        <div class="brand-title">{{ config.shop_name }}</div>
+        <div class="brand-subtitle">Local IP: <b>{{ local_ip }}:{{ config.port }}</b> &bull; Status: <span style="color:#4ade80;">Active</span></div>
+      </div>
+    </div>
+    <div class="nav-actions">
+      <button class="btn btn-primary" onclick="openSettings()">
+        ⚙️ Settings & Rates
+      </button>
+    </div>
+  </div>
+
+  <!-- ALL-NETWORK PUBLIC INTERNET BANNER (HIDDEN AS REQUESTED) -->
+  <div id="publicBanner" style="display: none;">
+    <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+      <span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:#22c55e;" id="tunnelDot"></span>
+      <a id="publicUrlLink" href="{{ server_url }}" target="_blank">{{ server_url }}</a>
+    </div>
+  </div>
+
+  <!-- STATS BAR -->
+  <div class="stats-container">
+    <div class="stat-card">
+      <div class="stat-label">Pending Prints (Ready)</div>
+      <div class="stat-value" style="color: #2563eb;" id="statPending">0</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Printed Today</div>
+      <div class="stat-value" style="color: #16a34a;" id="statPrinted">0</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Today's Total Revenue</div>
+      <div class="stat-value" style="color: #0f172a;" id="statRevenue">₹0</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">B/W & Colour Rates</div>
+      <div class="stat-value" style="font-size: 18px; margin-top: 10px;">
+        B/W: <b>₹{{ config.rate_bw }}</b> &bull; Color: <b>₹{{ config.rate_color }}</b>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN AREA -->
+  <div class="main">
+    
+    <!-- ACTIVE QUEUE -->
+    <div class="section-title" style="display:flex; justify-content:space-between; align-items:center;">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span>Incoming Print Queue (Awaiting Print)</span>
+        <span class="badge-count" id="queueBadge">0</span>
+      </div>
+      <button class="btn btn-outline-white" style="color:var(--text); border:1px solid var(--border); font-size:12px; padding:6px 14px; background:white;" onclick="fetchJobs()">
+        🔄 Refresh Queue
+      </button>
+    </div>
+
+    <div class="queue-grid" id="queueGrid">
+      <div class="empty-state">
+        <div class="empty-icon">📭</div>
+        <h3>No Pending Print Jobs</h3>
+        <p style="color: var(--muted); font-size: 13px; margin-top: 4px;">
+          When a customer scans the QR code and submits their file, it will appear here instantly with a sound alert.
+        </p>
+      </div>
+    </div>
+
+    <!-- RECENT COMPLETED HISTORY -->
+    <div class="section-title" style="margin-top: 30px;">
+      <span>Recent Completed Orders</span>
+    </div>
+
+    <div class="history-card">
+      <table>
+        <thead>
+          <tr>
+            <th>Time</th>
+            <th>Job ID</th>
+            <th>Customer</th>
+            <th>File Name</th>
+            <th>Pages & Type</th>
+            <th>Copies</th>
+            <th>Amount</th>
+            <th>Printer</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="historyTableBody">
+          <tr>
+            <td colspan="10" style="text-align: center; color: var(--muted); padding: 20px;">
+              No recent print history.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+
+  <!-- SETTINGS MODAL -->
+  <div class="modal-backdrop" id="settingsModal">
+    <div class="modal">
+      <div class="modal-title">
+        <span>Kiosk & Rates Settings</span>
+        <button style="border:none; background:none; font-size:20px; cursor:pointer;" onclick="closeSettings()">&times;</button>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Shop Name</label>
+        <input type="text" class="form-input" id="cfgShopName" value="{{ config.shop_name }}">
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Your UPI ID (VPA)</label>
+          <input type="text" class="form-input" id="cfgUpiId" value="{{ config.upi_id }}" placeholder="yourname@upi">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Shop/Payee Name</label>
+          <input type="text" class="form-input" id="cfgUpiName" value="{{ config.upi_name }}">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">B/W Rate (₹/page)</label>
+          <input type="number" step="0.5" class="form-input" id="cfgRateBw" value="{{ config.rate_bw }}">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Colour Rate (₹/page)</label>
+          <input type="number" step="0.5" class="form-input" id="cfgRateColor" value="{{ config.rate_color }}">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Default B/W Printer</label>
+        <select class="form-select" id="cfgPrinterBw">
+          {% for p in printers %}
+          <option value="{{ p }}" {% if p == config.default_bw_printer %}selected{% endif %}>{{ p }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Default Colour Printer</label>
+        <select class="form-select" id="cfgPrinterColor">
+          {% for p in printers %}
+          <option value="{{ p }}" {% if p == config.default_color_printer %}selected{% endif %}>{{ p }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="form-group" style="margin-top: 10px;">
+        <label style="display:flex; align-items:center; gap:8px; font-weight:700; font-size:13px; cursor:pointer;">
+          <input type="checkbox" id="cfgAutoPrint" {% if config.auto_print %}checked{% endif %}>
+          <span>Auto-Print immediately when paid (Zero Click)</span>
+        </label>
+        <span style="font-size:11px; color:var(--muted); display:block; margin-left:24px;">
+          Unchecked: You click "Approve & Print" after checking payment. Checked: System directly prints.
+        </span>
+      </div>
+
+      <!-- 1. SOUND & VOICE ALERTS -->
+      <div style="background:#f8fafc; border:1px solid var(--border); border-radius:12px; padding:12px 14px; margin-top:14px;">
+        <div style="font-size:12px; font-weight:800; color:var(--text); margin-bottom:8px; text-transform:uppercase; letter-spacing:0.5px;">
+          🔊 Sound & Voice Alerts
+        </div>
+        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+          <button type="button" class="btn btn-outline-white" id="soundToggleBtn" style="color:var(--text); border-color:#cbd5e1; font-size:12px; padding:8px 14px; background:white;" onclick="toggleSound()">
+            🔊 Voice Alert: ON
+          </button>
+          <button type="button" class="btn btn-outline-white" style="color:#2563eb; border-color:#93c5fd; font-size:12px; padding:8px 14px; background:#eff6ff;" onclick="testVoiceAlert()" title="Click to test speaker voice">
+            ▶️ Test Voice
+          </button>
+        </div>
+      </div>
+
+      <!-- 2. COUNTER QR POSTER -->
+      <div style="background:#f8fafc; border:1px solid var(--border); border-radius:12px; padding:12px 14px; margin-top:12px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+        <div>
+          <div style="font-size:13px; font-weight:800; color:var(--text);">🪧 Print Counter QR Poster</div>
+          <div style="font-size:11px; color:var(--muted);">Print high-resolution A4 counter poster</div>
+        </div>
+        <a href="/counter-poster" target="_blank" class="btn btn-primary" style="padding:8px 16px; font-size:12px; text-decoration:none;">
+          🖨️ Open Poster
+        </a>
+      </div>
+
+      <!-- 3. RAZORPAY PAYMENT GATEWAY -->
+      <div style="background:#f0fdf4; border:1px solid #86efac; border-radius:12px; padding:12px 14px; margin-top:12px;">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div style="font-size:12px; font-weight:800; color:#166534; text-transform:uppercase; letter-spacing:0.5px;">
+            ⚡ Razorpay Auto-Payment (Zero UTR Entry)
+          </div>
+          <span style="font-size:11px; background:#dcfce7; color:#15803d; font-weight:700; padding:2px 8px; border-radius:12px;">
+            {% if config.razorpay_enabled %}Enabled{% else %}Disabled{% endif %}
+          </span>
+        </div>
+        <div class="form-group" style="margin-top:8px; margin-bottom:8px;">
+          <label style="display:flex; align-items:center; gap:8px; font-weight:700; font-size:13px; cursor:pointer;">
+            <input type="checkbox" id="cfgRazorpayEnabled" {% if config.razorpay_enabled %}checked{% endif %}>
+            <span>Enable Razorpay Payment Gateway</span>
+          </label>
+          <span style="font-size:11px; color:#15803d; display:block; margin-left:24px;">
+            Customer pays directly via GPay / PhonePe / Paytm and document auto-prints immediately!
+          </span>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:6px;">
+          <div>
+            <label class="form-label" style="font-size:11px;">Razorpay Key ID</label>
+            <input type="text" class="form-input" id="cfgRazorpayKeyId" value="{{ config.razorpay_key_id or '' }}" placeholder="rzp_live_...">
+          </div>
+          <div>
+            <label class="form-label" style="font-size:11px;">Razorpay Key Secret</label>
+            <input type="password" class="form-input" id="cfgRazorpayKeySecret" value="{{ config.razorpay_key_secret or '' }}" placeholder="Key Secret">
+          </div>
+        </div>
+      </div>
+
+      <!-- Cash at Counter Payment Option Toggle -->
+      <div style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:12px; padding:12px 14px; margin-top:12px;">
+        <label style="display:flex; align-items:center; gap:8px; font-weight:700; font-size:13px; cursor:pointer;">
+          <input type="checkbox" id="cfgCashEnabled" {% if config.enable_cash_payment %}checked{% endif %}>
+          <span>💵 Enable "Pay Cash at Counter" Option</span>
+        </label>
+        <span style="font-size:11px; color:#64748b; display:block; margin-left:24px; margin-top:2px;">
+          When enabled, customers can choose to pay with cash at the counter instead of paying online.
+        </span>
+      </div>
+
+      <!-- 4. 7-DAY HISTORY AUTO-CLEANUP -->
+      <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:12px; padding:10px 14px; margin-top:12px; font-size:12px; color:#166534; display:flex; align-items:center; gap:8px;">
+        <span style="font-size:16px;">🗓️</span>
+        <div>
+          <b>7-Day Auto-Cleanup Active:</b> Files and print history older than 7 days are automatically purged.
+        </div>
+      </div>
+
+      <!-- 5. CLOUD KIOSK SETUP KEY (SAAS SYNC) -->
+      <div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:12px; padding:12px 14px; margin-top:12px;">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div style="font-size:12px; font-weight:800; color:#1e40af; text-transform:uppercase; letter-spacing:0.5px;">
+            ☁️ Cloud Kiosk Connection (SaaS Setup)
+          </div>
+          <span style="font-size:11px; background:#dbeafe; color:#1e40af; font-weight:700; padding:2px 8px; border-radius:12px;">
+            {% if config.cloud_sync_enabled %}Connected{% else %}Offline{% endif %}
+          </span>
+        </div>
+        <div style="font-size:11px; color:#475569; margin-top:4px; margin-bottom:8px;">
+          Paste your unique <b>Kiosk Setup Key</b> from the Super Admin portal here.
+        </div>
+        <div style="display:grid; grid-template-columns:1fr; gap:8px;">
+          <div>
+            <label class="form-label" style="font-size:11px;">Kiosk Setup Key (Secret)</label>
+            <input type="text" class="form-input" id="cfgCloudApiKey" value="{{ config.cloud_api_key or '' }}" placeholder="KP_KIOSK_..." style="font-family:monospace; font-weight:700; color:#1e3a8a;">
+          </div>
+          <div>
+            <label class="form-label" style="font-size:11px;">Cloud Server URL</label>
+            <input type="text" class="form-input" id="cfgCloudServerUrl" value="{{ config.cloud_server_url or 'https://print.fruitsgenerator.co.in' }}" placeholder="https://print.fruitsgenerator.co.in">
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex; gap:10px; margin-top: 20px;">
+        <button class="btn btn-primary" style="flex:1;" onclick="saveSettings()">Save Changes</button>
+        <button class="btn btn-outline-white" style="color:var(--text); border-color:var(--border);" onclick="closeSettings()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let soundEnabled = true;
+    let knownJobIds = new Set();
+    const printersList = {{ printers | tojson }};
+
+    function escapeHtml(text) {
+      if (text === null || text === undefined) return '';
+      return String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    // Synthesize Web Audio chime for instant notification
+    function playChime() {
+      try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(587.33, audioCtx.currentTime); // D5
+        osc.frequency.setValueAtTime(880, audioCtx.currentTime + 0.12); // A5
+        gain.gain.setValueAtTime(0.35, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.55);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.55);
+      } catch (e) {
+        console.log("Audio not allowed yet without user interaction:", e);
+      }
+    }
+
+    // Speak Voice: "Print request pending"
+    function speakVoiceAlert(phrase = "Print request pending") {
+      if (!soundEnabled) return;
+      if ('speechSynthesis' in window) {
+        try {
+          window.speechSynthesis.cancel();
+          const utterance = new SpeechSynthesisUtterance(phrase);
+          utterance.rate = 0.92; // Slightly measured, clear pronunciation
+          utterance.pitch = 1.05;
+          utterance.volume = 1.0;
+
+          const voices = window.speechSynthesis.getVoices();
+          const targetVoice = voices.find(v => v.lang === 'en-IN') ||
+                              voices.find(v => v.lang === 'en-GB') ||
+                              voices.find(v => v.lang === 'en-US') ||
+                              voices.find(v => v.lang.startsWith('en'));
+          if (targetVoice) {
+            utterance.voice = targetVoice;
+          }
+          window.speechSynthesis.speak(utterance);
+        } catch (e) {
+          console.log("SpeechSynthesis error:", e);
+        }
+      }
+    }
+
+    // Combined Alert: Chime + Voice
+    function triggerVoiceAlert(customPhrase = "Print request pending") {
+      if (!soundEnabled) return;
+      playChime();
+      setTimeout(() => {
+        speakVoiceAlert(customPhrase);
+      }, 400);
+    }
+
+    function testVoiceAlert() {
+      triggerVoiceAlert();
+    }
+
+    function toggleSound() {
+      soundEnabled = !soundEnabled;
+      document.getElementById('soundToggleBtn').innerText = soundEnabled ? '🔊 Voice Alert: ON' : '🔈 Voice Alert: OFF';
+      if (soundEnabled) {
+        triggerVoiceAlert();
+      }
+    }
+
+    // Ensure speech synthesis voices are loaded
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+    }
+
+    document.addEventListener('click', () => {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        if (ctx.state === 'suspended') ctx.resume();
+      } catch (e) {}
+    }, { once: true });
+
+    function fetchJobs() {
+      fetch('/api/jobs')
+        .then(res => res.json())
+        .then(data => {
+          renderDashboard(data.jobs || []);
+        })
+        .catch(err => console.error("Error fetching jobs:", err));
+    }
+
+    function renderDashboard(jobs) {
+      try {
+        const queueGrid = document.getElementById('queueGrid');
+        const historyBody = document.getElementById('historyTableBody');
+
+        // Show jobs where customer clicked 'I Have Paid' OR chose 'Pay Cash at Counter'
+        const pendingJobs = (jobs || []).filter(j => j.status === 'paid' || (j.status === 'pending' && j.utr === 'CASH AT COUNTER'));
+        const completedJobs = (jobs || []).filter(j => j.status === 'printed' || j.status === 'cancelled');
+
+        // Check for newly confirmed paid/cash jobs to trigger voice alert
+        let hasNewOrder = false;
+        let hasNewCashOrder = false;
+        let hasNewOrder = false;
+        pendingJobs.forEach(j => {
+          if (!knownJobIds.has(j.id)) {
+            knownJobIds.add(j.id);
+            hasNewOrder = true;
+            if (j.utr === 'CASH AT COUNTER' || j.status === 'pending_cash') {
+              hasNewCashOrder = true;
+            }
+          }
+        });
+
+        if (hasNewOrder) {
+          triggerVoiceAlert(hasNewCashOrder ? "Cash print request received. Please collect cash." : "Print request pending");
+        }
+
+        // Update Stats
+        document.getElementById('statPending').innerText = pendingJobs.length;
+        document.getElementById('queueBadge').innerText = pendingJobs.length;
+        document.getElementById('statPrinted').innerText = (jobs || []).filter(j => j.status === 'printed').length;
+
+        const totalRev = (jobs || []).filter(j => j.status === 'printed').reduce((acc, curr) => acc + (curr.total_price || 0), 0);
+        document.getElementById('statRevenue').innerText = '₹' + Math.round(totalRev);
+
+        // Render Queue
+        if (pendingJobs.length === 0) {
+          queueGrid.innerHTML = `
+            <div class="empty-state">
+              <div class="empty-icon">🖨️</div>
+              <h3>No Pending Print Jobs</h3>
+              <p style="color: var(--muted); font-size: 13px; margin-top: 4px;">
+                When a customer scans the QR code and submits their file, it will appear here instantly with a sound alert.
+              </p>
+            </div>
+          `;
+        } else {
+          // Group jobs by batch_id if present
+          const batchMap = {};
+          const standaloneJobs = [];
+
+          pendingJobs.forEach(j => {
+            if (j.batch_id) {
+              if (!batchMap[j.batch_id]) batchMap[j.batch_id] = [];
+              batchMap[j.batch_id].push(j);
+            } else {
+              standaloneJobs.push(j);
+            }
+          });
+
+          let html = '';
+
+          // 1. Render Batch Orders
+          Object.keys(batchMap).forEach(bId => {
+            const bJobs = batchMap[bId];
+            const first = bJobs[0];
+            let timeStr = first.created_at ? (first.created_at.includes(' ') ? first.created_at.split(' ')[1] : first.created_at) : '';
+            const totalBatchPrice = bJobs.reduce((sum, item) => sum + (item.total_price || 0), 0);
+            const totalBatchPages = bJobs.reduce((sum, item) => sum + (item.page_count || 1), 0);
+            const isCash = bJobs.some(item => item.utr === 'CASH AT COUNTER' || item.status === 'pending_cash');
+            const isPaid = bJobs.some(item => item.status === 'paid');
+            const statusBadge = isCash
+              ? `<span class="pill" style="background:#fef08a; color:#854d0e; font-weight:800; border:1px solid #eab308; font-size:12px;">💵 CASH REQUEST: Collect ₹${Math.round(totalBatchPrice)}</span>`
+              : (isPaid
+                ? `<span class="pill pill-paid">🟢 Paid ₹${Math.round(totalBatchPrice)}</span>`
+                : `<span class="pill" style="background:#fef3c7; color:#92400e; font-weight:700;">⏳ Uploaded (₹${Math.round(totalBatchPrice)})</span>`);
+
+            html += `
+              <div class="job-card" id="batch_card_${bId}" style="border: 2px solid ${isCash ? '#f59e0b' : '#2563eb'}; box-shadow: 0 4px 14px ${isCash ? 'rgba(245,158,11,0.18)' : 'rgba(37,99,235,0.12)'}; background: ${isCash ? '#fffef5' : '#ffffff'};">
+                <div class="job-header" style="background: ${isCash ? 'linear-gradient(135deg, #b45309, #d97706)' : 'linear-gradient(135deg, #1e3a8a, #2563eb)'}; color:white; padding:12px 16px; border-radius:12px 12px 0 0;">
+                  <div style="display:flex; align-items:center; gap:8px;">
+                    <span style="background:white; color:${isCash ? '#b45309' : '#1e3a8a'}; font-size:11px; font-weight:800; padding:2px 8px; border-radius:6px;">📦 BATCH ORDER</span>
+                    <span style="font-size:13px; font-weight:700;">${bId}</span>
+                  </div>
+                  <div style="display:flex; align-items:center; gap:10px;">
+                    <span style="font-size:12px; opacity:0.9;">${timeStr}</span>
+                    ${statusBadge}
+                  </div>
+                </div>
+
+                <div style="padding:16px;">
+                  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                    <div>
+                      <div class="cust-name" style="font-size:16px;">${escapeHtml(first.customer_name || 'Customer')}</div>
+                      <div style="font-size:12px; color:var(--muted); font-weight:600; margin-top:2px;">
+                        ${bJobs.length} Documents &bull; Total ${totalBatchPages} Pages to Print &bull; ${first.print_type === 'bw' ? 'Black & White' : (first.print_type === 'mixed' ? '🎨 Smart Mixed' : '🌈 Colour')}
+                      </div>
+                    </div>
+                    ${first.utr ? `<div style="font-size:11px; color:${first.utr.startsWith('RZP:') ? '#166534' : '#2563eb'}; font-weight:700; background:${first.utr.startsWith('RZP:') ? '#dcfce7' : '#eff6ff'}; padding:4px 10px; border-radius:6px; border:1px solid ${first.utr.startsWith('RZP:') ? '#86efac' : '#bfdbfe'};">${first.utr.startsWith('RZP:') ? '⚡ Razorpay: ' + escapeHtml(first.utr.replace('RZP:', '')) : 'UTR: ' + escapeHtml(first.utr)}</div>` : ''}
+                  </div>
+
+                  <!-- Documents list in this batch -->
+                  <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:14px;">
+                    ${bJobs.map((j, idx) => `
+                      <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:8px 10px;">
+                        <div style="display:flex; align-items:center; gap:10px; min-width:0;">
+                          <img src="/thumbnails/${j.id}.png" style="width:34px; height:44px; object-fit:cover; border-radius:4px; border:1px solid #cbd5e1; background:white;" onerror="this.style.display='none'">
+                          <div style="min-width:0;">
+                            <div style="font-size:13px; font-weight:700; color:#1e293b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                              ${idx + 1}. ${escapeHtml(j.filename || 'Document')}
+                            </div>
+                            <div style="font-size:11px; color:var(--muted); margin-top:2px; display:flex; gap:6px; flex-wrap:wrap; align-items:center;">
+                              ${j.page_range && j.page_range !== 'all' ? `<span style="color:#2563eb; font-weight:800;">📄 ${j.page_count} Pages (Pg: ${escapeHtml(j.page_range)})</span>` : `<span style="color:#475569; font-weight:600;">📄 ${j.page_count || 1} Pages (All)</span>`}
+                              <span>&bull; ${j.copies || 1} ${(j.copies || 1) > 1 ? 'Copies' : 'Copy'}</span>
+                              ${j.color_pages ? `<span style="background:#fef3c7; color:#b45309; padding:1px 6px; border-radius:999px; font-size:10px; font-weight:700;">🎨 Col: ${j.color_pages}</span>` : ''}
+                            </div>
+                          </div>
+                        </div>
+                        <button type="button" class="btn btn-outline-white" style="color:#2563eb; border-color:#bfdbfe; background:white; font-size:11px; padding:4px 8px; white-space:nowrap;" onclick="window.open('/uploads/${j.id}.pdf', '_blank')">
+                          👁️ View
+                        </button>
+                      </div>
+                    `).join('')}
+                  </div>
+
+                  <!-- Printer Select for Batch -->
+                  <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+                    <span style="font-size:12px; font-weight:700; color:#475569; white-space:nowrap;">Printer:</span>
+                    <select class="printer-select" id="printer_select_batch_${bId}" style="margin:0; flex:1;">
+                      ${printersList.map(p => `
+                        <option value="${p}" ${p === first.printer_used ? 'selected' : ''}>${p}</option>
+                      `).join('')}
+                    </select>
+                  </div>
+
+                  <!-- Batch Actions -->
+                  <div class="job-actions" style="margin-top:0;">
+                    ${isCash ? `
+                      <button class="btn-print" onclick="printBatch('${bId}')" style="background:#16a34a; font-size:14px; padding:12px; font-weight:800; flex:2;">
+                        💵 COLLECT CASH & PRINT ALL (₹${Math.round(totalBatchPrice)})
+                      </button>
+                      <button class="btn-cancel" onclick="cancelBatch('${bId}')" style="background:#fee2e2; color:#dc2626; border:1px solid #fca5a5; font-size:13px; font-weight:800; padding:12px 18px; border-radius:8px;" title="Cancel this batch">
+                        ❌ REJECT / CANCEL
+                      </button>
+                    ` : `
+                      <button class="btn-print" onclick="printBatch('${bId}')" style="background:#2563eb; font-size:14px; padding:12px; font-weight:700; flex:2;">
+                        🖨️ APPROVE & PRINT ALL (${bJobs.length} DOCUMENTS)
+                      </button>
+                      <button class="btn-cancel" onclick="cancelBatch('${bId}')" style="background:#fee2e2; color:#dc2626; border:1px solid #fca5a5; font-size:13px; font-weight:800; padding:12px 18px; border-radius:8px;" title="Cancel this batch">
+                        ✕
+                      </button>
+                    `}
+                  </div>
+                </div>
+              </div>
+            `;
+          });
+
+          // 2. Render Standalone Jobs
+          standaloneJobs.forEach(j => {
+            let timeStr = j.created_at ? (j.created_at.includes(' ') ? j.created_at.split(' ')[1] : j.created_at) : '';
+            const isCash = j.utr === 'CASH AT COUNTER' || j.status === 'pending_cash';
+            const isPaid = j.status === 'paid';
+            const statusBadge = isCash
+              ? `<span class="pill" style="background:#fef08a; color:#854d0e; font-weight:800; border:1px solid #eab308; font-size:12px;">💵 CASH REQUEST: Collect ₹${j.total_price || 0}</span>`
+              : (isPaid
+                ? `<span class="pill pill-paid">🟢 Paid ₹${j.total_price || 0}</span>`
+                : `<span class="pill" style="background:#fef3c7; color:#92400e; font-weight:700;">⏳ Uploaded (₹${j.total_price || 0})</span>`);
+
+            html += `
+              <div class="job-card" id="card_${j.id}" style="border: 2px solid ${isCash ? '#f59e0b' : 'var(--border)'}; background: ${isCash ? '#fffef5' : '#ffffff'};">
+                <div class="job-header" style="${isCash ? 'background: #fef3c7; border-bottom: 1px solid #fde68a;' : ''}">
+                  <span class="job-id" style="${isCash ? 'color: #92400e; font-weight: 800;' : ''}">${j.id}</span>
+                  <span class="job-time">${timeStr}</span>
+                </div>
+                <div class="job-body">
+                  <div class="thumb-wrap" onclick="window.open('/uploads/${j.id}.pdf', '_blank')" title="Click to View Full Document">
+                    <img src="/thumbnails/${j.id}.png" alt="Thumbnail" onerror="this.style.display='none'">
+                  </div>
+                  <div class="job-details">
+                    <div>
+                      <div class="cust-name">${escapeHtml(j.customer_name || 'Customer')}</div>
+                      <div style="font-size:12px; color:var(--muted); font-weight:600; margin-top:2px; word-break:break-all;">
+                        ${escapeHtml(j.filename || 'Document')}
+                      </div>
+                      <div class="job-meta-row">
+                        <span class="pill ${j.print_type === 'bw' ? 'pill-bw' : 'pill-color'}">${j.print_type === 'bw' ? 'Black & White' : (j.print_type === 'mixed' ? '🎨 Smart Mixed' : 'Colour')}</span>
+                        ${j.color_pages ? `<span class="pill" style="background:#fef3c7; color:#b45309; font-weight:700;">🎨 Col: ${j.color_pages}</span>` : ''}
+                        ${j.original_type === 'id_card' ? '<span class="pill" style="background:#ede9fe; color:#6d28d9; font-weight:800;">🪪 ID Card (Enlarged)</span>' : ''}
+                        ${j.original_type === '2in1' ? '<span class="pill" style="background:#fef3c7; color:#b45309; font-weight:800;">📑 2-in-1 Print</span>' : ''}
+                        ${statusBadge}
+                        ${j.page_range && j.page_range !== 'all' ? `<span class="pill" style="background:#dbeafe; color:#1d4ed8; font-weight:800;">📄 ${j.page_count} Pages (Pg: ${escapeHtml(j.page_range)})</span>` : `<span class="pill pill-bw">📄 ${j.page_count || 1} Pages</span>`}
+                        <span class="pill pill-bw">${j.copies || 1} ${(j.copies || 1) > 1 ? 'Copies' : 'Copy'}</span>
+                      </div>
+                      ${j.utr ? `<div style="font-size:11px; color:${j.utr.startsWith('RZP:') ? '#166534' : '#2563eb'}; margin-top:4px; font-weight:700;">${j.utr.startsWith('RZP:') ? '⚡ Paid via Razorpay: ' + escapeHtml(j.utr.replace('RZP:', '')) : 'UTR: ' + escapeHtml(j.utr)}</div>` : ''}
+                    </div>
+
+                    <select class="printer-select" id="printer_select_${j.id}">
+                      ${printersList.map(p => `
+                        <option value="${p}" ${p === j.printer_used ? 'selected' : ''}>${p}</option>
+                      `).join('')}
+                    </select>
+                  </div>
+                </div>
+                <div class="job-actions">
+                  ${isCash ? `
+                    <button class="btn-print" onclick="printJob('${j.id}')" style="background:#16a34a; font-size:13px; font-weight:800; padding:10px 16px; flex:2;">
+                      💵 COLLECT CASH & PRINT (₹${j.total_price || 0})
+                    </button>
+                    <button class="btn-cancel" onclick="cancelJob('${j.id}')" style="background:#fee2e2; color:#dc2626; border:1px solid #fca5a5; font-size:12px; font-weight:800; padding:10px 14px; border-radius:8px;" title="Cancel this job">
+                      ❌ CANCEL
+                    </button>
+                  ` : `
+                    <button class="btn-print" onclick="printJob('${j.id}')" style="background:#2563eb; font-size:13px; font-weight:700; padding:10px 16px; flex:2;">
+                      🖨️ APPROVE & PRINT
+                    </button>
+                    <button class="btn-cancel" onclick="cancelJob('${j.id}')" style="background:#fee2e2; color:#dc2626; border:1px solid #fca5a5; font-size:12px; font-weight:800; padding:10px 14px; border-radius:8px;" title="Cancel this job">
+                      ✕
+                    </button>
+                  `}
+                </div>
+              </div>
+            `;
+          });
+
+          queueGrid.innerHTML = html;
+        }
+
+        // Render History Table
+        if (completedJobs.length === 0) {
+          historyBody.innerHTML = `
+            <tr>
+              <td colspan="10" style="text-align: center; color: var(--muted); padding: 20px;">
+                No completed prints yet.
+              </td>
+            </tr>
+          `;
+        } else {
+          historyBody.innerHTML = completedJobs.map(j => `
+            <tr>
+              <td>${j.created_at || ''}</td>
+              <td><b>${j.id}</b></td>
+              <td>${escapeHtml(j.customer_name || 'Customer')}</td>
+              <td style="max-width:200px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(j.filename || '')}</td>
+              <td>
+                <span class="pill ${j.print_type === 'bw' ? 'pill-bw' : 'pill-color'}">${j.print_type === 'bw' ? 'B/W' : (j.print_type === 'mixed' ? 'Mixed' : 'Colour')}</span>
+                ${j.page_count || 1}p ${j.page_range && j.page_range !== 'all' ? `<span style="font-size:10px; color:#2563eb; font-weight:700;">(Pg: ${escapeHtml(j.page_range)})</span>` : ''}
+              </td>
+              <td>${j.copies || 1}</td>
+              <td><b>₹${j.total_price || 0}</b></td>
+              <td><small>${escapeHtml(j.printer_used || '-')}</small></td>
+              <td>
+                <span class="pill ${j.status === 'printed' ? 'pill-paid' : 'pill-bw'}" style="${j.status === 'cancelled' ? 'background:#fee2e2; color:#dc2626;' : ''}">
+                  ${j.status === 'printed' ? '✅ Printed' : '✕ Cancelled'}
+                </span>
+              </td>
+              <td>
+                <button class="btn btn-outline-white" style="color:#2563eb; border:1px solid #cbd5e1; padding:4px 8px; font-size:11px;" onclick="reprintJob('${j.id}')">
+                  Reprint
+                </button>
+              </td>
+            </tr>
+          `).join('');
+        }
+      } catch (err) {
+        console.error("Error in renderDashboard:", err);
+      }
+    }
+
+    function printJob(jobId) {
+      const select = document.getElementById(`printer_select_${jobId}`);
+      const selectedPrinter = select ? select.value : null;
+
+      fetch(`/api/job/${jobId}/print`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ printer_name: selectedPrinter })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          fetchJobs();
+        } else {
+          alert('Printing error: ' + (data.error || 'Check printer connection.'));
+        }
+      })
+      .catch(err => alert('Request failed. Check if PC server is running.'));
+    }
+
+    function reprintJob(jobId) {
+      if (confirm('Do you want to re-print this document?')) {
+        printJob(jobId);
+      }
+    }
+
+    function cancelJob(jobId) {
+      if (confirm('Are you sure you want to cancel this job?')) {
+        fetch(`/api/job/${jobId}/cancel`, { method: 'POST' })
+          .then(() => fetchJobs());
+      }
+    }
+
+    function printBatch(batchId) {
+      const printerEl = document.getElementById(`printer_select_batch_${batchId}`);
+      const printer = printerEl ? printerEl.value : null;
+
+      fetch(`/api/batch/${batchId}/print`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ printer_name: printer })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          fetchJobs();
+        } else {
+          alert('Printing error: ' + (data.error || 'Failed to print batch.'));
+        }
+      })
+      .catch(() => alert('Request failed. Check if PC server is running.'));
+    }
+
+    function cancelBatch(batchId) {
+      if (confirm('Are you sure you want to cancel all documents in this batch?')) {
+        fetch(`/api/batch/${batchId}/cancel`, { method: 'POST' })
+          .then(() => fetchJobs())
+          .catch(() => alert('Failed to cancel batch.'));
+      }
+    }
+
+    function openSettings() {
+      document.getElementById('settingsModal').style.display = 'flex';
+    }
+
+    function closeSettings() {
+      document.getElementById('settingsModal').style.display = 'none';
+    }
+
+    function openInEdge() {
+      fetch('/api/open-edge', { method: 'POST' })
+        .then(r => r.json())
+        .catch(() => {
+          window.open(location.href, '_blank');
+        });
+    }
+
+    function saveSettings() {
+      const payload = {
+        shop_name: document.getElementById('cfgShopName').value.trim(),
+        upi_id: document.getElementById('cfgUpiId').value.trim(),
+        upi_name: document.getElementById('cfgUpiName').value.trim(),
+        rate_bw: parseFloat(document.getElementById('cfgRateBw').value),
+        rate_color: parseFloat(document.getElementById('cfgRateColor').value),
+        default_bw_printer: document.getElementById('cfgPrinterBw').value,
+        default_color_printer: document.getElementById('cfgPrinterColor').value,
+        auto_print: document.getElementById('cfgAutoPrint').checked,
+        launch_mode: document.getElementById('cfgLaunchMode') ? document.getElementById('cfgLaunchMode').value : 'desktop',
+        enable_cash_payment: document.getElementById('cfgCashEnabled') ? document.getElementById('cfgCashEnabled').checked : true,
+        razorpay_enabled: document.getElementById('cfgRazorpayEnabled') ? document.getElementById('cfgRazorpayEnabled').checked : false,
+        razorpay_key_id: document.getElementById('cfgRazorpayKeyId') ? document.getElementById('cfgRazorpayKeyId').value.trim() : '',
+        razorpay_key_secret: document.getElementById('cfgRazorpayKeySecret') ? document.getElementById('cfgRazorpayKeySecret').value.trim() : '',
+        cloud_api_key: document.getElementById('cfgCloudApiKey') ? document.getElementById('cfgCloudApiKey').value.trim() : '',
+        cloud_server_url: document.getElementById('cfgCloudServerUrl') ? document.getElementById('cfgCloudServerUrl').value.trim() : 'https://print.fruitsgenerator.co.in',
+        cloud_sync_enabled: true
+      };
+
+      fetch('/api/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+      .then(res => res.json())
+      .then(data => {
+        closeSettings();
+        location.reload();
+      });
+    }
+
+    function onQrModeChange() {}
+    function toggleLockQr() {}
+    function copyQrUrl() {
+      const el = document.getElementById('displayQrUrl');
+      const url = el ? el.innerText.trim() : '';
+      if (!url) return;
+      navigator.clipboard.writeText(url).then(() => alert('QR URL Copied:\n' + url)).catch(() => prompt('Copy QR URL:', url));
+    }
+
+    function copyPublicUrl() {
+      const url = document.getElementById('publicUrlLink').href;
+      navigator.clipboard.writeText(url).then(() => {
+        alert('Public Link copied to clipboard!\n\n' + url);
+      }).catch(() => {
+        prompt('Copy this link:', url);
+      });
+    }
+
+    function syncPublicUrl() {
+      fetch('/api/config')
+        .then(res => res.json())
+        .then(data => {
+          if (data.server_url) {
+            const link = document.getElementById('publicUrlLink');
+            if (link) {
+              link.href = data.server_url;
+              link.innerText = data.server_url;
+            }
+            const modalLink = document.getElementById('publicUrlLinkModal');
+            if (modalLink) {
+              modalLink.href = data.server_url;
+              modalLink.innerText = data.server_url;
+            }
+          }
+        })
+        .catch(() => {});
+    }
+
+    // Auto poll every 2 seconds
+    setInterval(fetchJobs, 2000);
+    setInterval(syncPublicUrl, 5000);
+    fetchJobs();
+    syncPublicUrl();
+  </script>
+</body>
+</html>
