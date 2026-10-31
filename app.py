@@ -282,30 +282,75 @@ def get_shop_by_api_key(api_key):
 
 # ==================== Core Helpers & Image Processors ====================
 
+def solve_linear_8(A, B):
+    """Gaussian elimination to solve 8 linear equations for perspective transform."""
+    n = 8
+    M = [A[i] + [B[i]] for i in range(n)]
+    for i in range(n):
+        max_row = i
+        for k in range(i+1, n):
+            if abs(M[k][i]) > abs(M[max_row][i]):
+                max_row = k
+        M[i], M[max_row] = M[max_row], M[i]
+        pivot = M[i][i]
+        if abs(pivot) < 1e-12:
+            return None
+        for j in range(i, n+1):
+            M[i][j] /= pivot
+        for k in range(n):
+            if k != i:
+                factor = M[k][i]
+                for j in range(i, n+1):
+                    M[k][j] -= factor * M[i][j]
+    return [M[i][n] for i in range(n)]
+
+def find_perspective_coeffs(dst_pts, src_pts):
+    """Calculates 8 PIL perspective coefficients from destination to source."""
+    A = []
+    B = []
+    for (xd, yd), (xs, ys) in zip(dst_pts, src_pts):
+        A.append([xd, yd, 1, 0, 0, 0, -xs*xd, -xs*yd])
+        B.append(xs)
+        A.append([0, 0, 0, xd, yd, 1, -ys*xd, -ys*yd])
+        B.append(ys)
+    return solve_linear_8(A, B)
+
 def analyze_pdf_color(pdf_path):
-    """Detects color vs black/white pages in PDF."""
+    """High-speed color vs black/white detection for PDF pages."""
     try:
         doc = fitz.open(str(pdf_path))
         bw_count = 0
         color_count = 0
         color_pages = []
-        for i, page in enumerate(doc):
-            pix = page.get_pixmap(dpi=50)
-            img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
-            rgb_img = img.convert("HSV")
-            s_channel = rgb_img.split()[1]
-            if s_channel.getextrema()[1] > 30:
-                color_count += 1
-                color_pages.append(i + 1)
+        total = len(doc)
+        
+        step = 1 if total <= 20 else max(1, total // 20)
+        for i in range(0, total, step):
+            page = doc[i]
+            pix = page.get_pixmap(dpi=25)
+            samples = pix.samples
+            has_color = False
+            # Quick check every 4th pixel for fast detection
+            for j in range(0, len(samples), 12):
+                r, g, b = samples[j], samples[j+1], samples[j+2]
+                if abs(r - g) > 22 or abs(r - b) > 22 or abs(g - b) > 22:
+                    has_color = True
+                    break
+            block_size = min(step, total - i)
+            if has_color:
+                color_count += block_size
+                for k in range(block_size):
+                    color_pages.append(i + k + 1)
             else:
-                bw_count += 1
+                bw_count += block_size
         doc.close()
         return (color_count > 0), bw_count, color_count, color_pages
-    except Exception:
+    except Exception as e:
+        print("[-] Fast color detection fallback:", e)
         return False, 1, 0, []
 
 def process_uploaded_document(raw_path, final_pdf_path, thumbnail_path, ext):
-    """Converts uploaded file into a standard printable PDF and generates thumbnail."""
+    """Converts uploaded file into a standard printable PDF and generates thumbnail with high performance."""
     page_count = 1
     is_locked = False
     is_image = False
@@ -326,7 +371,7 @@ def process_uploaded_document(raw_path, final_pdf_path, thumbnail_path, ext):
             else:
                 page_count = len(doc)
                 if page_count > 0:
-                    pix = doc[0].get_pixmap(dpi=130)
+                    pix = doc[0].get_pixmap(dpi=75)
                     pix.save(str(thumbnail_path))
                 doc.close()
                 _, bw_count, color_count, color_pages = analyze_pdf_color(final_pdf_path)
@@ -343,10 +388,13 @@ def process_uploaded_document(raw_path, final_pdf_path, thumbnail_path, ext):
                 im = im.convert("RGB")
             im.save(str(final_pdf_path), "PDF", resolution=150.0)
             
-            im.thumbnail((400, 400))
-            im.save(str(thumbnail_path), "PNG")
+            thumb_im = im.copy()
+            thumb_im.thumbnail((400, 400))
+            thumb_im.save(str(thumbnail_path), "PNG")
             
-            rgb_img = im.convert("HSV")
+            # Fast color check on image
+            im_small = im.resize((100, 100))
+            rgb_img = im_small.convert("HSV")
             if rgb_img.split()[1].getextrema()[1] > 30:
                 color_count = 1
                 bw_count = 0
@@ -1015,16 +1063,12 @@ def api_magic_filter():
     except Exception as ex:
         return jsonify({"success": False, "error": str(ex)}), 500
 
-# --- Image Cropping ---
+# --- Image Cropping & 8-Point Perspective Warp ---
 @app.route("/api/image/crop", methods=["POST"])
 def api_crop_image():
-    if "image" not in request.files:
-        return jsonify({"success": False, "error": "No image uploaded"}), 400
     job_id = request.form.get("job_id", "").strip()
     if not job_id:
         return jsonify({"success": False, "error": "No job_id provided"}), 400
-
-    cropped_file = request.files["image"]
 
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
@@ -1041,7 +1085,33 @@ def api_crop_image():
     thumbnail_path = THUMBNAIL_FOLDER / f"{job_id}.png"
 
     try:
-        im = Image.open(cropped_file.stream)
+        pts_json = request.form.get("points")
+        if "image" in request.files:
+            cropped_file = request.files["image"]
+            im = Image.open(cropped_file.stream)
+        elif pts_json and raw_path.exists():
+            pts = json.loads(pts_json) # 4 normalized points: TL, TR, BR, BL
+            raw_im = Image.open(str(raw_path))
+            iw, ih = raw_im.size
+            src_pts = [(p["x"] * iw, p["y"] * ih) for p in pts]
+            
+            w_top = ((src_pts[1][0] - src_pts[0][0])**2 + (src_pts[1][1] - src_pts[0][1])**2)**0.5
+            w_bot = ((src_pts[2][0] - src_pts[3][0])**2 + (src_pts[2][1] - src_pts[3][1])**2)**0.5
+            h_left = ((src_pts[3][0] - src_pts[0][0])**2 + (src_pts[3][1] - src_pts[0][1])**2)**0.5
+            h_right = ((src_pts[2][0] - src_pts[1][0])**2 + (src_pts[2][1] - src_pts[1][1])**2)**0.5
+            
+            out_w = max(100, int(max(w_top, w_bot)))
+            out_h = max(100, int(max(h_left, h_right)))
+            dst_pts = [(0, 0), (out_w, 0), (out_w, out_h), (0, out_h)]
+            
+            coeffs = find_perspective_coeffs(dst_pts, src_pts)
+            if coeffs:
+                im = raw_im.transform((out_w, out_h), Image.PERSPECTIVE, coeffs, Image.BICUBIC)
+            else:
+                im = raw_im
+        else:
+            return jsonify({"success": False, "error": "No image or perspective points provided"}), 400
+
         thumb_im = im.copy()
         thumb_im.thumbnail((400, 400))
         thumb_im.save(str(thumbnail_path), "PNG")
@@ -1062,6 +1132,7 @@ def api_crop_image():
             "thumbnail_url": f"/thumbnails/{job_id}.png?t={int(time.time())}"
         })
     except Exception as ex:
+        print("[-] Perspective Crop Error:", ex)
         return jsonify({"success": False, "error": str(ex)}), 500
 
 # --- Password-Protected PDF Unlock ---

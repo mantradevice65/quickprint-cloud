@@ -1207,28 +1207,35 @@
   </div>
 
   <!-- CROPPER MODAL -->
+  <!-- 8-POINT PERSPECTIVE / FREEFORM CROPPER MODAL -->
   <div class="crop-modal-backdrop" id="cropModal">
     <div class="crop-header">
       <div style="display:flex; justify-content:space-between; align-items:center;">
-        <span id="cropTitle" style="font-size:16px; font-weight:800;">✂️ Crop Image</span>
-        <button type="button" onclick="closeCropperModal()" style="background:none; border:none; color:white; font-size:24px; cursor:pointer; line-height:1; padding:0 8px;">&times;</button>
+        <span id="cropTitle" style="font-size:16px; font-weight:800; color:#38bdf8;">✂️ 8-Point Perspective & Freeform Crop</span>
+        <button type="button" onclick="closeCropperModal()" style="background:none; border:none; color:white; font-size:26px; cursor:pointer; line-height:1; padding:0 8px;">&times;</button>
       </div>
-      <div style="font-size:12px; font-weight:400; color:#cbd5e1; margin-top:2px;">Drag corners or borders to freely adjust the frame</div>
+      <div style="font-size:11px; font-weight:500; color:#94a3b8; margin-top:2px;">
+        Drag the 4 corner dots or 4 edge handles to straighten any tilted paper, card, or document
+      </div>
       
-      <!-- Ratio Selector Bar -->
+      <!-- Ratio & Perspective Selector Bar -->
       <div class="crop-ratio-bar" id="cropRatioBar">
-        <button type="button" class="crop-ratio-btn active" id="btnRatioFree" onclick="setCropRatio(NaN, this)">🎯 Free-form</button>
-        <button type="button" class="crop-ratio-btn" id="btnRatioA4" onclick="setCropRatio(0.707, this)">📄 A4 Document</button>
-        <button type="button" class="crop-ratio-btn" id="btnRatioSquare" onclick="setCropRatio(1, this)">🔲 1:1 Square</button>
-        <button type="button" class="crop-ratio-btn" onclick="rotateCrop()">🔄 Rotate 90°</button>
+        <button type="button" class="crop-ratio-btn active" id="btnRatioPerspective" onclick="setPerspectiveMode('free', this)">🎯 8-Point Freeform</button>
+        <button type="button" class="crop-ratio-btn" id="btnRatioIdCard" onclick="setPerspectiveMode('id', this)">💳 ID Card (3:2)</button>
+        <button type="button" class="crop-ratio-btn" id="btnRatioA4" onclick="setPerspectiveMode('a4', this)">📄 A4 Document</button>
+        <button type="button" class="crop-ratio-btn" onclick="resetPerspectiveQuad()">🔲 Full Reset</button>
+        <button type="button" class="crop-ratio-btn" onclick="rotatePerspectiveImage()">🔄 Rotate 90°</button>
       </div>
     </div>
-    <div class="crop-body">
-      <img id="cropperImage" src="" alt="Crop image">
+    <div class="crop-body" id="cropBodyContainer" style="position:relative; width:100%; height:100%; display:flex; align-items:center; justify-content:center; touch-action:none; user-select:none; overflow:hidden;">
+      <canvas id="perspectiveCanvas" style="max-width:100%; max-height:100%; border-radius:8px; box-shadow:0 10px 30px rgba(0,0,0,0.8); cursor:crosshair;"></canvas>
+      <div id="cornerLoupe" style="display:none; position:absolute; width:90px; height:90px; border-radius:50%; border:3px solid #38bdf8; box-shadow:0 6px 20px rgba(0,0,0,0.7); overflow:hidden; pointer-events:none; z-index:10000; background:#000;">
+        <canvas id="loupeCanvas" width="90" height="90"></canvas>
+      </div>
     </div>
     <div class="crop-footer">
       <button type="button" class="btn btn-outline-white" style="background:#334155; color:white; flex:1;" onclick="closeCropperModal()">✕ Cancel</button>
-      <button type="button" class="btn btn-success" id="btnFinishCrop" style="flex:2;" onclick="finishCrop()">✅ Done Cropping</button>
+      <button type="button" class="btn btn-success" id="btnFinishCrop" style="flex:2; font-weight:800;" onclick="finishPerspectiveCrop()">✅ Straighten & Done</button>
     </div>
   </div>
 
@@ -1285,23 +1292,80 @@
       calculateTotal();
     }
 
-    // Normal Document Multi-File Upload
-    function handleMultipleFiles(e) {
-      const files = Array.from(e.target.files || []);
-      if (files.length === 0) return;
+    // ================= ⚡ LIGHTNING FAST UPLOAD OPTIMIZER =================
+    async function optimizeImageForUpload(file) {
+      if (!file || !file.type || !file.type.startsWith('image/')) return file;
+      if (file.size < 1.2 * 1024 * 1024) return file; // Already under 1.2MB, fast enough
+
+      return new Promise((resolve) => {
+        const img = new Image();
+        const url = URL.createObjectURL(file);
+        img.onload = () => {
+          URL.revokeObjectURL(url);
+          const maxDim = 2480; // Standard A4 300 DPI high resolution
+          let w = img.width;
+          let h = img.height;
+          if (w > maxDim || h > maxDim) {
+            if (w > h) {
+              h = Math.round((h * maxDim) / w);
+              w = maxDim;
+            } else {
+              w = Math.round((w * maxDim) / h);
+              h = maxDim;
+            }
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = w;
+          canvas.height = h;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, w, h);
+          canvas.toBlob(
+            (blob) => {
+              if (blob && blob.size < file.size) {
+                const optName = file.name.replace(/\.[^.]+$/, '.jpg');
+                const optFile = new File([blob], optName, { type: 'image/jpeg', lastModified: Date.now() });
+                console.log(`[⚡ FAST UPLOAD] Optimized ${file.name}: ${(file.size/1024/1024).toFixed(1)}MB -> ${(optFile.size/1024).toFixed(0)}KB`);
+                resolve(optFile);
+              } else {
+                resolve(file);
+              }
+            },
+            'image/jpeg',
+            0.90
+          );
+        };
+        img.onerror = () => {
+          URL.revokeObjectURL(url);
+          resolve(file);
+        };
+        img.src = url;
+      });
+    }
+
+    // Normal Document Multi-File Upload (Accelerated)
+    async function handleMultipleFiles(e) {
+      const rawFiles = Array.from(e.target.files || []);
+      if (rawFiles.length === 0) return;
+
+      document.getElementById('dropZone').style.display = 'none';
+      document.getElementById('uploadLoader').style.display = 'block';
+      const loaderText = document.getElementById('uploadLoaderText');
+      if (loaderText) {
+        loaderText.innerText = `Preparing & Speed-Optimizing ${rawFiles.length} Document${rawFiles.length > 1 ? 's' : ''}...`;
+      }
+
+      // Fast-optimize images in parallel before uploading to speed up transfers
+      const files = await Promise.all(rawFiles.map(f => optimizeImageForUpload(f)));
+
+      if (loaderText) {
+        loaderText.innerText = `Uploading ${files.length} Document${files.length > 1 ? 's' : ''}...`;
+      }
 
       const formData = new FormData();
       formData.append('shop_slug', CURRENT_SHOP_SLUG);
       files.forEach(f => {
         formData.append('files', f);
       });
-
-      document.getElementById('dropZone').style.display = 'none';
-      document.getElementById('uploadLoader').style.display = 'block';
-      const loaderText = document.getElementById('uploadLoaderText');
-      if (loaderText) {
-        loaderText.innerText = `Uploading & Processing ${files.length} Document${files.length > 1 ? 's' : ''}...`;
-      }
 
       fetch('/api/upload', { method: 'POST', body: formData })
       .then(async (res) => {
@@ -1440,111 +1504,560 @@
       if (url) openCropperModal(url);
     }
 
-    function openCropperModal(dataUrl) {
-      let title = 'Crop Document';
-      let ratio = NaN; // free ratio by default
+    // ================= 🎯 8-POINT PERSPECTIVE & FREEFORM CROPPER =================
+    let perspectiveImg = null;
+    let perspectiveRawUrl = null;
+    let perspectiveDisplayW = 0;
+    let perspectiveDisplayH = 0;
+    let pPoints = [ // 4 corners in normalized coordinates [0..1]
+      { x: 0.05, y: 0.05 }, // 0: Top-Left (TL)
+      { x: 0.95, y: 0.05 }, // 1: Top-Right (TR)
+      { x: 0.95, y: 0.95 }, // 2: Bottom-Right (BR)
+      { x: 0.05, y: 0.95 }  // 3: Bottom-Left (BL)
+    ];
+    let dragTarget = null; // 0..3 (corners), 'm0'..'m3' (midpoints), 'inside' (pan)
+    let dragStartPos = null;
+    let dragStartPoints = null;
 
-      const ratioBar = document.getElementById('cropRatioBar');
-      if (activeTarget === 'id_front') {
-        title = 'Crop ID Front';
-        ratio = 1.585; // Standard ID Card aspect ratio
-        if (ratioBar) ratioBar.style.display = 'none';
-      } else if (activeTarget === 'id_back') {
-        title = 'Crop ID Back';
-        ratio = 1.585;
-        if (ratioBar) ratioBar.style.display = 'none';
-      } else if (activeTarget === '2in1_top') {
-        title = 'Crop Top Half (2-in-1 Print)';
-        ratio = 2200 / 1550; // Balanced 2-in-1 aspect ratio
-        if (ratioBar) ratioBar.style.display = 'none';
-      } else if (activeTarget === '2in1_bottom') {
-        title = 'Crop Bottom Half (2-in-1 Print)';
-        ratio = 2200 / 1550; // Balanced 2-in-1 aspect ratio
-        if (ratioBar) ratioBar.style.display = 'none';
-      } else if (activeTarget && activeTarget.startsWith('doc_image_')) {
-        title = '✂️ Free-Style Document Crop';
-        ratio = NaN; // 100% Free Style
-        if (ratioBar) {
-          ratioBar.style.display = 'flex';
-          document.querySelectorAll('.crop-ratio-btn').forEach(b => b.classList.remove('active'));
-          const freeBtn = document.getElementById('btnRatioFree');
-          if (freeBtn) freeBtn.classList.add('active');
-        }
-      }
+    function lerp(a, b, t) { return a + (b - a) * t; }
+    function lerpPt(p1, p2, t) { return { x: lerp(p1.x, p2.x, t), y: lerp(p1.y, p2.y, t) }; }
+    function clamp(val, min = 0, max = 1) { return Math.max(min, Math.min(max, val)); }
 
-      document.getElementById('cropTitle').innerText = title;
-      const img = document.getElementById('cropperImage');
-      img.src = dataUrl;
-      document.getElementById('cropModal').style.display = 'flex';
-
-      if (cropper) cropper.destroy();
-      cropper = new Cropper(img, {
-        aspectRatio: ratio,
-        viewMode: 1,
-        autoCropArea: 0.95,
-        responsive: true
-      });
+    function getBilinear(p0, p1, p2, p3, u, v) {
+      return {
+        x: (1 - u) * (1 - v) * p0.x + u * (1 - v) * p1.x + u * v * p2.x + (1 - u) * v * p3.x,
+        y: (1 - u) * (1 - v) * p0.y + u * (1 - v) * p1.y + u * v * p2.y + (1 - u) * v * p3.y
+      };
     }
 
-    function rotateCrop() {
-      if (cropper) cropper.rotate(90);
+    function isPointInQuad(pt, poly) {
+      let inside = false;
+      for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+        const xi = poly[i].x, yi = poly[i].y;
+        const xj = poly[j].x, yj = poly[j].y;
+        const intersect = ((yi > pt.y) !== (yj > pt.y)) && (pt.x < (xj - xi) * (pt.y - yi) / (yj - yi) + xi);
+        if (intersect) inside = !inside;
+      }
+      return inside;
+    }
+
+    function openCropperModal(dataUrl) {
+      perspectiveRawUrl = dataUrl;
+      const modal = document.getElementById('cropModal');
+      modal.style.display = 'flex';
+
+      let title = '✂️ 8-Point Perspective & Freeform Crop';
+      const ratioBar = document.getElementById('cropRatioBar');
+      if (activeTarget === 'id_front') {
+        title = '✂️ Straighten & Crop ID Front';
+      } else if (activeTarget === 'id_back') {
+        title = '✂️ Straighten & Crop ID Back';
+      } else if (activeTarget === '2in1_top') {
+        title = '✂️ Straighten Top Half (2-in-1)';
+      } else if (activeTarget === '2in1_bottom') {
+        title = '✂️ Straighten Bottom Half (2-in-1)';
+      } else if (activeTarget && activeTarget.startsWith('doc_image_')) {
+        title = '✂️ 8-Point Perspective & Document Crop';
+      }
+      document.getElementById('cropTitle').innerText = title;
+
+      perspectiveImg = new Image();
+      perspectiveImg.crossOrigin = 'anonymous';
+      perspectiveImg.onload = function() {
+        initPerspectiveCanvas();
+      };
+      perspectiveImg.src = dataUrl;
+    }
+
+    function initPerspectiveCanvas() {
+      const container = document.getElementById('cropBodyContainer');
+      const canvas = document.getElementById('perspectiveCanvas');
+      if (!container || !canvas || !perspectiveImg) return;
+
+      const maxW = container.clientWidth - 20;
+      const maxH = container.clientHeight - 20;
+      const imgW = perspectiveImg.naturalWidth || perspectiveImg.width;
+      const imgH = perspectiveImg.naturalHeight || perspectiveImg.height;
+
+      const scale = Math.min(maxW / imgW, maxH / imgH, 1.0);
+      perspectiveDisplayW = Math.round(imgW * scale);
+      perspectiveDisplayH = Math.round(imgH * scale);
+
+      canvas.width = perspectiveDisplayW;
+      canvas.height = perspectiveDisplayH;
+      canvas.style.width = perspectiveDisplayW + 'px';
+      canvas.style.height = perspectiveDisplayH + 'px';
+
+      if (activeTarget === 'id_front' || activeTarget === 'id_back') {
+        setPerspectiveMode('id');
+      } else {
+        setPerspectiveMode('free');
+      }
+
+      setupCanvasEvents(canvas);
+      drawPerspectiveCanvas();
+    }
+
+    function setPerspectiveMode(mode, btnEl) {
+      if (btnEl) {
+        document.querySelectorAll('.crop-ratio-btn').forEach(b => b.classList.remove('active'));
+        btnEl.classList.add('active');
+      }
+      const aspect = perspectiveDisplayW / perspectiveDisplayH;
+      if (mode === 'id') {
+        // Standard ID Card aspect ratio ~ 1.58
+        const targetRatio = 1.58;
+        let qw = 0.88, qh = 0.88;
+        if (aspect > targetRatio) {
+          qw = (targetRatio / aspect) * 0.88;
+        } else {
+          qh = (aspect / targetRatio) * 0.88;
+        }
+        const ox = (1 - qw) / 2;
+        const oy = (1 - qh) / 2;
+        pPoints = [
+          { x: ox, y: oy },
+          { x: ox + qw, y: oy },
+          { x: ox + qw, y: oy + qh },
+          { x: ox, y: oy + qh }
+        ];
+      } else if (mode === 'a4') {
+        // A4 Document aspect ratio ~ 0.707 (portrait) or 1.414 (landscape)
+        const targetRatio = aspect > 1 ? 1.414 : 0.707;
+        let qw = 0.88, qh = 0.88;
+        if (aspect > targetRatio) {
+          qw = (targetRatio / aspect) * 0.88;
+        } else {
+          qh = (aspect / targetRatio) * 0.88;
+        }
+        const ox = (1 - qw) / 2;
+        const oy = (1 - qh) / 2;
+        pPoints = [
+          { x: ox, y: oy },
+          { x: ox + qw, y: oy },
+          { x: ox + qw, y: oy + qh },
+          { x: ox, y: oy + qh }
+        ];
+      } else {
+        // Freeform 8-point default inset
+        pPoints = [
+          { x: 0.05, y: 0.05 },
+          { x: 0.95, y: 0.05 },
+          { x: 0.95, y: 0.95 },
+          { x: 0.05, y: 0.95 }
+        ];
+      }
+      drawPerspectiveCanvas();
+    }
+
+    function resetPerspectiveQuad() {
+      pPoints = [
+        { x: 0.01, y: 0.01 },
+        { x: 0.99, y: 0.01 },
+        { x: 0.99, y: 0.99 },
+        { x: 0.01, y: 0.99 }
+      ];
+      drawPerspectiveCanvas();
+    }
+
+    function rotatePerspectiveImage() {
+      if (!perspectiveImg) return;
+      const offCanvas = document.createElement('canvas');
+      offCanvas.width = perspectiveImg.naturalHeight || perspectiveImg.height;
+      offCanvas.height = perspectiveImg.naturalWidth || perspectiveImg.width;
+      const ctx = offCanvas.getContext('2d');
+      ctx.translate(offCanvas.width / 2, offCanvas.height / 2);
+      ctx.rotate(90 * Math.PI / 180);
+      ctx.drawImage(perspectiveImg, -perspectiveImg.width / 2, -perspectiveImg.height / 2);
+
+      const rotatedUrl = offCanvas.toDataURL('image/jpeg', 0.95);
+      perspectiveImg = new Image();
+      perspectiveImg.onload = function() {
+        initPerspectiveCanvas();
+      };
+      perspectiveImg.src = rotatedUrl;
     }
 
     function closeCropperModal() {
       document.getElementById('cropModal').style.display = 'none';
-      if (cropper) {
-        cropper.destroy();
-        cropper = null;
+      const loupe = document.getElementById('cornerLoupe');
+      if (loupe) loupe.style.display = 'none';
+      perspectiveImg = null;
+    }
+
+    function drawPerspectiveCanvas() {
+      const canvas = document.getElementById('perspectiveCanvas');
+      if (!canvas || !perspectiveImg) return;
+      const ctx = canvas.getContext('2d');
+      const w = canvas.width;
+      const h = canvas.height;
+
+      ctx.clearRect(0, 0, w, h);
+      ctx.drawImage(perspectiveImg, 0, 0, w, h);
+
+      const sPts = pPoints.map(p => ({ x: p.x * w, y: p.y * h }));
+
+      // 1. Shaded Mask Outside Polygon
+      ctx.save();
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.65)';
+      ctx.beginPath();
+      ctx.rect(0, 0, w, h);
+      ctx.moveTo(sPts[0].x, sPts[0].y);
+      ctx.lineTo(sPts[3].x, sPts[3].y);
+      ctx.lineTo(sPts[2].x, sPts[2].y);
+      ctx.lineTo(sPts[1].x, sPts[1].y);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+
+      // 2. Bright Glowing Boundary Line
+      ctx.save();
+      ctx.strokeStyle = '#38bdf8';
+      ctx.lineWidth = 2.5;
+      ctx.shadowColor = '#0284c7';
+      ctx.shadowBlur = 6;
+      ctx.beginPath();
+      ctx.moveTo(sPts[0].x, sPts[0].y);
+      ctx.lineTo(sPts[1].x, sPts[1].y);
+      ctx.lineTo(sPts[2].x, sPts[2].y);
+      ctx.lineTo(sPts[3].x, sPts[3].y);
+      ctx.closePath();
+      ctx.stroke();
+      ctx.restore();
+
+      // 3. Rule-of-Thirds Alignment Grid Inside Quad
+      ctx.save();
+      ctx.strokeStyle = 'rgba(56, 189, 248, 0.35)';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([4, 4]);
+      for (let t = 1; t <= 2; t++) {
+        const f = t / 3;
+        const hl = lerpPt(sPts[0], sPts[3], f);
+        const hr = lerpPt(sPts[1], sPts[2], f);
+        ctx.beginPath(); ctx.moveTo(hl.x, hl.y); ctx.lineTo(hr.x, hr.y); ctx.stroke();
+        const vt = lerpPt(sPts[0], sPts[1], f);
+        const vb = lerpPt(sPts[3], sPts[2], f);
+        ctx.beginPath(); ctx.moveTo(vt.x, vt.y); ctx.lineTo(vb.x, vb.y); ctx.stroke();
       }
+      ctx.restore();
+
+      // 4. Draw 4 Corner Handles (Cyan with White Core)
+      sPts.forEach((pt) => {
+        ctx.save();
+        ctx.shadowColor = 'rgba(0,0,0,0.8)';
+        ctx.shadowBlur = 8;
+        ctx.beginPath();
+        ctx.arc(pt.x, pt.y, 13, 0, Math.PI * 2);
+        ctx.fillStyle = '#0284c7';
+        ctx.fill();
+        ctx.lineWidth = 2.5;
+        ctx.strokeStyle = '#38bdf8';
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.arc(pt.x, pt.y, 5, 0, Math.PI * 2);
+        ctx.fillStyle = '#ffffff';
+        ctx.fill();
+        ctx.restore();
+      });
+
+      // 5. Draw 4 Midpoint Handles (Emerald Diamonds with White Core) - 8 handles total
+      const mids = [
+        lerpPt(sPts[0], sPts[1], 0.5),
+        lerpPt(sPts[1], sPts[2], 0.5),
+        lerpPt(sPts[2], sPts[3], 0.5),
+        lerpPt(sPts[3], sPts[0], 0.5)
+      ];
+      mids.forEach((pt) => {
+        ctx.save();
+        ctx.shadowColor = 'rgba(0,0,0,0.8)';
+        ctx.shadowBlur = 6;
+        ctx.beginPath();
+        ctx.arc(pt.x, pt.y, 9, 0, Math.PI * 2);
+        ctx.fillStyle = '#059669';
+        ctx.fill();
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = '#34d399';
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.arc(pt.x, pt.y, 3.5, 0, Math.PI * 2);
+        ctx.fillStyle = '#ffffff';
+        ctx.fill();
+        ctx.restore();
+      });
     }
 
-    function setCropRatio(ratio, btnEl) {
-      if (!cropper) return;
-      cropper.setAspectRatio(ratio);
-      document.querySelectorAll('.crop-ratio-btn').forEach(b => b.classList.remove('active'));
-      if (btnEl) btnEl.classList.add('active');
+    function setupCanvasEvents(canvas) {
+      if (canvas.dataset.eventsAttached) return;
+      canvas.dataset.eventsAttached = 'true';
+
+      function getPos(e) {
+        const rect = canvas.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        return {
+          x: (clientX - rect.left) * (canvas.width / rect.width),
+          y: (clientY - rect.top) * (canvas.height / rect.height),
+          clientX,
+          clientY
+        };
+      }
+
+      function onStart(e) {
+        e.preventDefault();
+        const pos = getPos(e);
+        const w = canvas.width;
+        const h = canvas.height;
+        const sPts = pPoints.map(p => ({ x: p.x * w, y: p.y * h }));
+
+        const hitRadius = 36;
+        dragTarget = null;
+
+        // Check 4 corners first
+        for (let i = 0; i < 4; i++) {
+          const d = Math.hypot(pos.x - sPts[i].x, pos.y - sPts[i].y);
+          if (d <= hitRadius) {
+            dragTarget = i;
+            break;
+          }
+        }
+
+        // Check 4 midpoints next
+        if (dragTarget === null) {
+          const mids = [
+            lerpPt(sPts[0], sPts[1], 0.5),
+            lerpPt(sPts[1], sPts[2], 0.5),
+            lerpPt(sPts[2], sPts[3], 0.5),
+            lerpPt(sPts[3], sPts[0], 0.5)
+          ];
+          for (let i = 0; i < 4; i++) {
+            const d = Math.hypot(pos.x - mids[i].x, pos.y - mids[i].y);
+            if (d <= hitRadius) {
+              dragTarget = 'm' + i;
+              break;
+            }
+          }
+        }
+
+        // Check inside quad (pan)
+        if (dragTarget === null && isPointInQuad(pos, sPts)) {
+          dragTarget = 'inside';
+        }
+
+        if (dragTarget !== null) {
+          dragStartPos = pos;
+          dragStartPoints = JSON.parse(JSON.stringify(pPoints));
+          if (typeof dragTarget === 'number') {
+            updateLoupe(pos.clientX, pos.clientY, pPoints[dragTarget]);
+          }
+        }
+      }
+
+      function onMove(e) {
+        if (dragTarget === null) return;
+        e.preventDefault();
+        const pos = e.touches ? getPos(e) : getPos(e);
+        const w = canvas.width;
+        const h = canvas.height;
+        const dx = (pos.x - dragStartPos.x) / w;
+        const dy = (pos.y - dragStartPos.y) / h;
+
+        if (typeof dragTarget === 'number') {
+          pPoints[dragTarget].x = clamp(dragStartPoints[dragTarget].x + dx);
+          pPoints[dragTarget].y = clamp(dragStartPoints[dragTarget].y + dy);
+          updateLoupe(pos.clientX, pos.clientY, pPoints[dragTarget]);
+        } else if (dragTarget === 'm0') {
+          pPoints[0].x = clamp(dragStartPoints[0].x + dx);
+          pPoints[0].y = clamp(dragStartPoints[0].y + dy);
+          pPoints[1].x = clamp(dragStartPoints[1].x + dx);
+          pPoints[1].y = clamp(dragStartPoints[1].y + dy);
+        } else if (dragTarget === 'm1') {
+          pPoints[1].x = clamp(dragStartPoints[1].x + dx);
+          pPoints[1].y = clamp(dragStartPoints[1].y + dy);
+          pPoints[2].x = clamp(dragStartPoints[2].x + dx);
+          pPoints[2].y = clamp(dragStartPoints[2].y + dy);
+        } else if (dragTarget === 'm2') {
+          pPoints[2].x = clamp(dragStartPoints[2].x + dx);
+          pPoints[2].y = clamp(dragStartPoints[2].y + dy);
+          pPoints[3].x = clamp(dragStartPoints[3].x + dx);
+          pPoints[3].y = clamp(dragStartPoints[3].y + dy);
+        } else if (dragTarget === 'm3') {
+          pPoints[3].x = clamp(dragStartPoints[3].x + dx);
+          pPoints[3].y = clamp(dragStartPoints[3].y + dy);
+          pPoints[0].x = clamp(dragStartPoints[0].x + dx);
+          pPoints[0].y = clamp(dragStartPoints[0].y + dy);
+        } else if (dragTarget === 'inside') {
+          for (let i = 0; i < 4; i++) {
+            pPoints[i].x = clamp(dragStartPoints[i].x + dx);
+            pPoints[i].y = clamp(dragStartPoints[i].y + dy);
+          }
+        }
+        drawPerspectiveCanvas();
+      }
+
+      function onEnd(e) {
+        dragTarget = null;
+        const loupe = document.getElementById('cornerLoupe');
+        if (loupe) loupe.style.display = 'none';
+      }
+
+      canvas.addEventListener('mousedown', onStart);
+      window.addEventListener('mousemove', onMove);
+      window.addEventListener('mouseup', onEnd);
+
+      canvas.addEventListener('touchstart', onStart, { passive: false });
+      window.addEventListener('touchmove', onMove, { passive: false });
+      window.addEventListener('touchend', onEnd);
+      window.addEventListener('touchcancel', onEnd);
     }
 
-    function openDocImageCropper(jobId) {
-      const file = uploadedBatch.find(f => f.job_id === jobId);
-      if (!file) return;
+    function updateLoupe(touchX, touchY, ptNorm) {
+      const loupe = document.getElementById('cornerLoupe');
+      const lCanvas = document.getElementById('loupeCanvas');
+      if (!loupe || !lCanvas || !perspectiveImg) return;
+      loupe.style.display = 'block';
+      loupe.style.left = (touchX - 45) + 'px';
+      loupe.style.top = (touchY - 110) + 'px';
 
-      activeTarget = 'doc_image_' + jobId;
-      const targetUrl = file.raw_url || file.thumbnail_url || `/uploads/${file.job_id}_raw.${file.original_type}`;
-      openCropperModal(targetUrl);
+      const lctx = lCanvas.getContext('2d');
+      const iw = perspectiveImg.naturalWidth || perspectiveImg.width;
+      const ih = perspectiveImg.naturalHeight || perspectiveImg.height;
+      const cx = ptNorm.x * iw;
+      const cy = ptNorm.y * ih;
+      const zoomW = 70;
+      const zoomH = 70;
+
+      lctx.clearRect(0, 0, 90, 90);
+      lctx.drawImage(perspectiveImg, cx - zoomW / 2, cy - zoomH / 2, zoomW, zoomH, 0, 0, 90, 90);
+
+      lctx.strokeStyle = '#38bdf8';
+      lctx.lineWidth = 1.5;
+      lctx.beginPath();
+      lctx.moveTo(45, 0); lctx.lineTo(45, 90);
+      lctx.moveTo(0, 45); lctx.lineTo(90, 45);
+      lctx.stroke();
+      
+      lctx.beginPath();
+      lctx.arc(45, 45, 8, 0, Math.PI * 2);
+      lctx.stroke();
     }
 
-    function finishCrop() {
-      if (!cropper) return;
+    // High-Resolution 16x16 Bilinear Triangle Mesh Warp
+    function warpPerspectiveCanvas(img, p0, p1, p2, p3, outW, outH) {
+      const outCanvas = document.createElement('canvas');
+      outCanvas.width = outW;
+      outCanvas.height = outH;
+      const ctx = outCanvas.getContext('2d');
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
 
-      if (activeTarget && activeTarget.startsWith('doc_image_')) {
-        const jobId = activeTarget.replace('doc_image_', '');
-        const canvas = cropper.getCroppedCanvas({
-          imageSmoothingQuality: 'high'
-        });
-        if (!canvas) {
+      const iw = img.naturalWidth || img.width;
+      const ih = img.naturalHeight || img.height;
+
+      const s0 = { x: p0.x * iw, y: p0.y * ih };
+      const s1 = { x: p1.x * iw, y: p1.y * ih };
+      const s2 = { x: p2.x * iw, y: p2.y * ih };
+      const s3 = { x: p3.x * iw, y: p3.y * ih };
+
+      const gridN = 16;
+      for (let y = 0; y < gridN; y++) {
+        for (let x = 0; x < gridN; x++) {
+          const u0 = x / gridN, u1 = (x + 1) / gridN;
+          const v0 = y / gridN, v1 = (y + 1) / gridN;
+
+          const d00 = { x: u0 * outW, y: v0 * outH };
+          const d10 = { x: u1 * outW, y: v0 * outH };
+          const d11 = { x: u1 * outW, y: v1 * outH };
+          const d01 = { x: u0 * outW, y: v1 * outH };
+
+          const sp00 = getBilinear(s0, s1, s2, s3, u0, v0);
+          const sp10 = getBilinear(s0, s1, s2, s3, u1, v0);
+          const sp11 = getBilinear(s0, s1, s2, s3, u1, v1);
+          const sp01 = getBilinear(s0, s1, s2, s3, u0, v1);
+
+          drawTriangleAffine(ctx, img, sp00, sp10, sp01, d00, d10, d01);
+          drawTriangleAffine(ctx, img, sp10, sp11, sp01, d10, d11, d01);
+        }
+      }
+      return outCanvas;
+    }
+
+    function drawTriangleAffine(ctx, img, s0, s1, s2, d0, d1, d2) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(d0.x, d0.y);
+      ctx.lineTo(d1.x, d1.y);
+      ctx.lineTo(d2.x, d2.y);
+      ctx.closePath();
+      ctx.clip();
+
+      const denom = (s0.x * (s1.y - s2.y) - s1.x * (s0.y - s2.y) + s2.x * (s0.y - s1.y));
+      if (Math.abs(denom) > 1e-6) {
+        const m11 = - (s0.y * (d1.x - d2.x) - s1.y * (d0.x - d2.x) + s2.y * (d0.x - d1.x)) / denom;
+        const m12 =   (s0.y * (d1.y - d2.y) - s1.y * (d0.y - d2.y) + s2.y * (d0.y - d1.y)) / denom;
+        const m21 =   (s0.x * (d1.x - d2.x) - s1.x * (d0.x - d2.x) + s2.x * (d0.x - d1.x)) / denom;
+        const m22 = - (s0.x * (d1.y - d2.y) - s1.x * (d0.y - d2.y) + s2.x * (d0.y - d1.y)) / denom;
+        const dx  =   (s0.x * (s1.y * d2.x - s2.y * d1.x) - s1.x * (s0.y * d2.x - s2.y * d0.x) + s2.x * (s0.y * d1.x - s1.y * d0.x)) / denom;
+        const dy  =   (s0.x * (s1.y * d2.y - s2.y * d1.y) - s1.x * (s0.y * d2.y - s2.y * d0.y) + s2.x * (s0.y * d1.x - s1.y * d0.y)) / denom;
+
+        ctx.transform(m11, m12, m21, m22, dx, dy);
+        ctx.drawImage(img, 0, 0);
+      }
+      ctx.restore();
+    }
+
+    function finishPerspectiveCrop() {
+      if (!perspectiveImg) return;
+      const doneBtn = document.getElementById('btnFinishCrop');
+      if (doneBtn) {
+        doneBtn.disabled = true;
+        doneBtn.innerText = '⏳ Straightening...';
+      }
+
+      const iw = perspectiveImg.naturalWidth || perspectiveImg.width;
+      const ih = perspectiveImg.naturalHeight || perspectiveImg.height;
+      const s0 = { x: pPoints[0].x * iw, y: pPoints[0].y * ih };
+      const s1 = { x: pPoints[1].x * iw, y: pPoints[1].y * ih };
+      const s2 = { x: pPoints[2].x * iw, y: pPoints[2].y * ih };
+      const s3 = { x: pPoints[3].x * iw, y: pPoints[3].y * ih };
+
+      let outW, outH;
+      if (activeTarget.startsWith('id_')) {
+        outW = 1550;
+        outH = 980; // Standard ID Card Proportion
+      } else if (activeTarget.startsWith('2in1_')) {
+        outW = 2200;
+        outH = 1550; // Balanced 2-in-1 Proportion
+      } else {
+        const wTop = Math.hypot(s1.x - s0.x, s1.y - s0.y);
+        const wBot = Math.hypot(s2.x - s3.x, s2.y - s3.y);
+        const hLeft = Math.hypot(s3.x - s0.x, s3.y - s0.y);
+        const hRight = Math.hypot(s2.x - s1.x, s2.y - s1.y);
+        outW = Math.max(200, Math.round(Math.max(wTop, wBot)));
+        outH = Math.max(200, Math.round(Math.max(hLeft, hRight)));
+      }
+
+      const warpedCanvas = warpPerspectiveCanvas(perspectiveImg, pPoints[0], pPoints[1], pPoints[2], pPoints[3], outW, outH);
+
+      warpedCanvas.toBlob((blob) => {
+        if (!blob) {
           alert('Crop failed. Please try again.');
+          if (doneBtn) { doneBtn.disabled = false; doneBtn.innerText = '✅ Straighten & Done'; }
           return;
         }
 
-        const doneBtn = document.getElementById('btnFinishCrop');
-        if (doneBtn) {
-          doneBtn.disabled = true;
-          doneBtn.innerText = '⏳ Saving Crop...';
-        }
-
-        canvas.toBlob((blob) => {
+        if (activeTarget && activeTarget.startsWith('doc_image_')) {
+          const jobId = activeTarget.replace('doc_image_', '');
           const fd = new FormData();
           fd.append('job_id', jobId);
           fd.append('image', blob, 'cropped.png');
+          fd.append('points', JSON.stringify(pPoints));
 
           fetch('/api/image/crop', { method: 'POST', body: fd })
             .then(res => res.json())
             .then(data => {
-              if (doneBtn) {
-                doneBtn.disabled = false;
-                doneBtn.innerText = '✅ Done Cropping';
-              }
+              if (doneBtn) { doneBtn.disabled = false; doneBtn.innerText = '✅ Straighten & Done'; }
               if (data.success) {
                 const file = uploadedBatch.find(f => f.job_id === jobId);
                 if (file) {
@@ -1558,29 +2071,13 @@
               }
             })
             .catch(() => {
-              if (doneBtn) {
-                doneBtn.disabled = false;
-                doneBtn.innerText = '✅ Done Cropping';
-              }
+              if (doneBtn) { doneBtn.disabled = false; doneBtn.innerText = '✅ Straighten & Done'; }
               alert('Network error while saving cropped image.');
             });
-        }, 'image/png');
-        return;
-      }
+          return;
+        }
 
-      const isId = activeTarget.startsWith('id_');
-      const canvasOpts = { imageSmoothingQuality: 'high' };
-      if (isId) {
-        canvasOpts.width = 1550;
-      } else {
-        canvasOpts.width = 2200;
-        canvasOpts.height = 1550;
-      }
-      const canvas = cropper.getCroppedCanvas(canvasOpts);
-
-      canvas.toBlob((blob) => {
         const previewUrl = URL.createObjectURL(blob);
-
         if (activeTarget === 'id_front') {
           idFrontBlob = blob;
           document.getElementById('btnGroupIdFront').style.display = 'none';
@@ -1615,12 +2112,21 @@
           document.getElementById('tag2in1Bottom').className = 'tag-status done';
         }
 
+        if (doneBtn) { doneBtn.disabled = false; doneBtn.innerText = '✅ Straighten & Done'; }
         closeCropperModal();
 
-        // Check if merge buttons can be enabled
         if (idFrontBlob && idBackBlob) document.getElementById('btnMergeId').disabled = false;
         if (twoInOneTopBlob && twoInOneBottomBlob) document.getElementById('btnMerge2in1').disabled = false;
       }, 'image/png');
+    }
+
+    function openDocImageCropper(jobId) {
+      const file = uploadedBatch.find(f => f.job_id === jobId);
+      if (!file) return;
+
+      activeTarget = 'doc_image_' + jobId;
+      const targetUrl = file.raw_url || file.thumbnail_url || `/uploads/${file.job_id}_raw.${file.original_type}`;
+      openCropperModal(targetUrl);
     }
 
     function resetIdSide(side) {
