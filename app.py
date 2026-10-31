@@ -1,5 +1,6 @@
 import os
 import sys
+import gc
 import json
 import uuid
 import sqlite3
@@ -920,7 +921,9 @@ def cloud_kiosk_sync_worker():
             pass
         time.sleep(3)
 
-threading.Thread(target=cloud_kiosk_sync_worker, daemon=True).start()
+IS_CLOUD = bool(os.environ.get('RENDER') or os.environ.get('PORT'))
+if not IS_CLOUD:
+    threading.Thread(target=cloud_kiosk_sync_worker, daemon=True).start()
 
 
 # ==================== Customer Routes ====================
