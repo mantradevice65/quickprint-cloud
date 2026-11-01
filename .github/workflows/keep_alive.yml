@@ -1,0 +1,16 @@
+name: Render 24-7 Keep-Alive
+
+on:
+  schedule:
+    # Runs every 10 minutes (Render sleeps after 15 minutes of inactivity)
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    name: Ping Cloud Health
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Keep-Alive Signal
+        run: |
+          curl -sS --retry 3 --max-time 15 "https://print.fruitsgenerator.co.in/api/health" || echo "Ping attempted"

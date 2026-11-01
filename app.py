@@ -958,9 +958,30 @@ def cloud_kiosk_sync_worker():
             pass
         time.sleep(3)
 
+def render_keep_alive_worker():
+    """
+    Prevents Render Free Tier from spinning down to sleep.
+    Pings the public health check every 8 minutes (Render sleeps after 15 minutes of inactivity).
+    """
+    time.sleep(30)
+    while True:
+        try:
+            url = "https://print.fruitsgenerator.co.in/api/health"
+            req = urllib.request.Request(
+                url,
+                headers={"User-Agent": "QuickPrint-24-7-KeepAlive/1.0"}
+            )
+            with urllib.request.urlopen(req, timeout=12) as resp:
+                pass
+        except Exception:
+            pass
+        time.sleep(480) # 8 minutes
+
 IS_CLOUD = bool(os.environ.get('RENDER') or os.environ.get('PORT'))
 if not IS_CLOUD:
     threading.Thread(target=cloud_kiosk_sync_worker, daemon=True).start()
+else:
+    threading.Thread(target=render_keep_alive_worker, daemon=True).start()
 
 
 # ==================== Customer Routes ====================
