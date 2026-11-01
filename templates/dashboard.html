@@ -744,8 +744,8 @@
           <div style="font-size:12px; font-weight:800; color:#1e40af; text-transform:uppercase; letter-spacing:0.5px;">
             ☁️ Cloud Kiosk Connection (SaaS Setup)
           </div>
-          <span style="font-size:11px; background:#dbeafe; color:#1e40af; font-weight:700; padding:2px 8px; border-radius:12px;">
-            {% if config.cloud_sync_enabled %}Connected{% else %}Offline{% endif %}
+          <span id="cloudConnectionBadge" style="font-size:11px; font-weight:700; padding:3px 10px; border-radius:12px; {% if (config.cloud_api_key and config.is_activated) or config.cloud_sync_enabled %}background:#dcfce7; color:#15803d; border:1px solid #86efac;{% else %}background:#fee2e2; color:#dc2626; border:1px solid #fca5a5;{% endif %}">
+            {% if (config.cloud_api_key and config.is_activated) or config.cloud_sync_enabled %}🟢 Connected{% else %}🔴 Offline{% endif %}
           </span>
         </div>
         <div style="font-size:11px; color:#475569; margin-top:4px; margin-bottom:8px;">
@@ -1328,6 +1328,21 @@
             if (modalLink) {
               modalLink.href = data.server_url;
               modalLink.innerText = data.server_url;
+            }
+          }
+          const badge = document.getElementById('cloudConnectionBadge');
+          if (badge && data) {
+            const isConn = Boolean((data.cloud_api_key && data.is_activated) || data.cloud_sync_enabled);
+            if (isConn) {
+              badge.innerHTML = '🟢 Connected';
+              badge.style.background = '#dcfce7';
+              badge.style.color = '#15803d';
+              badge.style.border = '1px solid #86efac';
+            } else {
+              badge.innerHTML = '🔴 Offline';
+              badge.style.background = '#fee2e2';
+              badge.style.color = '#dc2626';
+              badge.style.border = '1px solid #fca5a5';
             }
           }
         })
