@@ -485,6 +485,25 @@
 
         <div class="grid-2">
           <div class="form-group">
+            <label class="form-label">Number of Systems / Counters</label>
+            <select id="addNumCounters" class="form-select">
+              <option value="1" selected>1 System (Single Counter QR)</option>
+              <option value="2">2 Systems (Counter 1 &amp; 2 QRs)</option>
+              <option value="3">3 Systems (Counter 1, 2, 3 QRs)</option>
+              <option value="4">4 Systems (Counter 1, 2, 3, 4 QRs)</option>
+              <option value="5">5 Systems (Counter 1, 2, 3, 4, 5 QRs)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Terminal Setup Note</label>
+            <div style="font-size:11px; color:#94a3b8; margin-top:8px; line-height:1.4;">
+              All systems use the <b>same single Kiosk API Key</b>. Each system selects its Counter on first launch.
+            </div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="form-group">
             <label class="form-label">B&amp;W Rate (₹/Page)</label>
             <input type="number" step="0.5" id="addRateBw" class="form-input" value="5.0" required>
           </div>
@@ -565,6 +584,25 @@
           <div class="form-group">
             <label class="form-label">Mobile Number</label>
             <input type="text" id="editPhone" class="form-input">
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="form-group">
+            <label class="form-label">Number of Systems / Counters</label>
+            <select id="editNumCounters" class="form-select">
+              <option value="1" selected>1 System (Single Counter QR)</option>
+              <option value="2">2 Systems (Counter 1 &amp; 2 QRs)</option>
+              <option value="3">3 Systems (Counter 1, 2, 3 QRs)</option>
+              <option value="4">4 Systems (Counter 1, 2, 3, 4 QRs)</option>
+              <option value="5">5 Systems (Counter 1, 2, 3, 4, 5 QRs)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Terminal Setup Note</label>
+            <div style="font-size:11px; color:#94a3b8; margin-top:8px; line-height:1.4;">
+              All systems use the <b>same single Kiosk API Key</b>. Each system selects its Counter on first launch.
+            </div>
           </div>
         </div>
 
@@ -808,6 +846,11 @@
           badgeHtml = `<span class="badge badge-success">🟢 Active</span>`;
         }
 
+        const numCounters = parseInt(s.num_counters || 1);
+        const counterBadge = numCounters > 1 
+          ? `<span class="badge" style="background:#1e3a8a; color:#93c5fd; font-size:10px; margin-left:4px;">🖥️ ${numCounters} Systems</span>` 
+          : `<span class="badge" style="background:#1e293b; color:#94a3b8; font-size:10px; margin-left:4px;">🖥️ 1 System</span>`;
+
         let expirySub = '';
         if (s.plan_type === 'lifetime' || s.subscription_expiry === '2099-12-31') {
           expirySub = `<div style="font-size:11px; color:#10b981; font-weight:700;">Lifetime Access</div>`;
@@ -815,6 +858,23 @@
           expirySub = `<div style="font-size:11px; color:#f87171; font-weight:700;">Expired ${Math.abs(s.days_remaining)} days ago</div>`;
         } else {
           expirySub = `<div style="font-size:11px; color:#38bdf8; font-weight:700;">${s.days_remaining} days left</div>`;
+        }
+
+        let posterBtnsHtml = '';
+        if (numCounters <= 1) {
+          posterBtnsHtml = `
+            <a href="/s/${s.slug}/poster" target="_blank" class="action-btn" title="Print Poster">
+              📄 Poster
+            </a>`;
+        } else {
+          posterBtnsHtml = `<div style="display:inline-flex; gap:3px; flex-wrap:wrap;">`;
+          for (let c = 1; c <= numCounters; c++) {
+            posterBtnsHtml += `
+              <a href="/s/${s.slug}/poster/${c}" target="_blank" class="action-btn" style="padding:4px 7px; font-size:11px;" title="Print Counter ${c} Poster">
+                📄 C${c} QR
+              </a>`;
+          }
+          posterBtnsHtml += `</div>`;
         }
 
         return `
@@ -826,7 +886,7 @@
                 <span style="font-size:10px; font-family:monospace; color:#38bdf8; font-weight:700;">🔑 ${s.kiosk_api_key}</span>
                 <button type="button" onclick="copyDirectKey('${s.kiosk_api_key}', this)" style="border:none; background:#1e293b; color:#38bdf8; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:800; cursor:pointer;" title="Click to copy API key">📋 Copy</button>
               </div>
-              <div style="margin-top:6px;">${badgeHtml}</div>
+              <div style="margin-top:6px; display:flex; align-items:center; gap:4px; flex-wrap:wrap;">${badgeHtml} ${counterBadge}</div>
             </td>
             <td>
               <div style="font-weight:700;">${s.owner_name || 'N/A'}</div>
@@ -848,9 +908,7 @@
             </td>
             <td>
               <div style="display:flex; flex-wrap:wrap; gap:6px;">
-                <a href="/s/${s.slug}/poster" target="_blank" class="action-btn" title="Print Poster">
-                  📄 Poster
-                </a>
+                ${posterBtnsHtml}
                 <button type="button" class="action-btn" onclick="openEditShopModal('${s.slug}')" title="Edit Kiosk & Razorpay Keys" style="color:#60a5fa; font-weight:700;">
                   ✏️ Edit
                 </button>
@@ -935,6 +993,7 @@
         rate_color: parseFloat(document.getElementById('addRateColor').value) || 10.0,
         upi_id: document.getElementById('addUpiId').value.trim(),
         upi_name: document.getElementById('addUpiName').value.trim(),
+        num_counters: parseInt(document.getElementById('addNumCounters').value || 1),
         razorpay_key_id: document.getElementById('addRazorpayKeyId').value.trim(),
         razorpay_key_secret: document.getElementById('addRazorpayKeySecret').value.trim(),
         razorpay_enabled: document.getElementById('addRazorpayEnabled').checked,
@@ -981,6 +1040,7 @@
       document.getElementById('editRazorpayKeySecret').value = s.razorpay_key_secret || '';
       document.getElementById('editRazorpayEnabled').checked = Boolean(s.razorpay_enabled);
       document.getElementById('editEnableCash').checked = Boolean(s.enable_cash_payment !== 0);
+      document.getElementById('editNumCounters').value = String(s.num_counters || 1);
       document.getElementById('editShopModal').style.display = 'flex';
     }
 
@@ -995,6 +1055,7 @@
         shop_name: document.getElementById('editShopName').value.trim(),
         owner_name: document.getElementById('editOwnerName').value.trim(),
         phone: document.getElementById('editPhone').value.trim(),
+        num_counters: parseInt(document.getElementById('editNumCounters').value || 1),
         rate_bw: parseFloat(document.getElementById('editRateBw').value),
         rate_color: parseFloat(document.getElementById('editRateColor').value),
         upi_id: document.getElementById('editUpiId').value.trim(),

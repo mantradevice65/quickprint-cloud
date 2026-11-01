@@ -88,6 +88,15 @@ def load_config():
             pass
     return DEFAULT_CONFIG.copy()
 
+def save_config(cfg):
+    try:
+        with open(CONFIG_FILE, "w", encoding="utf-8") as f:
+            json.dump(cfg, f, indent=4)
+        return True
+    except Exception as e:
+        print("[-] Error saving config:", e)
+        return False
+
 SHOPS_REGISTRY_FILE = BASE_DIR / "shops_registry.json"
 
 def save_shops_registry():
@@ -106,6 +115,10 @@ def save_shops_registry():
             pass
         try:
             c.execute("ALTER TABLE shops ADD COLUMN lifetime_revenue REAL DEFAULT 0.0")
+        except Exception:
+            pass
+        try:
+            c.execute("ALTER TABLE shops ADD COLUMN num_counters INTEGER DEFAULT 1")
         except Exception:
             pass
 
@@ -150,6 +163,10 @@ def sync_shops_from_registry():
             pass
         try:
             c.execute("ALTER TABLE shops ADD COLUMN lifetime_revenue REAL DEFAULT 0.0")
+        except Exception:
+            pass
+        try:
+            c.execute("ALTER TABLE shops ADD COLUMN num_counters INTEGER DEFAULT 1")
         except Exception:
             pass
 
@@ -1012,6 +1029,13 @@ def customer_page(shop_slug=None):
     has_rzp_keys = bool((shop.get("razorpay_key_id") or "").strip() and (shop.get("razorpay_key_secret") or "").strip())
     rzp_enabled = bool(shop.get("razorpay_enabled", 1)) and has_rzp_keys
     
+    counter_param = request.args.get("counter")
+    if counter_param:
+        c_clean = "".join(filter(str.isalnum, str(counter_param)))
+        counter_display = f"Counter {c_clean}" if c_clean.isdigit() else f"Counter {c_clean}"
+    else:
+        counter_display = shop.get("counter_name", "Counter 1")
+
     cfg = {
         "shop_slug": shop["slug"],
         "shop_name": shop["shop_name"],
@@ -1019,7 +1043,7 @@ def customer_page(shop_slug=None):
         "upi_name": shop.get("upi_name", ""),
         "rate_bw": float(shop.get("rate_bw", 5.0)),
         "rate_color": float(shop.get("rate_color", 10.0)),
-        "counter_name": shop.get("counter_name", "Counter 1"),
+        "counter_name": counter_display,
         "razorpay_enabled": rzp_enabled,
         "razorpay_key_id": shop.get("razorpay_key_id", "").strip() if rzp_enabled else "",
         "enable_cash_payment": bool(shop.get("enable_cash_payment", 1))
@@ -1027,12 +1051,16 @@ def customer_page(shop_slug=None):
     return render_template("customer.html", config=cfg)
 
 @app.route("/s/<shop_slug>/qr")
-def get_shop_qr(shop_slug):
+@app.route("/s/<shop_slug>/qr/<int:counter_num>")
+def get_shop_qr(shop_slug, counter_num=None):
     shop = get_shop_by_slug(shop_slug)
     if not shop:
         return jsonify({"error": "Shop not found"}), 404
     base_url = request.host_url.rstrip("/")
-    target_url = f"{base_url}/s/{shop['slug']}"
+    if counter_num and counter_num > 1:
+        target_url = f"{base_url}/s/{shop['slug']}?counter={counter_num}"
+    else:
+        target_url = f"{base_url}/s/{shop['slug']}"
     qr = qrcode.QRCode(box_size=10, border=2)
     qr.add_data(target_url)
     qr.make(fit=True)
@@ -1043,13 +1071,19 @@ def get_shop_qr(shop_slug):
     return send_file(buf, mimetype="image/png")
 
 @app.route("/s/<shop_slug>/poster")
-def view_shop_poster(shop_slug):
+@app.route("/s/<shop_slug>/poster/<int:counter_num>")
+def view_shop_poster(shop_slug, counter_num=None):
     shop = get_shop_by_slug(shop_slug)
     if not shop:
         return render_template("shop_error.html", error_type="not_found", shop_slug=shop_slug), 404
     base_url = request.host_url.rstrip("/")
-    portal_url = f"{base_url}/s/{shop['slug']}"
-    return render_template("counter_poster.html", shop=shop, portal_url=portal_url)
+    shop_copy = dict(shop)
+    if counter_num and counter_num >= 1:
+        shop_copy["counter_name"] = f"Counter {counter_num}"
+        portal_url = f"{base_url}/s/{shop['slug']}?counter={counter_num}"
+    else:
+        portal_url = f"{base_url}/s/{shop['slug']}"
+    return render_template("counter_poster.html", shop=shop_copy, portal_url=portal_url)
 
 @app.route("/api/config", methods=["GET", "POST"])
 def api_get_config():
@@ -2192,19 +2226,20 @@ def api_super_create_shop():
         
     kiosk_api_key = f"qp_kiosk_{uuid.uuid4().hex[:12]}"
     created_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    num_counters = max(1, min(10, int(data.get("num_counters") or 1)))
 
     c.execute("""
         INSERT INTO shops (
             slug, shop_name, owner_name, phone, upi_id, upi_name,
             razorpay_enabled, razorpay_key_id, razorpay_key_secret,
             rate_bw, rate_color, enable_cash_payment, counter_name,
-            kiosk_api_key, plan_type, subscription_expiry, is_active, created_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            kiosk_api_key, plan_type, subscription_expiry, is_active, created_at, num_counters
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """, (
         slug, shop_name, owner_name, phone, upi_id, upi_name,
         razorpay_enabled, razorpay_key_id, razorpay_key_secret,
         rate_bw, rate_color, enable_cash, "Counter 1",
-        kiosk_api_key, plan_type, expiry_date, 1, created_at
+        kiosk_api_key, plan_type, expiry_date, 1, created_at, num_counters
     ))
     conn.commit()
     conn.close()
@@ -2283,6 +2318,7 @@ def api_super_update_shop(slug):
     razorpay_enabled = 1 if data.get("razorpay_enabled", True) else 0
     razorpay_key_id = (data.get("razorpay_key_id") or "").strip()
     razorpay_key_secret = (data.get("razorpay_key_secret") or "").strip()
+    num_counters = max(1, min(10, int(data.get("num_counters") or 1)))
     
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
@@ -2295,9 +2331,10 @@ def api_super_update_shop(slug):
         UPDATE shops
         SET shop_name = ?, owner_name = ?, phone = ?, upi_id = ?, upi_name = ?,
             rate_bw = ?, rate_color = ?, enable_cash_payment = ?,
-            razorpay_enabled = ?, razorpay_key_id = ?, razorpay_key_secret = ?
+            razorpay_enabled = ?, razorpay_key_id = ?, razorpay_key_secret = ?,
+            num_counters = ?
         WHERE slug = ?
-    """, (shop_name, owner_name, phone, upi_id, upi_name, rate_bw, rate_color, enable_cash, razorpay_enabled, razorpay_key_id, razorpay_key_secret, slug))
+    """, (shop_name, owner_name, phone, upi_id, upi_name, rate_bw, rate_color, enable_cash, razorpay_enabled, razorpay_key_id, razorpay_key_secret, num_counters, slug))
     conn.commit()
     conn.close()
     save_shops_registry()
@@ -2446,6 +2483,8 @@ def api_kiosk_activate():
             "rate_bw": float(s.get("rate_bw", 5.0)),
             "rate_color": float(s.get("rate_color", 10.0)),
             "counter_name": s.get("counter_name", "Counter 1"),
+            "num_counters": int(s.get("num_counters") or 1),
+            "counters": [f"Counter {i}" for i in range(1, int(s.get("num_counters") or 1) + 1)],
             "razorpay_enabled": bool(s.get("razorpay_enabled", 1)),
             "razorpay_key_id": s.get("razorpay_key_id", ""),
             "razorpay_key_secret": s.get("razorpay_key_secret", ""),
@@ -2491,7 +2530,8 @@ def api_kiosk_activate_local():
             cfg["upi_name"] = shop.get("upi_name", "")
             cfg["rate_bw"] = float(shop.get("rate_bw", 5.0))
             cfg["rate_color"] = float(shop.get("rate_color", 10.0))
-            cfg["counter_name"] = shop.get("counter_name", "Counter 1")
+            chosen_counter = (data.get("counter_name") or shop.get("counter_name", "Counter 1")).strip()
+            cfg["counter_name"] = chosen_counter
             cfg["razorpay_enabled"] = bool(shop.get("razorpay_enabled"))
             cfg["razorpay_key_id"] = shop.get("razorpay_key_id", "")
             cfg["razorpay_key_secret"] = shop.get("razorpay_key_secret", "")
