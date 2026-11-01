@@ -4,5 +4,4 @@ uploads/*
 !uploads/.gitkeep
 thumbnails/*
 !thumbnails/.gitkeep
-jobs.db
 .env

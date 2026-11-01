@@ -822,6 +822,10 @@
             <td>
               <div style="font-size:15px; font-weight:800; color:white;">${s.shop_name}</div>
               <div style="font-size:11px; color:#94a3b8; font-family:monospace; margin-top:2px;">/s/${s.slug}</div>
+              <div style="margin-top:4px; display:inline-flex; align-items:center; gap:6px; background:#0f172a; padding:3px 8px; border-radius:6px; border:1px solid #334155;">
+                <span style="font-size:10px; font-family:monospace; color:#38bdf8; font-weight:700;">🔑 ${s.kiosk_api_key}</span>
+                <button type="button" onclick="copyDirectKey('${s.kiosk_api_key}', this)" style="border:none; background:#1e293b; color:#38bdf8; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:800; cursor:pointer;" title="Click to copy API key">📋 Copy</button>
+              </div>
               <div style="margin-top:6px;">${badgeHtml}</div>
             </td>
             <td>
@@ -1075,6 +1079,19 @@
         btnText.innerText = 'Copied!';
         setTimeout(() => { btnText.innerText = 'Copy API Key'; }, 2500);
       });
+    }
+
+    function copyDirectKey(key, btn) {
+      if (!key) return;
+      navigator.clipboard.writeText(key).then(() => {
+        const orig = btn.innerText;
+        btn.innerText = '✅ Copied!';
+        btn.style.color = '#34d399';
+        setTimeout(() => {
+          btn.innerText = orig;
+          btn.style.color = '#38bdf8';
+        }, 2000);
+      }).catch(() => prompt('Copy Kiosk Key:', key));
     }
 
     function handleLogout() {

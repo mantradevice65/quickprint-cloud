@@ -480,6 +480,35 @@
 </head>
 <body>
 
+  <!-- UNCONFIGURED / ACTIVATION MODAL -->
+  {% if not config.is_activated or not config.cloud_api_key or not config.shop_name %}
+  <div class="modal-backdrop" id="activationModal" style="display:flex; z-index:99999; background:rgba(15, 23, 42, 0.96); backdrop-filter:blur(10px);">
+    <div class="modal" style="max-width:540px; text-align:center; padding:36px 28px; border-radius:24px; box-shadow:0 25px 60px rgba(0,0,0,0.6); border:1px solid rgba(255,255,255,0.12); background:#0f172a; color:white;">
+      <div style="font-size:52px; margin-bottom:12px;">🔑</div>
+      <h2 style="font-size:24px; font-weight:900; margin-bottom:8px; color:white;">Activate QuickPrint Kiosk</h2>
+      <p style="font-size:14px; color:#94a3b8; line-height:1.6; margin-bottom:24px;">
+        This terminal is fresh and unconfigured. Please enter the <b>Shop Kiosk API Key</b> provided by your Administrator to connect your shop, rates, and cloud queue.
+      </p>
+
+      <div style="text-align:left; margin-bottom:20px;">
+        <label style="font-size:12px; font-weight:800; color:#cbd5e1; text-transform:uppercase; letter-spacing:0.5px;">Shop Kiosk API Key</label>
+        <input type="text" id="inputActivationKey" placeholder="e.g. qp_kiosk_232eadcaac2f" style="width:100%; box-sizing:border-box; margin-top:8px; padding:14px 16px; border-radius:12px; background:#1e293b; border:2px solid #334155; color:#38bdf8; font-family:monospace; font-size:15px; font-weight:700; outline:none;" onkeydown="if(event.key==='Enter') submitActivation()">
+        <div id="activationError" style="display:none; color:#f87171; font-size:12px; font-weight:700; margin-top:8px;"></div>
+      </div>
+
+      <button type="button" id="btnActivateKiosk" onclick="submitActivation()" style="width:100%; padding:14px; border-radius:12px; background:linear-gradient(135deg, #2563eb, #1d4ed8); color:white; font-size:15px; font-weight:800; border:none; cursor:pointer; transition:all 0.2s; box-shadow:0 4px 14px rgba(37,99,235,0.4);">
+        ⚡ Connect &amp; Activate Terminal
+      </button>
+
+      <div style="margin-top:24px; padding-top:20px; border-top:1px solid #1e293b; display:flex; justify-content:space-around; text-align:left; font-size:12px; color:#94a3b8;">
+        <div>✅ Auto-fetches Shop Name</div>
+        <div>✅ Sets UPI &amp; Rates</div>
+        <div>✅ Syncs Cloud Orders</div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
   <!-- TOP NAVBAR -->
   <div class="navbar">
     <div class="brand">
@@ -713,7 +742,15 @@
         <div style="display:grid; grid-template-columns:1fr; gap:8px;">
           <div>
             <label class="form-label" style="font-size:11px;">Kiosk Setup Key (Secret)</label>
-            <input type="text" class="form-input" id="cfgCloudApiKey" value="{{ config.cloud_api_key or '' }}" placeholder="KP_KIOSK_..." style="font-family:monospace; font-weight:700; color:#1e3a8a;">
+            <input type="text" class="form-input" id="cfgCloudApiKey" value="{{ config.cloud_api_key or '' }}" placeholder="qp_kiosk_..." style="font-family:monospace; font-weight:700; color:#1e3a8a;">
+          </div>
+          <div style="display:flex; gap:8px; margin-top:2px;">
+            <button type="button" class="btn btn-primary" onclick="resyncShopFromCloud()" style="padding:7px 12px; font-size:11px; font-weight:700; flex:1;">
+              🔄 Re-Sync Shop Profile from Cloud
+            </button>
+            <button type="button" class="btn btn-outline-white" onclick="resetKioskKey()" style="padding:7px 12px; font-size:11px; color:#ef4444; border-color:#fca5a5; background:#fff;" title="Unpair terminal">
+              Unlink Shop
+            </button>
           </div>
           <div>
             <label class="form-label" style="font-size:11px;">Cloud Server URL</label>
@@ -1248,6 +1285,74 @@
           }
         })
         .catch(() => {});
+    }
+
+    function submitActivation() {
+      const keyInput = document.getElementById('inputActivationKey');
+      const errDiv = document.getElementById('activationError');
+      const btn = document.getElementById('btnActivateKiosk');
+      const key = (keyInput ? keyInput.value : '').trim();
+
+      if (!key) {
+        if (errDiv) { errDiv.innerText = 'Please enter your Kiosk API Key.'; errDiv.style.display = 'block'; }
+        return;
+      }
+
+      if (errDiv) errDiv.style.display = 'none';
+      if (btn) { btn.disabled = true; btn.innerText = 'Connecting to Cloud...'; }
+
+      fetch('/api/kiosk/activate_local', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ kiosk_api_key: key })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (btn) { btn.disabled = false; btn.innerText = '⚡ Connect & Activate Terminal'; }
+        if (data.success) {
+          alert('🎉 ' + data.message);
+          location.reload();
+        } else {
+          if (errDiv) { errDiv.innerText = data.error || 'Activation failed.'; errDiv.style.display = 'block'; }
+        }
+      })
+      .catch(err => {
+        if (btn) { btn.disabled = false; btn.innerText = '⚡ Connect & Activate Terminal'; }
+        if (errDiv) { errDiv.innerText = 'Network error: could not connect to server.'; errDiv.style.display = 'block'; }
+      });
+    }
+
+    function resyncShopFromCloud() {
+      const key = (document.getElementById('cfgCloudApiKey').value || '').trim();
+      if (!key) {
+        alert('Please enter a Kiosk Setup Key first.');
+        return;
+      }
+      fetch('/api/kiosk/activate_local', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ kiosk_api_key: key })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          alert('✅ ' + data.message);
+          location.reload();
+        } else {
+          alert('❌ Error: ' + (data.error || 'Sync failed'));
+        }
+      })
+      .catch(() => alert('Network error syncing from cloud.'));
+    }
+
+    function resetKioskKey() {
+      if (!confirm('Are you sure you want to unpair/reset this terminal? It will return to the unconfigured activation screen.')) return;
+      fetch('/api/kiosk/deactivate_local', { method: 'POST' })
+        .then(r => r.json())
+        .then(data => {
+          alert('Terminal unlinked successfully.');
+          location.reload();
+        });
     }
 
     // Auto poll every 2 seconds

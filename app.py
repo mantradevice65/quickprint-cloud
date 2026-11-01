@@ -92,28 +92,49 @@ SHOPS_REGISTRY_FILE = BASE_DIR / "shops_registry.json"
 
 def save_shops_registry():
     """
-    Permanent Kiosk Registry Persistence:
-    Syncs the active shops from database into shops_registry.json.
-    Ensures that newly registered kiosks are backed up to disk.
+    Permanent Kiosk Registry & Revenue Ledger Persistence:
+    Syncs the active shops, lifetime print orders, and lifetime processed revenue into shops_registry.json.
+    Ensures that newly registered kiosks, order counts, and earnings are backed up to disk.
     """
     try:
         conn = sqlite3.connect(DB_FILE)
         conn.row_factory = sqlite3.Row
         c = conn.cursor()
+        try:
+            c.execute("ALTER TABLE shops ADD COLUMN lifetime_jobs INTEGER DEFAULT 0")
+        except Exception:
+            pass
+        try:
+            c.execute("ALTER TABLE shops ADD COLUMN lifetime_revenue REAL DEFAULT 0.0")
+        except Exception:
+            pass
+
         c.execute("SELECT * FROM shops ORDER BY id ASC")
         data = [dict(r) for r in c.fetchall()]
+        for s in data:
+            slug = s.get("slug")
+            c.execute("SELECT COUNT(*), COALESCE(SUM(total_price), 0) FROM jobs WHERE shop_slug = ?", (slug,))
+            row = c.fetchone()
+            db_jobs = row[0] if row else 0
+            db_rev = round(row[1], 2) if row else 0.0
+            cur_lifetime_jobs = int(s.get("lifetime_jobs") or 0)
+            cur_lifetime_rev = float(s.get("lifetime_revenue") or 0.0)
+            s["lifetime_jobs"] = max(db_jobs, cur_lifetime_jobs)
+            s["lifetime_revenue"] = max(db_rev, cur_lifetime_rev)
+            c.execute("UPDATE shops SET lifetime_jobs = ?, lifetime_revenue = ? WHERE slug = ?", (s["lifetime_jobs"], s["lifetime_revenue"], slug))
+        conn.commit()
         conn.close()
         with open(SHOPS_REGISTRY_FILE, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2)
-        print(f"[🛡️ REGISTRY] Synced {len(data)} kiosks to {SHOPS_REGISTRY_FILE.name}")
+        print(f"[🛡️ REGISTRY] Synced {len(data)} kiosks and revenue ledgers to {SHOPS_REGISTRY_FILE.name}")
     except Exception as e:
         print("[-] Error saving shops_registry.json:", e)
 
 def sync_shops_from_registry():
     """
     Auto-Restoration Engine:
-    On every server boot, loads all registered shops from shops_registry.json
-    so that redeploying, updating software, or adding features NEVER deletes any kiosk.
+    On every server boot, loads all registered shops, lifetime orders, and revenue from shops_registry.json
+    so that redeploying, updating software, or adding features NEVER deletes any kiosk or historical ledger.
     """
     if not SHOPS_REGISTRY_FILE.exists():
         return
@@ -123,21 +144,33 @@ def sync_shops_from_registry():
             
         conn = sqlite3.connect(DB_FILE)
         c = conn.cursor()
+        try:
+            c.execute("ALTER TABLE shops ADD COLUMN lifetime_jobs INTEGER DEFAULT 0")
+        except Exception:
+            pass
+        try:
+            c.execute("ALTER TABLE shops ADD COLUMN lifetime_revenue REAL DEFAULT 0.0")
+        except Exception:
+            pass
+
         restored = 0
         for s in registry:
             slug = (s.get("slug") or "").strip().lower()
             if not slug:
                 continue
-            c.execute("SELECT id FROM shops WHERE slug = ?", (slug,))
+            c.execute("SELECT id, lifetime_jobs, lifetime_revenue FROM shops WHERE slug = ?", (slug,))
             row = c.fetchone()
+            reg_jobs = int(s.get("lifetime_jobs") or 0)
+            reg_rev = float(s.get("lifetime_revenue") or 0.0)
             if not row:
                 c.execute("""
                     INSERT INTO shops (
                         slug, shop_name, owner_name, phone, upi_id, upi_name,
                         razorpay_enabled, razorpay_key_id, razorpay_key_secret,
                         rate_bw, rate_color, enable_cash_payment, counter_name,
-                        kiosk_api_key, plan_type, subscription_expiry, is_active, created_at
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        kiosk_api_key, plan_type, subscription_expiry, is_active, created_at,
+                        lifetime_jobs, lifetime_revenue
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """, (
                     slug,
                     s.get("shop_name", "Print Kiosk"),
@@ -156,10 +189,14 @@ def sync_shops_from_registry():
                     s.get("plan_type", "yearly"),
                     s.get("subscription_expiry", "2099-12-31"),
                     s.get("is_active", 1),
-                    s.get("created_at") or datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    s.get("created_at") or datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    reg_jobs,
+                    reg_rev
                 ))
                 restored += 1
-                print(f"[🛡️ AUTO-RESTORE] Restored Kiosk: {slug} ({s.get('shop_name')})")
+                print(f"[🛡️ AUTO-RESTORE] Restored Kiosk: {slug} ({s.get('shop_name')}) with {reg_jobs} orders, ₹{reg_rev} rev")
+            else:
+                c.execute("UPDATE shops SET lifetime_jobs = MAX(COALESCE(lifetime_jobs,0), ?), lifetime_revenue = MAX(COALESCE(lifetime_revenue,0), ?) WHERE slug = ?", (reg_jobs, reg_rev, slug))
         conn.commit()
         conn.close()
         if restored > 0:
@@ -2072,8 +2109,10 @@ def api_super_get_shops():
         slug = s["slug"]
         c.execute("SELECT COUNT(*), COALESCE(SUM(total_price), 0) FROM jobs WHERE shop_slug = ?", (slug,))
         row = c.fetchone()
-        s["total_jobs"] = row[0] if row else 0
-        s["total_revenue"] = round(row[1], 2) if row else 0.0
+        db_jobs = row[0] if row else 0
+        db_rev = round(row[1], 2) if row else 0.0
+        s["total_jobs"] = max(db_jobs, int(s.get("lifetime_jobs") or 0))
+        s["total_revenue"] = max(db_rev, float(s.get("lifetime_revenue") or 0.0))
         
         exp_str = s.get("subscription_expiry")
         if exp_str and exp_str != "2099-12-31":
@@ -2339,7 +2378,137 @@ def api_super_backup_shops():
     response.headers["Content-Disposition"] = f"attachment; filename=QuickPrint_Kiosks_Backup_{timestamp}.json"
     return response
 
-# ==================== Kiosk Sync API (For Shop PC) ====================
+# ==================== Kiosk Sync & Activation API (For Shop PC) ====================
+
+@app.route("/api/kiosk/activate", methods=["GET", "POST"])
+def api_kiosk_activate():
+    """
+    Kiosk Terminal Activation Endpoint:
+    Allows a desktop software client to connect via Shop Kiosk API Key.
+    Returns the complete shop configuration (name, owner, UPI, rates, counter, QR url).
+    """
+    if request.method == "POST":
+        data = request.get_json(silent=True) or request.form.to_dict() or {}
+        api_key = (data.get("kiosk_api_key") or data.get("api_key") or "").strip()
+    else:
+        api_key = request.args.get("api_key", "").strip() or request.args.get("kiosk_api_key", "").strip()
+
+    if not api_key:
+        return jsonify({"success": False, "error": "Kiosk API Key is required"}), 400
+
+    conn = sqlite3.connect(DB_FILE)
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    c.execute("SELECT * FROM shops WHERE kiosk_api_key = ? LIMIT 1", (api_key,))
+    shop = c.fetchone()
+    conn.close()
+
+    if not shop:
+        return jsonify({"success": False, "error": "Invalid Kiosk API Key. Please check with your administrator."}), 404
+
+    s = dict(shop)
+    if not s.get("is_active"):
+        return jsonify({"success": False, "error": "This Kiosk is currently paused by Administrator."}), 403
+
+    slug = s.get("slug", "")
+    cloud_base = "https://print.fruitsgenerator.co.in"
+
+    return jsonify({
+        "success": True,
+        "shop": {
+            "shop_name": s.get("shop_name", "Print Kiosk"),
+            "owner_name": s.get("owner_name", ""),
+            "phone": s.get("phone", ""),
+            "slug": slug,
+            "upi_id": s.get("upi_id", ""),
+            "upi_name": s.get("upi_name", ""),
+            "rate_bw": float(s.get("rate_bw", 5.0)),
+            "rate_color": float(s.get("rate_color", 10.0)),
+            "counter_name": s.get("counter_name", "Counter 1"),
+            "razorpay_enabled": bool(s.get("razorpay_enabled", 1)),
+            "razorpay_key_id": s.get("razorpay_key_id", ""),
+            "razorpay_key_secret": s.get("razorpay_key_secret", ""),
+            "enable_cash_payment": bool(s.get("enable_cash_payment", 1)),
+            "kiosk_api_key": api_key,
+            "public_url": f"{cloud_base}/s/{slug}",
+            "locked_url": f"{cloud_base}/s/{slug}"
+        }
+    })
+
+@app.route("/api/kiosk/activate_local", methods=["POST"])
+def api_kiosk_activate_local():
+    """Local client endpoint: activates this PC terminal using cloud API key."""
+    data = request.get_json(silent=True) or request.form.to_dict() or {}
+    api_key = (data.get("kiosk_api_key") or data.get("api_key") or "").strip()
+    if not api_key:
+        return jsonify({"success": False, "error": "Kiosk API Key is required"}), 400
+
+    cfg = load_config()
+    cloud_server = cfg.get("cloud_server_url", "https://print.fruitsgenerator.co.in").rstrip("/")
+
+    try:
+        activate_url = f"{cloud_server}/api/kiosk/activate"
+        req_data = json.dumps({"kiosk_api_key": api_key}).encode("utf-8")
+        req = urllib.request.Request(
+            activate_url,
+            data=req_data,
+            headers={
+                "Content-Type": "application/json",
+                "User-Agent": "QuickPrint-Desktop-Kiosk/1.0"
+            }
+        )
+        with urllib.request.urlopen(req, timeout=12) as resp:
+            res_json = json.loads(resp.read().decode("utf-8"))
+            if not res_json.get("success"):
+                return jsonify({"success": False, "error": res_json.get("error", "Activation failed")}), 400
+
+            shop = res_json.get("shop", {})
+            cfg["shop_name"] = shop.get("shop_name", "Print Kiosk")
+            cfg["owner_name"] = shop.get("owner_name", "")
+            cfg["phone"] = shop.get("phone", "")
+            cfg["upi_id"] = shop.get("upi_id", "")
+            cfg["upi_name"] = shop.get("upi_name", "")
+            cfg["rate_bw"] = float(shop.get("rate_bw", 5.0))
+            cfg["rate_color"] = float(shop.get("rate_color", 10.0))
+            cfg["counter_name"] = shop.get("counter_name", "Counter 1")
+            cfg["razorpay_enabled"] = bool(shop.get("razorpay_enabled"))
+            cfg["razorpay_key_id"] = shop.get("razorpay_key_id", "")
+            cfg["razorpay_key_secret"] = shop.get("razorpay_key_secret", "")
+            cfg["enable_cash_payment"] = bool(shop.get("enable_cash_payment", 1))
+            cfg["cloud_api_key"] = api_key
+            cfg["public_url"] = shop.get("public_url", "")
+            cfg["locked_url"] = shop.get("locked_url", "")
+            cfg["is_activated"] = True
+            save_config(cfg)
+
+            return jsonify({
+                "success": True,
+                "message": f"Successfully activated for {cfg['shop_name']}!",
+                "shop_name": cfg["shop_name"],
+                "slug": shop.get("slug")
+            })
+    except urllib.error.HTTPError as e:
+        try:
+            err_body = json.loads(e.read().decode("utf-8"))
+            return jsonify({"success": False, "error": err_body.get("error", f"HTTP Error {e.code}")}), e.code
+        except Exception:
+            return jsonify({"success": False, "error": f"Cloud rejected key (HTTP {e.code})"}), e.code
+    except Exception as e:
+        return jsonify({"success": False, "error": f"Could not connect to cloud server: {str(e)}"}), 500
+
+@app.route("/api/kiosk/deactivate_local", methods=["POST"])
+def api_kiosk_deactivate_local():
+    """Unpairs this local terminal so it can be re-activated or sold to a new client."""
+    cfg = load_config()
+    cfg["is_activated"] = False
+    cfg["cloud_api_key"] = ""
+    cfg["shop_name"] = ""
+    cfg["upi_id"] = ""
+    cfg["upi_name"] = ""
+    cfg["public_url"] = ""
+    cfg["locked_url"] = ""
+    save_config(cfg)
+    return jsonify({"success": True, "message": "Terminal reset successfully."})
 
 @app.route("/api/kiosk/pending_jobs", methods=["GET"])
 def kiosk_pending_jobs():
