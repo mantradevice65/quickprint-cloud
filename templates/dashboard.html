@@ -496,6 +496,18 @@
         <div id="activationError" style="display:none; color:#f87171; font-size:12px; font-weight:700; margin-top:8px;"></div>
       </div>
 
+      <div style="text-align:left; margin-bottom:20px;">
+        <label style="font-size:12px; font-weight:800; color:#cbd5e1; text-transform:uppercase; letter-spacing:0.5px;">Assign This System's Counter</label>
+        <select id="selectCounterName" style="width:100%; box-sizing:border-box; margin-top:8px; padding:12px 16px; border-radius:12px; background:#1e293b; border:2px solid #334155; color:#f8fafc; font-size:14px; font-weight:800; outline:none;">
+          <option value="Counter 1" selected>Counter 1 (Main Terminal)</option>
+          <option value="Counter 2">Counter 2 (Terminal 2)</option>
+          <option value="Counter 3">Counter 3 (Terminal 3)</option>
+          <option value="Counter 4">Counter 4 (Terminal 4)</option>
+          <option value="Counter 5">Counter 5 (Terminal 5)</option>
+        </select>
+        <div style="font-size:11px; color:#94a3b8; margin-top:4px;">In shops with multiple PCs, assign which counter desk this PC represents.</div>
+      </div>
+
       <button type="button" id="btnActivateKiosk" onclick="submitActivation()" style="width:100%; padding:14px; border-radius:12px; background:linear-gradient(135deg, #2563eb, #1d4ed8); color:white; font-size:15px; font-weight:800; border:none; cursor:pointer; transition:all 0.2s; box-shadow:0 4px 14px rgba(37,99,235,0.4);">
         ⚡ Connect &amp; Activate Terminal
       </button>
@@ -770,6 +782,16 @@
     let soundEnabled = true;
     let knownJobIds = new Set();
     const printersList = {{ printers | tojson }};
+    const currentConfig = {{ config | tojson }};
+    let lastPendingFingerprint = null;
+    let lastHistoryFingerprint = null;
+
+    function getDefaultPrinterForJob(printType) {
+      if (printType === 'color' || printType === 'mixed') {
+        return currentConfig.default_color_printer || currentConfig.default_bw_printer || (printersList.length ? printersList[0] : '');
+      }
+      return currentConfig.default_bw_printer || currentConfig.default_color_printer || (printersList.length ? printersList[0] : '');
+    }
 
     function escapeHtml(text) {
       if (text === null || text === undefined) return '';
@@ -906,234 +928,259 @@
         const totalMonthRev = monthPrintedJobs.reduce((acc, curr) => acc + (curr.total_price || 0), 0);
         document.getElementById('statRevenue').innerText = '₹' + Math.round(totalMonthRev);
 
-        // Render Queue
-        if (pendingJobs.length === 0) {
-          queueGrid.innerHTML = `
-            <div class="empty-state">
-              <div class="empty-icon">🖨️</div>
-              <h3>No Pending Print Jobs</h3>
-              <p style="color: var(--muted); font-size: 13px; margin-top: 4px;">
-                When a customer scans the QR code and submits their file, it will appear here instantly with a sound alert.
-              </p>
-            </div>
-          `;
-        } else {
-          // Group jobs by batch_id if present
-          const batchMap = {};
-          const standaloneJobs = [];
+        // Render Queue with Fingerprint Guard (Prevents 2-Second DOM Flickering & Re-renders)
+        const pendingFingerprint = pendingJobs.map(j => `${j.id}:${j.status}:${j.total_price}:${j.print_type}`).join('|');
+        if (pendingFingerprint !== lastPendingFingerprint) {
+          lastPendingFingerprint = pendingFingerprint;
+          if (pendingJobs.length === 0) {
+            queueGrid.innerHTML = `
+              <div class="empty-state">
+                <div class="empty-icon">🖨️</div>
+                <h3>No Pending Print Jobs</h3>
+                <p style="color: var(--muted); font-size: 13px; margin-top: 4px;">
+                  When a customer scans the QR code and submits their file, it will appear here instantly with a sound alert.
+                </p>
+              </div>
+            `;
+          } else {
+            // Group jobs by batch_id if present
+            const batchMap = {};
+            const standaloneJobs = [];
 
-          pendingJobs.forEach(j => {
-            if (j.batch_id) {
-              if (!batchMap[j.batch_id]) batchMap[j.batch_id] = [];
-              batchMap[j.batch_id].push(j);
-            } else {
-              standaloneJobs.push(j);
-            }
-          });
+            pendingJobs.forEach(j => {
+              if (j.batch_id) {
+                if (!batchMap[j.batch_id]) batchMap[j.batch_id] = [];
+                batchMap[j.batch_id].push(j);
+              } else {
+                standaloneJobs.push(j);
+              }
+            });
 
-          let html = '';
+            let html = '';
+            const hasCustomPrinters = Boolean(currentConfig.default_bw_printer || currentConfig.default_color_printer);
 
-          // 1. Render Batch Orders
-          Object.keys(batchMap).forEach(bId => {
-            const bJobs = batchMap[bId];
-            const first = bJobs[0];
-            let timeStr = first.created_at ? (first.created_at.includes(' ') ? first.created_at.split(' ')[1] : first.created_at) : '';
-            const totalBatchPrice = bJobs.reduce((sum, item) => sum + (item.total_price || 0), 0);
-            const totalBatchPages = bJobs.reduce((sum, item) => sum + (item.page_count || 1), 0);
-            const isCash = bJobs.some(item => item.utr === 'CASH AT COUNTER' || item.status === 'pending_cash');
-            const isPaid = bJobs.some(item => item.status === 'paid');
-            const statusBadge = isCash
-              ? `<span class="pill" style="background:#fef08a; color:#854d0e; font-weight:800; border:1px solid #eab308; font-size:12px;">💵 CASH REQUEST: Collect ₹${Math.round(totalBatchPrice)}</span>`
-              : (isPaid
-                ? `<span class="pill pill-paid">🟢 Paid ₹${Math.round(totalBatchPrice)}</span>`
-                : `<span class="pill" style="background:#fef3c7; color:#92400e; font-weight:700;">⏳ Uploaded (₹${Math.round(totalBatchPrice)})</span>`);
+            // 1. Render Batch Orders
+            Object.keys(batchMap).forEach(bId => {
+              const bJobs = batchMap[bId];
+              const first = bJobs[0];
+              let timeStr = first.created_at ? (first.created_at.includes(' ') ? first.created_at.split(' ')[1] : first.created_at) : '';
+              const totalBatchPrice = bJobs.reduce((sum, item) => sum + (item.total_price || 0), 0);
+              const totalBatchPages = bJobs.reduce((sum, item) => sum + (item.page_count || 1), 0);
+              const isCash = bJobs.some(item => item.utr === 'CASH AT COUNTER' || item.status === 'pending_cash');
+              const isPaid = bJobs.some(item => item.status === 'paid');
+              const statusBadge = isCash
+                ? `<span class="pill" style="background:#fef08a; color:#854d0e; font-weight:800; border:1px solid #eab308; font-size:12px;">💵 CASH REQUEST: Collect ₹${Math.round(totalBatchPrice)}</span>`
+                : (isPaid
+                  ? `<span class="pill pill-paid">🟢 Paid ₹${Math.round(totalBatchPrice)}</span>`
+                  : `<span class="pill" style="background:#fef3c7; color:#92400e; font-weight:700;">⏳ Uploaded (₹${Math.round(totalBatchPrice)})</span>`);
 
-            html += `
-              <div class="job-card" id="batch_card_${bId}" style="border: 2px solid ${isCash ? '#f59e0b' : '#2563eb'}; box-shadow: 0 4px 14px ${isCash ? 'rgba(245,158,11,0.18)' : 'rgba(37,99,235,0.12)'}; background: ${isCash ? '#fffef5' : '#ffffff'};">
-                <div class="job-header" style="background: ${isCash ? 'linear-gradient(135deg, #b45309, #d97706)' : 'linear-gradient(135deg, #1e3a8a, #2563eb)'}; color:white; padding:12px 16px; border-radius:12px 12px 0 0;">
-                  <div style="display:flex; align-items:center; gap:8px;">
-                    <span style="background:white; color:${isCash ? '#b45309' : '#1e3a8a'}; font-size:11px; font-weight:800; padding:2px 8px; border-radius:6px;">📦 BATCH ORDER</span>
-                    <span style="font-size:13px; font-weight:700;">${bId}</span>
-                  </div>
-                  <div style="display:flex; align-items:center; gap:10px;">
-                    <span style="font-size:12px; opacity:0.9;">${timeStr}</span>
-                    ${statusBadge}
-                  </div>
-                </div>
+              const defaultBatchPrinter = getDefaultPrinterForJob(first.print_type);
+              const printerBatchHtml = hasCustomPrinters
+                ? `<div style="display:flex; align-items:center; gap:8px; margin-bottom:12px; font-size:12px; font-weight:700; color:#475569;">
+                     <span>🖨️ Printer:</span>
+                     <span style="color:#0f172a; background:#f1f5f9; padding:3px 10px; border-radius:6px; border:1px solid #cbd5e1; font-weight:800;">${escapeHtml(defaultBatchPrinter || 'Default System Printer')}</span>
+                   </div>`
+                : `<div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+                     <span style="font-size:12px; font-weight:700; color:#475569; white-space:nowrap;">Printer:</span>
+                     <select class="printer-select" id="printer_select_batch_${bId}" style="margin:0; flex:1;">
+                       ${printersList.map(p => `
+                         <option value="${p}" ${p === first.printer_used ? 'selected' : ''}>${p}</option>
+                       `).join('')}
+                     </select>
+                   </div>`;
 
-                <div style="padding:16px;">
-                  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-                    <div>
-                      <div class="cust-name" style="font-size:16px;">${escapeHtml(first.customer_name || 'Customer')}</div>
-                      <div style="font-size:12px; color:var(--muted); font-weight:600; margin-top:2px;">
-                        ${bJobs.length} Documents &bull; Total ${totalBatchPages} Pages to Print &bull; ${first.print_type === 'bw' ? 'Black & White' : (first.print_type === 'mixed' ? '🎨 Smart Mixed' : '🌈 Colour')}
-                      </div>
+              html += `
+                <div class="job-card" id="batch_card_${bId}" style="border: 2px solid ${isCash ? '#f59e0b' : '#2563eb'}; box-shadow: 0 4px 14px ${isCash ? 'rgba(245,158,11,0.18)' : 'rgba(37,99,235,0.12)'}; background: ${isCash ? '#fffef5' : '#ffffff'};">
+                  <div class="job-header" style="background: ${isCash ? 'linear-gradient(135deg, #b45309, #d97706)' : 'linear-gradient(135deg, #1e3a8a, #2563eb)'}; color:white; padding:12px 16px; border-radius:12px 12px 0 0;">
+                    <div style="display:flex; align-items:center; gap:8px;">
+                      <span style="background:white; color:${isCash ? '#b45309' : '#1e3a8a'}; font-size:11px; font-weight:800; padding:2px 8px; border-radius:6px;">📦 BATCH ORDER</span>
+                      <span style="font-size:13px; font-weight:700;">${bId}</span>
                     </div>
-                    ${first.utr ? `<div style="font-size:11px; color:${first.utr.startsWith('RZP:') ? '#166534' : '#2563eb'}; font-weight:700; background:${first.utr.startsWith('RZP:') ? '#dcfce7' : '#eff6ff'}; padding:4px 10px; border-radius:6px; border:1px solid ${first.utr.startsWith('RZP:') ? '#86efac' : '#bfdbfe'};">${first.utr.startsWith('RZP:') ? '⚡ Razorpay: ' + escapeHtml(first.utr.replace('RZP:', '')) : 'UTR: ' + escapeHtml(first.utr)}</div>` : ''}
+                    <div style="display:flex; align-items:center; gap:10px;">
+                      <span style="font-size:12px; opacity:0.9;">${timeStr}</span>
+                      ${statusBadge}
+                    </div>
                   </div>
 
-                  <!-- Documents list in this batch -->
-                  <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:14px;">
-                    ${bJobs.map((j, idx) => `
-                      <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:8px 10px;">
-                        <div style="display:flex; align-items:center; gap:10px; min-width:0;">
-                          <img src="/thumbnails/${j.id}.png" style="width:34px; height:44px; object-fit:cover; border-radius:4px; border:1px solid #cbd5e1; background:white;" onerror="this.style.display='none'">
-                          <div style="min-width:0;">
-                            <div style="font-size:13px; font-weight:700; color:#1e293b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
-                              ${idx + 1}. ${escapeHtml(j.filename || 'Document')}
-                            </div>
-                            <div style="font-size:11px; color:var(--muted); margin-top:2px; display:flex; gap:6px; flex-wrap:wrap; align-items:center;">
-                              ${j.page_range && j.page_range !== 'all' ? `<span style="color:#2563eb; font-weight:800;">📄 ${j.page_count} Pages (Pg: ${escapeHtml(j.page_range)})</span>` : `<span style="color:#475569; font-weight:600;">📄 ${j.page_count || 1} Pages (All)</span>`}
-                              <span>&bull; ${j.copies || 1} ${(j.copies || 1) > 1 ? 'Copies' : 'Copy'}</span>
-                              ${j.color_pages ? `<span style="background:#fef3c7; color:#b45309; padding:1px 6px; border-radius:999px; font-size:10px; font-weight:700;">🎨 Col: ${j.color_pages}</span>` : ''}
+                  <div style="padding:16px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                      <div>
+                        <div class="cust-name" style="font-size:16px;">${escapeHtml(first.customer_name || 'Customer')}</div>
+                        <div style="font-size:12px; color:var(--muted); font-weight:600; margin-top:2px;">
+                          ${bJobs.length} Documents &bull; Total ${totalBatchPages} Pages to Print &bull; ${first.print_type === 'bw' ? 'Black & White' : (first.print_type === 'mixed' ? '🎨 Smart Mixed' : '🌈 Colour')}
+                        </div>
+                      </div>
+                      ${first.utr ? `<div style="font-size:11px; color:${first.utr.startsWith('RZP:') ? '#166534' : '#2563eb'}; font-weight:700; background:${first.utr.startsWith('RZP:') ? '#dcfce7' : '#eff6ff'}; padding:4px 10px; border-radius:6px; border:1px solid ${first.utr.startsWith('RZP:') ? '#86efac' : '#bfdbfe'};">${first.utr.startsWith('RZP:') ? '⚡ Razorpay: ' + escapeHtml(first.utr.replace('RZP:', '')) : 'UTR: ' + escapeHtml(first.utr)}</div>` : ''}
+                    </div>
+
+                    <!-- Documents list in this batch -->
+                    <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:14px;">
+                      ${bJobs.map((j, idx) => `
+                        <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:8px 10px;">
+                          <div style="display:flex; align-items:center; gap:10px; min-width:0;">
+                            <img src="/thumbnails/${j.id}.png" style="width:34px; height:44px; object-fit:cover; border-radius:4px; border:1px solid #cbd5e1; background:white;" onerror="this.style.display='none'">
+                            <div style="min-width:0;">
+                              <div style="font-size:13px; font-weight:700; color:#1e293b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                                ${idx + 1}. ${escapeHtml(j.filename || 'Document')}
+                              </div>
+                              <div style="font-size:11px; color:var(--muted); margin-top:2px; display:flex; gap:6px; flex-wrap:wrap; align-items:center;">
+                                ${j.page_range && j.page_range !== 'all' ? `<span style="color:#2563eb; font-weight:800;">📄 ${j.page_count} Pages (Pg: ${escapeHtml(j.page_range)})</span>` : `<span style="color:#475569; font-weight:600;">📄 ${j.page_count || 1} Pages (All)</span>`}
+                                <span>&bull; ${j.copies || 1} ${(j.copies || 1) > 1 ? 'Copies' : 'Copy'}</span>
+                                ${j.color_pages ? `<span style="background:#fef3c7; color:#b45309; padding:1px 6px; border-radius:999px; font-size:10px; font-weight:700;">🎨 Col: ${j.color_pages}</span>` : ''}
+                              </div>
                             </div>
                           </div>
+                          <button type="button" class="btn btn-outline-white" style="color:#2563eb; border-color:#bfdbfe; background:white; font-size:11px; padding:4px 8px; white-space:nowrap;" onclick="window.open('/uploads/${j.id}.pdf', '_blank')">
+                            👁️ View
+                          </button>
                         </div>
-                        <button type="button" class="btn btn-outline-white" style="color:#2563eb; border-color:#bfdbfe; background:white; font-size:11px; padding:4px 8px; white-space:nowrap;" onclick="window.open('/uploads/${j.id}.pdf', '_blank')">
-                          👁️ View
-                        </button>
-                      </div>
-                    `).join('')}
-                  </div>
-
-                  <!-- Printer Select for Batch -->
-                  <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
-                    <span style="font-size:12px; font-weight:700; color:#475569; white-space:nowrap;">Printer:</span>
-                    <select class="printer-select" id="printer_select_batch_${bId}" style="margin:0; flex:1;">
-                      ${printersList.map(p => `
-                        <option value="${p}" ${p === first.printer_used ? 'selected' : ''}>${p}</option>
                       `).join('')}
-                    </select>
-                  </div>
+                    </div>
 
-                  <!-- Batch Actions -->
-                  <div class="job-actions" style="margin-top:0;">
+                    <!-- Printer Info for Batch -->
+                    ${printerBatchHtml}
+
+                    <!-- Batch Actions -->
+                    <div class="job-actions" style="margin-top:0;">
+                      ${isCash ? `
+                        <button class="btn-print" onclick="printBatch('${bId}')" style="background:#16a34a; font-size:14px; padding:12px; font-weight:800; flex:2;">
+                          💵 COLLECT CASH & PRINT ALL (₹${Math.round(totalBatchPrice)})
+                        </button>
+                        <button class="btn-cancel" onclick="cancelBatch('${bId}')" style="background:#fee2e2; color:#dc2626; border:1px solid #fca5a5; font-size:13px; font-weight:800; padding:12px 18px; border-radius:8px;" title="Cancel this batch">
+                          ❌ REJECT / CANCEL
+                        </button>
+                      ` : `
+                        <button class="btn-print" onclick="printBatch('${bId}')" style="background:#2563eb; font-size:14px; padding:12px; font-weight:700; flex:2;">
+                          🖨️ APPROVE & PRINT ALL (${bJobs.length} DOCUMENTS)
+                        </button>
+                        <button class="btn-cancel" onclick="cancelBatch('${bId}')" style="background:#fee2e2; color:#dc2626; border:1px solid #fca5a5; font-size:13px; font-weight:800; padding:12px 18px; border-radius:8px;" title="Cancel this batch">
+                          ✕
+                        </button>
+                      `}
+                    </div>
+                  </div>
+                </div>
+              `;
+            });
+
+            // 2. Render Standalone Jobs
+            standaloneJobs.forEach(j => {
+              let timeStr = j.created_at ? (j.created_at.includes(' ') ? j.created_at.split(' ')[1] : j.created_at) : '';
+              const isCash = j.utr === 'CASH AT COUNTER' || j.status === 'pending_cash';
+              const isPaid = j.status === 'paid';
+              const statusBadge = isCash
+                ? `<span class="pill" style="background:#fef08a; color:#854d0e; font-weight:800; border:1px solid #eab308; font-size:12px;">💵 CASH REQUEST: Collect ₹${j.total_price || 0}</span>`
+                : (isPaid
+                  ? `<span class="pill pill-paid">🟢 Paid ₹${j.total_price || 0}</span>`
+                  : `<span class="pill" style="background:#fef3c7; color:#92400e; font-weight:700;">⏳ Uploaded (₹${j.total_price || 0})</span>`);
+
+              const defaultJobPrinter = getDefaultPrinterForJob(j.print_type);
+              const printerJobHtml = hasCustomPrinters
+                ? `<div style="display:flex; align-items:center; gap:8px; margin-top:8px; font-size:12px; font-weight:700; color:#475569;">
+                     <span>🖨️ Printer:</span>
+                     <span style="color:#0f172a; background:#f1f5f9; padding:3px 10px; border-radius:6px; border:1px solid #cbd5e1; font-weight:800;">${escapeHtml(defaultJobPrinter || 'Default System Printer')}</span>
+                   </div>`
+                : `<select class="printer-select" id="printer_select_${j.id}">
+                     ${printersList.map(p => `
+                       <option value="${p}" ${p === j.printer_used ? 'selected' : ''}>${p}</option>
+                     `).join('')}
+                   </select>`;
+
+              html += `
+                <div class="job-card" id="card_${j.id}" style="border: 2px solid ${isCash ? '#f59e0b' : 'var(--border)'}; background: ${isCash ? '#fffef5' : '#ffffff'};">
+                  <div class="job-header" style="${isCash ? 'background: #fef3c7; border-bottom: 1px solid #fde68a;' : ''}">
+                    <span class="job-id" style="${isCash ? 'color: #92400e; font-weight: 800;' : ''}">${j.id}</span>
+                    <span class="job-time">${timeStr}</span>
+                  </div>
+                  <div class="job-body">
+                    <div class="thumb-wrap" onclick="window.open('/uploads/${j.id}.pdf', '_blank')" title="Click to View Full Document">
+                      <img src="/thumbnails/${j.id}.png" alt="Thumbnail" onerror="this.style.display='none'">
+                    </div>
+                    <div class="job-details">
+                      <div>
+                        <div class="cust-name">${escapeHtml(j.customer_name || 'Customer')}</div>
+                        <div style="font-size:12px; color:var(--muted); font-weight:600; margin-top:2px; word-break:break-all;">
+                          ${escapeHtml(j.filename || 'Document')}
+                        </div>
+                        <div class="job-meta-row">
+                          <span class="pill ${j.print_type === 'bw' ? 'pill-bw' : 'pill-color'}">${j.print_type === 'bw' ? 'Black & White' : (j.print_type === 'mixed' ? '🎨 Smart Mixed' : 'Colour')}</span>
+                          ${j.color_pages ? `<span class="pill" style="background:#fef3c7; color:#b45309; font-weight:700;">🎨 Col: ${j.color_pages}</span>` : ''}
+                          ${j.original_type === 'id_card' ? '<span class="pill" style="background:#ede9fe; color:#6d28d9; font-weight:800;">🪪 ID Card (Enlarged)</span>' : ''}
+                          ${j.original_type === '2in1' ? '<span class="pill" style="background:#fef3c7; color:#b45309; font-weight:800;">📑 2-in-1 Print</span>' : ''}
+                          ${statusBadge}
+                          ${j.page_range && j.page_range !== 'all' ? `<span class="pill" style="background:#dbeafe; color:#1d4ed8; font-weight:800;">📄 ${j.page_count} Pages (Pg: ${escapeHtml(j.page_range)})</span>` : `<span class="pill pill-bw">📄 ${j.page_count || 1} Pages</span>`}
+                          <span class="pill pill-bw">${j.copies || 1} ${(j.copies || 1) > 1 ? 'Copies' : 'Copy'}</span>
+                        </div>
+                        ${j.utr ? `<div style="font-size:11px; color:${j.utr.startsWith('RZP:') ? '#166534' : '#2563eb'}; margin-top:4px; font-weight:700;">${j.utr.startsWith('RZP:') ? '⚡ Paid via Razorpay: ' + escapeHtml(j.utr.replace('RZP:', '')) : 'UTR: ' + escapeHtml(j.utr)}</div>` : ''}
+                      </div>
+
+                      ${printerJobHtml}
+                    </div>
+                  </div>
+                  <div class="job-actions">
                     ${isCash ? `
-                      <button class="btn-print" onclick="printBatch('${bId}')" style="background:#16a34a; font-size:14px; padding:12px; font-weight:800; flex:2;">
-                        💵 COLLECT CASH & PRINT ALL (₹${Math.round(totalBatchPrice)})
+                      <button class="btn-print" onclick="printJob('${j.id}')" style="background:#16a34a; font-size:13px; font-weight:800; padding:10px 16px; flex:2;">
+                        💵 COLLECT CASH & PRINT (₹${j.total_price || 0})
                       </button>
-                      <button class="btn-cancel" onclick="cancelBatch('${bId}')" style="background:#fee2e2; color:#dc2626; border:1px solid #fca5a5; font-size:13px; font-weight:800; padding:12px 18px; border-radius:8px;" title="Cancel this batch">
-                        ❌ REJECT / CANCEL
+                      <button class="btn-cancel" onclick="cancelJob('${j.id}')" style="background:#fee2e2; color:#dc2626; border:1px solid #fca5a5; font-size:12px; font-weight:800; padding:10px 14px; border-radius:8px;" title="Cancel this job">
+                        ❌ CANCEL
                       </button>
                     ` : `
-                      <button class="btn-print" onclick="printBatch('${bId}')" style="background:#2563eb; font-size:14px; padding:12px; font-weight:700; flex:2;">
-                        🖨️ APPROVE & PRINT ALL (${bJobs.length} DOCUMENTS)
+                      <button class="btn-print" onclick="printJob('${j.id}')" style="background:#2563eb; font-size:13px; font-weight:700; padding:10px 16px; flex:2;">
+                        🖨️ APPROVE & PRINT
                       </button>
-                      <button class="btn-cancel" onclick="cancelBatch('${bId}')" style="background:#fee2e2; color:#dc2626; border:1px solid #fca5a5; font-size:13px; font-weight:800; padding:12px 18px; border-radius:8px;" title="Cancel this batch">
+                      <button class="btn-cancel" onclick="cancelJob('${j.id}')" style="background:#fee2e2; color:#dc2626; border:1px solid #fca5a5; font-size:12px; font-weight:800; padding:10px 14px; border-radius:8px;" title="Cancel this job">
                         ✕
                       </button>
                     `}
                   </div>
                 </div>
-              </div>
-            `;
-          });
+              `;
+            });
 
-          // 2. Render Standalone Jobs
-          standaloneJobs.forEach(j => {
-            let timeStr = j.created_at ? (j.created_at.includes(' ') ? j.created_at.split(' ')[1] : j.created_at) : '';
-            const isCash = j.utr === 'CASH AT COUNTER' || j.status === 'pending_cash';
-            const isPaid = j.status === 'paid';
-            const statusBadge = isCash
-              ? `<span class="pill" style="background:#fef08a; color:#854d0e; font-weight:800; border:1px solid #eab308; font-size:12px;">💵 CASH REQUEST: Collect ₹${j.total_price || 0}</span>`
-              : (isPaid
-                ? `<span class="pill pill-paid">🟢 Paid ₹${j.total_price || 0}</span>`
-                : `<span class="pill" style="background:#fef3c7; color:#92400e; font-weight:700;">⏳ Uploaded (₹${j.total_price || 0})</span>`);
-
-            html += `
-              <div class="job-card" id="card_${j.id}" style="border: 2px solid ${isCash ? '#f59e0b' : 'var(--border)'}; background: ${isCash ? '#fffef5' : '#ffffff'};">
-                <div class="job-header" style="${isCash ? 'background: #fef3c7; border-bottom: 1px solid #fde68a;' : ''}">
-                  <span class="job-id" style="${isCash ? 'color: #92400e; font-weight: 800;' : ''}">${j.id}</span>
-                  <span class="job-time">${timeStr}</span>
-                </div>
-                <div class="job-body">
-                  <div class="thumb-wrap" onclick="window.open('/uploads/${j.id}.pdf', '_blank')" title="Click to View Full Document">
-                    <img src="/thumbnails/${j.id}.png" alt="Thumbnail" onerror="this.style.display='none'">
-                  </div>
-                  <div class="job-details">
-                    <div>
-                      <div class="cust-name">${escapeHtml(j.customer_name || 'Customer')}</div>
-                      <div style="font-size:12px; color:var(--muted); font-weight:600; margin-top:2px; word-break:break-all;">
-                        ${escapeHtml(j.filename || 'Document')}
-                      </div>
-                      <div class="job-meta-row">
-                        <span class="pill ${j.print_type === 'bw' ? 'pill-bw' : 'pill-color'}">${j.print_type === 'bw' ? 'Black & White' : (j.print_type === 'mixed' ? '🎨 Smart Mixed' : 'Colour')}</span>
-                        ${j.color_pages ? `<span class="pill" style="background:#fef3c7; color:#b45309; font-weight:700;">🎨 Col: ${j.color_pages}</span>` : ''}
-                        ${j.original_type === 'id_card' ? '<span class="pill" style="background:#ede9fe; color:#6d28d9; font-weight:800;">🪪 ID Card (Enlarged)</span>' : ''}
-                        ${j.original_type === '2in1' ? '<span class="pill" style="background:#fef3c7; color:#b45309; font-weight:800;">📑 2-in-1 Print</span>' : ''}
-                        ${statusBadge}
-                        ${j.page_range && j.page_range !== 'all' ? `<span class="pill" style="background:#dbeafe; color:#1d4ed8; font-weight:800;">📄 ${j.page_count} Pages (Pg: ${escapeHtml(j.page_range)})</span>` : `<span class="pill pill-bw">📄 ${j.page_count || 1} Pages</span>`}
-                        <span class="pill pill-bw">${j.copies || 1} ${(j.copies || 1) > 1 ? 'Copies' : 'Copy'}</span>
-                      </div>
-                      ${j.utr ? `<div style="font-size:11px; color:${j.utr.startsWith('RZP:') ? '#166534' : '#2563eb'}; margin-top:4px; font-weight:700;">${j.utr.startsWith('RZP:') ? '⚡ Paid via Razorpay: ' + escapeHtml(j.utr.replace('RZP:', '')) : 'UTR: ' + escapeHtml(j.utr)}</div>` : ''}
-                    </div>
-
-                    <select class="printer-select" id="printer_select_${j.id}">
-                      ${printersList.map(p => `
-                        <option value="${p}" ${p === j.printer_used ? 'selected' : ''}>${p}</option>
-                      `).join('')}
-                    </select>
-                  </div>
-                </div>
-                <div class="job-actions">
-                  ${isCash ? `
-                    <button class="btn-print" onclick="printJob('${j.id}')" style="background:#16a34a; font-size:13px; font-weight:800; padding:10px 16px; flex:2;">
-                      💵 COLLECT CASH & PRINT (₹${j.total_price || 0})
-                    </button>
-                    <button class="btn-cancel" onclick="cancelJob('${j.id}')" style="background:#fee2e2; color:#dc2626; border:1px solid #fca5a5; font-size:12px; font-weight:800; padding:10px 14px; border-radius:8px;" title="Cancel this job">
-                      ❌ CANCEL
-                    </button>
-                  ` : `
-                    <button class="btn-print" onclick="printJob('${j.id}')" style="background:#2563eb; font-size:13px; font-weight:700; padding:10px 16px; flex:2;">
-                      🖨️ APPROVE & PRINT
-                    </button>
-                    <button class="btn-cancel" onclick="cancelJob('${j.id}')" style="background:#fee2e2; color:#dc2626; border:1px solid #fca5a5; font-size:12px; font-weight:800; padding:10px 14px; border-radius:8px;" title="Cancel this job">
-                      ✕
-                    </button>
-                  `}
-                </div>
-              </div>
-            `;
-          });
-
-          queueGrid.innerHTML = html;
+            queueGrid.innerHTML = html;
+          }
         }
 
-        // Render History Table
-        if (completedJobs.length === 0) {
-          historyBody.innerHTML = `
-            <tr>
-              <td colspan="10" style="text-align: center; color: var(--muted); padding: 20px;">
-                No completed prints yet.
-              </td>
-            </tr>
-          `;
-        } else {
-          historyBody.innerHTML = completedJobs.map(j => `
-            <tr>
-              <td>${j.created_at || ''}</td>
-              <td><b>${j.id}</b></td>
-              <td>${escapeHtml(j.customer_name || 'Customer')}</td>
-              <td style="max-width:200px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(j.filename || '')}</td>
-              <td>
-                <span class="pill ${j.print_type === 'bw' ? 'pill-bw' : 'pill-color'}">${j.print_type === 'bw' ? 'B/W' : (j.print_type === 'mixed' ? 'Mixed' : 'Colour')}</span>
-                ${j.page_count || 1}p ${j.page_range && j.page_range !== 'all' ? `<span style="font-size:10px; color:#2563eb; font-weight:700;">(Pg: ${escapeHtml(j.page_range)})</span>` : ''}
-              </td>
-              <td>${j.copies || 1}</td>
-              <td><b>₹${j.total_price || 0}</b></td>
-              <td><small>${escapeHtml(j.printer_used || '-')}</small></td>
-              <td>
-                <span class="pill ${j.status === 'printed' ? 'pill-paid' : 'pill-bw'}" style="${j.status === 'cancelled' ? 'background:#fee2e2; color:#dc2626;' : ''}">
-                  ${j.status === 'printed' ? '✅ Printed' : '✕ Cancelled'}
-                </span>
-              </td>
-              <td>
-                <span class="pill" style="background:#f1f5f9; color:#16a34a; font-weight:700; font-size:11px; border:1px solid #cbd5e1;">
-                  🔒 File Shredded
-                </span>
-              </td>
-            </tr>
-          `).join('');
+        // Render History Table with Fingerprint Guard
+        const historyFingerprint = completedJobs.map(j => `${j.id}:${j.status}:${j.printer_used}`).join('|');
+        if (historyFingerprint !== lastHistoryFingerprint) {
+          lastHistoryFingerprint = historyFingerprint;
+          if (completedJobs.length === 0) {
+            historyBody.innerHTML = `
+              <tr>
+                <td colspan="10" style="text-align: center; color: var(--muted); padding: 20px;">
+                  No completed prints yet.
+                </td>
+              </tr>
+            `;
+          } else {
+            historyBody.innerHTML = completedJobs.map(j => `
+              <tr>
+                <td>${j.created_at || ''}</td>
+                <td><b>${j.id}</b></td>
+                <td>${escapeHtml(j.customer_name || 'Customer')}</td>
+                <td style="max-width:200px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(j.filename || '')}</td>
+                <td>
+                  <span class="pill ${j.print_type === 'bw' ? 'pill-bw' : 'pill-color'}">${j.print_type === 'bw' ? 'B/W' : (j.print_type === 'mixed' ? 'Mixed' : 'Colour')}</span>
+                  ${j.page_count || 1}p ${j.page_range && j.page_range !== 'all' ? `<span style="font-size:10px; color:#2563eb; font-weight:700;">(Pg: ${escapeHtml(j.page_range)})</span>` : ''}
+                </td>
+                <td>${j.copies || 1}</td>
+                <td><b>₹${j.total_price || 0}</b></td>
+                <td><small>${escapeHtml(j.printer_used || '-')}</small></td>
+                <td>
+                  <span class="pill ${j.status === 'printed' ? 'pill-paid' : 'pill-bw'}" style="${j.status === 'cancelled' ? 'background:#fee2e2; color:#dc2626;' : ''}">
+                    ${j.status === 'printed' ? '✅ Printed' : '✕ Cancelled'}
+                  </span>
+                </td>
+                <td>
+                  <span class="pill" style="background:#f1f5f9; color:#16a34a; font-weight:700; font-size:11px; border:1px solid #cbd5e1;">
+                    🔒 File Shredded
+                  </span>
+                </td>
+              </tr>
+            `).join('');
+          }
         }
       } catch (err) {
         console.error("Error in renderDashboard:", err);
@@ -1301,10 +1348,13 @@
       if (errDiv) errDiv.style.display = 'none';
       if (btn) { btn.disabled = true; btn.innerText = 'Connecting to Cloud...'; }
 
+      const counterSelect = document.getElementById('selectCounterName');
+      const counterName = counterSelect ? counterSelect.value : 'Counter 1';
+
       fetch('/api/kiosk/activate_local', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ kiosk_api_key: key })
+        body: JSON.stringify({ kiosk_api_key: key, counter_name: counterName })
       })
       .then(res => res.json())
       .then(data => {
