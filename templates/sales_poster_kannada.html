@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="kn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QuickPrint Kiosk Software - Kannada Sales Poster | Ameer Solapur</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Kannada:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@500;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    @page {
+      size: A4 portrait;
+      margin: 0;
+    }
+
+    body {
+      font-family: 'Noto Sans Kannada', 'Plus Jakarta Sans', -apple-system, sans-serif;
+      background: #0f172a;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 24px 12px;
+      color: #0f172a;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .action-bar {
+      width: 210mm;
+      max-width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      padding: 10px 16px;
+      background: #1e293b;
+      border-radius: 12px;
+      border: 1px solid #334155;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+    }
+
+    .btn {
+      padding: 10px 20px;
+      font-size: 14px;
+      font-weight: 700;
+      border-radius: 8px;
+      cursor: pointer;
+      border: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      text-decoration: none;
+      transition: all 0.2s;
+      font-family: 'Plus Jakarta Sans', 'Noto Sans Kannada', sans-serif;
+    }
+
+    .btn-print {
+      background: #2563eb;
+      color: #ffffff;
+      box-shadow: 0 4px 14px rgba(37,99,235,0.4);
+    }
+    .btn-print:hover {
+      background: #1d4ed8;
+      transform: translateY(-1px);
+    }
+
+    .btn-whatsapp {
+      background: #16a34a;
+      color: #ffffff;
+      box-shadow: 0 4px 14px rgba(22,163,74,0.4);
+    }
+    .btn-whatsapp:hover {
+      background: #15803d;
+      transform: translateY(-1px);
+    }
+
+    /* A4 Poster Sheet */
+    .poster-sheet {
+      width: 210mm;
+      min-height: 297mm;
+      background: #ffffff;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.45);
+      border-radius: 6px;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 10mm 12mm;
+      overflow: hidden;
+    }
+
+    /* Outer Framing Border */
+    .poster-frame {
+      position: absolute;
+      inset: 4mm;
+      border: 2px solid #2563eb;
+      border-radius: 4px;
+      pointer-events: none;
+    }
+
+    .poster-frame-inner {
+      position: absolute;
+      inset: 5.5mm;
+      border: 1px dashed #cbd5e1;
+      border-radius: 2px;
+      pointer-events: none;
+    }
+
+    /* Header Section */
+    .header {
+      text-align: center;
+      position: relative;
+      z-index: 2;
+    }
+
+    .top-ribbon {
+      background: linear-gradient(135deg, #1e3a8a, #2563eb);
+      color: #ffffff;
+      font-size: 13px;
+      font-weight: 800;
+      padding: 6px 18px;
+      border-radius: 20px;
+      display: inline-block;
+      margin-bottom: 8px;
+      letter-spacing: 0.5px;
+      box-shadow: 0 4px 12px rgba(37,99,235,0.25);
+    }
+
+    .brand-title {
+      font-size: 32px;
+      font-weight: 900;
+      color: #0f172a;
+      line-height: 1.15;
+      margin-bottom: 4px;
+      letter-spacing: -0.5px;
+    }
+
+    .brand-title span.accent {
+      color: #2563eb;
+      background: linear-gradient(135deg, #2563eb, #1d4ed8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .brand-tagline {
+      font-size: 17px;
+      font-weight: 800;
+      color: #dc2626;
+      background: #fef2f2;
+      border: 1px dashed #fca5a5;
+      padding: 6px 16px;
+      border-radius: 8px;
+      display: inline-block;
+      margin-top: 4px;
+      line-height: 1.4;
+    }
+
+    /* Comparison Banner (Old vs New) */
+    .compare-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 10px;
+      margin-bottom: 10px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .compare-card {
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 12.5px;
+      line-height: 1.45;
+    }
+
+    .compare-old {
+      background: #fff1f2;
+      border: 1.5px solid #fecdd3;
+    }
+
+    .compare-old-title {
+      color: #e11d48;
+      font-weight: 800;
+      font-size: 13.5px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 6px;
+      border-bottom: 1px solid #fecdd3;
+      padding-bottom: 4px;
+    }
+
+    .compare-new {
+      background: #f0fdf4;
+      border: 1.5px solid #86efac;
+      box-shadow: 0 4px 12px rgba(22,163,74,0.1);
+    }
+
+    .compare-new-title {
+      color: #15803d;
+      font-weight: 800;
+      font-size: 13.5px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 6px;
+      border-bottom: 1px solid #86efac;
+      padding-bottom: 4px;
+    }
+
+    .compare-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 6px;
+      margin-bottom: 4px;
+      font-weight: 600;
+    }
+
+    /* Features Section */
+    .features-header {
+      text-align: center;
+      margin: 6px 0;
+      position: relative;
+      z-index: 2;
+    }
+
+    .features-header-title {
+      font-size: 17px;
+      font-weight: 900;
+      color: #1e3a8a;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      background: #eff6ff;
+      padding: 5px 16px;
+      border-radius: 20px;
+      display: inline-block;
+      border: 1px solid #bfdbfe;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 9px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .feature-box {
+      background: #ffffff;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 9px 11px;
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+      transition: all 0.2s;
+    }
+
+    .feature-icon {
+      font-size: 24px;
+      line-height: 1;
+      padding: 7px;
+      background: #eff6ff;
+      border-radius: 8px;
+      border: 1px solid #dbeafe;
+      flex-shrink: 0;
+    }
+
+    .feature-text h4 {
+      font-size: 13px;
+      font-weight: 800;
+      color: #0f172a;
+      margin-bottom: 2px;
+      line-height: 1.3;
+    }
+
+    .feature-text p {
+      font-size: 11.5px;
+      font-weight: 500;
+      color: #475569;
+      line-height: 1.35;
+    }
+
+    /* Target Shops Badge Bar */
+    .shops-bar {
+      margin-top: 10px;
+      background: #f8fafc;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 10px;
+      padding: 8px 12px;
+      text-align: center;
+      position: relative;
+      z-index: 2;
+    }
+
+    .shops-bar-title {
+      font-size: 12px;
+      font-weight: 800;
+      color: #1e293b;
+      margin-bottom: 5px;
+    }
+
+    .shops-tags {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .shop-tag {
+      background: #ffffff;
+      border: 1px solid #94a3b8;
+      border-radius: 6px;
+      padding: 3px 10px;
+      font-size: 11.5px;
+      font-weight: 700;
+      color: #0f172a;
+    }
+
+    /* Offer Banner */
+    .offer-strip {
+      margin-top: 9px;
+      background: linear-gradient(90deg, #f59e0b, #d97706);
+      color: #ffffff;
+      border-radius: 10px;
+      padding: 7px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 4px 12px rgba(217,119,6,0.25);
+      position: relative;
+      z-index: 2;
+    }
+
+    .offer-strip-left {
+      font-size: 13px;
+      font-weight: 800;
+      line-height: 1.3;
+    }
+
+    .offer-badge {
+      background: #ffffff;
+      color: #b45309;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    }
+
+    /* Footer / Sales Contact Section */
+    .contact-card {
+      margin-top: 10px;
+      background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
+      border-radius: 12px;
+      padding: 12px 16px;
+      color: #ffffff;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 10px 25px rgba(15,23,42,0.35);
+      position: relative;
+      z-index: 2;
+    }
+
+    .contact-info {
+      flex: 1;
+    }
+
+    .contact-tag {
+      font-size: 11.5px;
+      font-weight: 700;
+      color: #93c5fd;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 2px;
+    }
+
+    .contact-name {
+      font-size: 22px;
+      font-weight: 900;
+      color: #ffffff;
+      line-height: 1.2;
+    }
+
+    .contact-sub {
+      font-size: 12px;
+      color: #cbd5e1;
+      font-weight: 600;
+      margin-top: 1px;
+    }
+
+    .contact-numbers {
+      background: #ffffff;
+      color: #0f172a;
+      border-radius: 10px;
+      padding: 10px 16px;
+      text-align: right;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+
+    .call-btn-text {
+      font-size: 11px;
+      font-weight: 800;
+      color: #16a34a;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 2px;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 4px;
+    }
+
+    .phone-number {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 23px;
+      font-weight: 900;
+      color: #0f172a;
+      letter-spacing: 1px;
+      line-height: 1.1;
+      text-decoration: none;
+      display: block;
+    }
+
+    .whatsapp-badge {
+      font-size: 11px;
+      color: #475569;
+      font-weight: 700;
+      margin-top: 2px;
+    }
+
+    @media print {
+      body {
+        background: transparent;
+        padding: 0;
+      }
+      .action-bar {
+        display: none !important;
+      }
+      .poster-sheet {
+        box-shadow: none;
+        border-radius: 0;
+        width: 210mm;
+        height: 297mm;
+        padding: 8mm 10mm;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Screen Toolbar -->
+  <div class="action-bar">
+    <div style="color:#ffffff; font-weight:700; font-size:14px;">
+      📄 QuickPrint Official Sales Poster (Kannada) - A4 Ready
+    </div>
+    <div style="display:flex; gap:10px;">
+      <a href="https://wa.me/917760606262?text=Hello%20Ameer%20Sir,%20QuickPrint%20Software%20Demo%20Beku" target="_blank" class="btn btn-whatsapp">
+        💬 WhatsApp Enquiry
+      </a>
+      <button onclick="window.print()" class="btn btn-print">
+        🖨️ Print / Save as PDF
+      </button>
+    </div>
+  </div>
+
+  <!-- A4 Printable Sheet -->
+  <div class="poster-sheet">
+    <div class="poster-frame"></div>
+    <div class="poster-frame-inner"></div>
+
+    <!-- Header Section -->
+    <div class="header">
+      <div class="top-ribbon">
+        🌟 ಕರ್ನಾಟಕದ ಎಲ್ಲಾ ಝೆರಾಕ್ಸ್, ಸೈಬರ್ ಕೆಫೆ ಮತ್ತು CSC ಕೇಂದ್ರಗಳಿಗೆ ಸುವರ್ಣಾವಕಾಶ!
+      </div>
+      <h1 class="brand-title">
+        ನಿಮ್ಮ ಅಂಗಡಿಯನ್ನು ಮಾಡಿ <span class="accent">100% ಸ್ಮಾರ್ಟ್!</span>
+      </h1>
+      <div class="brand-tagline">
+        🚫 ಗ್ರಾಹಕರಿಗೆ WhatsApp ನಂಬರ್ ಕೊಡುವ ಜಂಜಾಟ ಬೇಡ! QR ಕೋಡ್ ಸ್ಕ್ಯಾನ್ ಮಾಡಿ ತಕ್ಷಣ ಪ್ರಿಂಟ್ ಪಡೆಯಿರಿ!
+      </div>
+    </div>
+
+    <!-- Comparison: Old vs New -->
+    <div class="compare-container">
+      <div class="compare-card compare-old">
+        <div class="compare-old-title">
+          ❌ ಹಳೆಯ ವಿಧಾನದ ಸಮಸ್ಯೆಗಳು
+        </div>
+        <div class="compare-item">
+          <span>⚠️</span>
+          <span>ಪ್ರತಿದಿನ ನೂರಾರು ಜನರಿಗೆ ಮೊಬೈಲ್ ನಂಬರ್ ಕೊಡುವುದು</span>
+        </div>
+        <div class="compare-item">
+          <span>⚠️</span>
+          <span>ಮೊಬೈಲ್ ಹ್ಯಾಂಗ್ ಆಗುವುದು, ಗ್ಯಾಲರಿ ತುಂಬಿ ಹೋಗುವುದು</span>
+        </div>
+        <div class="compare-item">
+          <span>⚠️</span>
+          <span>ಗ್ರಾಹಕರ ಗೌಪ್ಯ ಫೋಟೋ, ಆಧಾರ್ ದುರ್ಬಳಕೆಯ ಆತಂಕ</span>
+        </div>
+        <div class="compare-item">
+          <span>⚠️</span>
+          <span>ಕೌಂಟರ್‌ನಲ್ಲಿ ರಶ್ ಮತ್ತು ಯುಟಿಆರ್ (UTR) ಹುಡುಕಾಟ</span>
+        </div>
+      </div>
+
+      <div class="compare-card compare-new">
+        <div class="compare-new-title">
+          ✅ QuickPrint ಸ್ಮಾರ್ಟ್ ಸಾಫ್ಟ್‌ವೇರ್
+        </div>
+        <div class="compare-item">
+          <span>⚡</span>
+          <span>ಕೌಂಟರ್ QR ಸ್ಕ್ಯಾನ್ - 1 ಸೆಕೆಂಡಿನಲ್ಲಿ ಫೈಲ್ ಅಪ್ಲೋಡ್</span>
+        </div>
+        <div class="compare-item">
+          <span>🖨️</span>
+          <span>ನಿಮ್ಮ ಕಂಪ್ಯೂಟರ್‌ಗೆ ನೇರ ಆಟೋ ಸೈಲೆಂಟ್ ಪ್ರಿಂಟ್</span>
+        </div>
+        <div class="compare-item">
+          <span>🔒</span>
+          <span>ಪ್ರಿಂಟ್ ಆದ ಕೂಡಲೇ ಫೈಲ್ ಶಾಶ್ವತ ಡಿಲೀಟ್ (Zero Data)</span>
+        </div>
+        <div class="compare-item">
+          <span>💰</span>
+          <span>Google Pay, PhonePe, Paytm ನೇರ ಆಟೋ ಪಾವತಿ</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Core Features Grid -->
+    <div class="features-header">
+      <div class="features-header-title">
+        🔥 ಕ್ವಿಕ್‌ಪ್ರಿಂಟ್ (QuickPrint) ಸಾಫ್ಟ್‌ವೇರ್‌ನ ಪ್ರಮುಖ ವೈಶಿಷ್ಟ್ಯಗಳು
+      </div>
+    </div>
+
+    <div class="features-grid">
+      <!-- 1 -->
+      <div class="feature-box">
+        <div class="feature-icon">🚫📱</div>
+        <div class="feature-text">
+          <h4>ನೋ ವಾಟ್ಸಾಪ್ ನಂಬರ್ (Zero WhatsApp)</h4>
+          <p>ಗ್ರಾಹಕರು ನಿಮ್ಮ ನಂಬರ್ ಸೇವ್ ಮಾಡಬೇಕಿಲ್ಲ. QR ಸ್ಕ್ಯಾನ್ ಮಾಡಿದರೆ ಸಾಕು, ನೇರ ವೆಬ್ ಪೋರ್ಟಲ್ ಓಪನ್ ಆಗುತ್ತದೆ.</p>
+        </div>
+      </div>
+
+      <!-- 2 -->
+      <div class="feature-box">
+        <div class="feature-icon">⚡🖨️</div>
+        <div class="feature-text">
+          <h4>ಸ್ವಯಂಚಾಲಿತ ಪ್ರಿಂಟಿಂಗ್ (Auto-Print)</h4>
+          <p>ಗ್ರಾಹಕರು ಫೈಲ್ ಕಳಿಸಿ ಹಣ ಪಾವತಿಸಿದ ತಕ್ಷಣ ನಿಮ್ಮ ಪ್ರಿಂಟರ್‌ನಿಂದ ಪ್ರಿಂಟ್ ತಾನಾಗಿಯೇ ಹೊರಬರುತ್ತದೆ!</p>
+        </div>
+      </div>
+
+      <!-- 3 -->
+      <div class="feature-box">
+        <div class="feature-icon">🔒🗑️</div>
+        <div class="feature-text">
+          <h4>100% ಗ್ರಾಹಕರ ಗೌಪ್ಯತೆ (Auto Shredder)</h4>
+          <p>ಪ್ರಿಂಟ್ ಮುಗಿದ ತಕ್ಷಣ ಡಾಕ್ಯುಮೆಂಟ್ ಮತ್ತು ಫೋಟೋಗಳು ತಕ್ಷಣವೇ ಶಾಶ್ವತವಾಗಿ ಡಿಲೀಟ್ ಆಗುತ್ತವೆ.</p>
+        </div>
+      </div>
+
+      <!-- 4 -->
+      <div class="feature-box">
+        <div class="feature-icon">💳⚡</div>
+        <div class="feature-text">
+          <h4>ಆನ್‌ಲೈನ್ UPI & Razorpay ಆಟೋ-ಪೇ</h4>
+          <p>ಚಿಲ್ಲರೆ ಕಿರಿಕಿರಿ ಇಲ್ಲ. ಗ್ರಾಹಕರು GPay / PhonePe ಮೂಲಕ ಪಾವತಿಸಿದರೆ ಮಾತ್ರ ಡಾಕ್ಯುಮೆಂಟ್ ಪ್ರಿಂಟ್ ಆಗುತ್ತದೆ.</p>
+        </div>
+      </div>
+
+      <!-- 5 -->
+      <div class="feature-box">
+        <div class="feature-icon">🖥️🖧</div>
+        <div class="feature-text">
+          <h4>ಮಲ್ಟಿ-ಕೌಂಟರ್ ಸಿಸ್ಟಮ್ (1 ರಿಂದ 5 ಕೌಂಟರ್)</h4>
+          <p>ಅಂಗಡಿಯಲ್ಲಿ ಎಷ್ಟು ಕಂಪ್ಯೂಟರ್‌ಗಳಿದ್ದರೂ ಸರಿ, ಪ್ರತಿಯೊಂದು ಸಿಸ್ಟಮ್‌ಗೂ ಪ್ರತ್ಯೇಕ ಕೌಂಟರ್ QR ಕೋಡ್ ಲಭ್ಯ.</p>
+        </div>
+      </div>
+
+      <!-- 6 -->
+      <div class="feature-box">
+        <div class="feature-icon">📊📈</div>
+        <div class="feature-text">
+          <h4>ದಿನದ ಲೆಕ್ಕಪತ್ರ ಮತ್ತು ಕಲೆಕ್ಷನ್ ಡ್ಯಾಶ್‌ಬೋರ್ಡ್</h4>
+          <p>ಇಂದು ಎಷ್ಟು ಪ್ರಿಂಟ್ ಆಯಿತು, ಒಟ್ಟು ಎಷ್ಟು ಹಣ ಕಲೆಕ್ಷನ್ ಆಯಿತು ಎಂಬ ನಿಖರ ಲೆಕ್ಕಪತ್ರ ಸ್ಕ್ರೀನ್ ಮೇಲೆ ಕಾಣುತ್ತದೆ.</p>
+        </div>
+      </div>
+
+      <!-- 7 -->
+      <div class="feature-box">
+        <div class="feature-icon">📄📑</div>
+        <div class="feature-text">
+          <h4>ಎಲ್ಲಾ ಫೈಲ್ ಫಾರ್ಮ್ಯಾಟ್ ಸಪೋರ್ಟ್</h4>
+          <p>PDF, Word, Excel, PowerPoint, JPG, PNG ಮತ್ತು ಮೊಬೈಲ್ ಕ್ಯಾಮೆರಾ ಫೋಟೋಗಳು ಸುಲಭವಾಗಿ ಪ್ರಿಂಟ್ ಆಗುತ್ತವೆ.</p>
+        </div>
+      </div>
+
+      <!-- 8 -->
+      <div class="feature-box">
+        <div class="feature-icon">🖨️✨</div>
+        <div class="feature-text">
+          <h4>ಎಲ್ಲಾ ಪ್ರಿಂಟರ್‌ಗಳಿಗೂ ಸುಲಭ ಕನೆಕ್ಷನ್</h4>
+          <p>Canon, Epson, HP, Brother, Konica Minolta — ಯಾವುದೇ ಕಂಪನಿಯ ಪ್ರಿಂಟರ್ ಜೊತೆ 100% ಹೊಂದಿಕೊಳ್ಳುತ್ತದೆ.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Target Audience Bar -->
+    <div class="shops-bar">
+      <div class="shops-bar-title">🎯 ಈ ಸಾಫ್ಟ್‌ವೇರ್ ಯಾರಿಗೆ ಅತ್ಯಂತ ಉಪಯುಕ್ತ?</div>
+      <div class="shops-tags">
+        <span class="shop-tag">🏪 ಝೆರಾಕ್ಸ್ ಅಂಗಡಿಗಳು (Xerox Shops)</span>
+        <span class="shop-tag">💻 ಸೈಬರ್ ಕೆಫೆಗಳು (Cyber Cafes)</span>
+        <span class="shop-tag">🏛️ CSC / ಗ್ರಾಮ ಒನ್ ಕೇಂದ್ರಗಳು</span>
+        <span class="shop-tag">🏢 ಕರ್ನಾಟಕ ಒನ್ (Karnataka One)</span>
+        <span class="shop-tag">📚 ಕಾಲೇಜು ಪ್ರಿಂಟಿಂಗ್ ಸೆಂಟರ್‌ಗಳು</span>
+      </div>
+    </div>
+
+    <!-- Special Offer Strip -->
+    <div class="offer-strip">
+      <div class="offer-strip-left">
+        🎉 <b>ವಿಶೇಷ ಆರಂಭಿಕ ಕೊಡುಗೆ (Launch Offer):</b> ಇಂದೇ ನಿಮ್ಮ ಅಂಗಡಿಗೆ ಅಳವಡಿಸಿ, ಗ್ರಾಹಕರ ರಶ್ ಕಡಿಮೆ ಮಾಡಿ & ಆದಾಯ ದುಪ್ಪಟ್ಟುಗೊಳಿಸಿ!
+      </div>
+      <div class="offer-badge">
+        ಉಚಿತ ಲೈವ್ ಡೆಮೊ!
+      </div>
+    </div>
+
+    <!-- Sales & Contact Footer Card -->
+    <div class="contact-card">
+      <div class="contact-info">
+        <div class="contact-tag">ಕರ್ನಾಟಕ ಅಧಿಕೃತ ವಿತರಕರು ಮತ್ತು ತಾಂತ್ರಿಕ ಬೆಂಬಲ</div>
+        <div class="contact-name">ಅಮೀರ್ ಸೋಲಾಪುರ್ (Ameer Solapur)</div>
+        <div class="contact-sub">Karnataka CSC & QuickPrint Solutions • Live Installation & Support</div>
+      </div>
+
+      <div class="contact-numbers">
+        <div class="call-btn-text">
+          <span>📞</span> ಸಾಫ್ಟ್‌ವೇರ್ ಬುಕಿಂಗ್ ಮತ್ತು ಡೆಮೊಗಾಗಿ ಕರೆ ಮಾಡಿ:
+        </div>
+        <a href="tel:7760606262" class="phone-number">7760606262</a>
+        <div class="whatsapp-badge">
+          💬 WhatsApp & Call 24/7 ಲಭ್ಯವಿದೆ
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</body>
+</html>

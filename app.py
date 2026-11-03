@@ -1085,6 +1085,10 @@ def view_shop_poster(shop_slug, counter_num=None):
         portal_url = f"{base_url}/s/{shop['slug']}"
     return render_template("counter_poster.html", shop=shop_copy, portal_url=portal_url)
 
+@app.route("/sales-poster")
+def view_sales_poster():
+    return render_template("sales_poster_kannada.html")
+
 @app.route("/api/config", methods=["GET", "POST"])
 def api_get_config():
     if request.method == "POST":
