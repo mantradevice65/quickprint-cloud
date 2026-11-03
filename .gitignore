@@ -5,3 +5,5 @@ uploads/*
 thumbnails/*
 !thumbnails/.gitkeep
 .env
+
+*.db

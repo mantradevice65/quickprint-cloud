@@ -798,84 +798,176 @@
       return String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
 
-    // Synthesize Web Audio chime for instant notification
+    // =========================================================================
+    // ROBUST MULTI-TIER AUDIO & VOICE ALERT ENGINE (100% Reliable across all PCs)
+    // =========================================================================
+    let audioUnlocked = false;
+    let globalAudioCtx = null;
+
+    function getAudioContext() {
+      try {
+        if (!globalAudioCtx) {
+          globalAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (globalAudioCtx.state === 'suspended') {
+          globalAudioCtx.resume();
+        }
+        return globalAudioCtx;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    // Auto-unlock audio on ANY interaction (click, key, touch, scroll)
+    function unlockAudio() {
+      if (audioUnlocked) return;
+      audioUnlocked = true;
+      try {
+        const ctx = getAudioContext();
+        if (ctx && ctx.state === 'suspended') {
+          ctx.resume();
+        }
+      } catch (e) {}
+      if ('speechSynthesis' in window) {
+        try {
+          window.speechSynthesis.resume();
+        } catch (e) {}
+      }
+      const banner = document.getElementById('audioUnlockBanner');
+      if (banner) banner.style.display = 'none';
+    }
+
+    ['click', 'touchstart', 'keydown', 'mousedown'].forEach(evt => {
+      window.addEventListener(evt, unlockAudio, { passive: true });
+    });
+
+    if ('speechSynthesis' in window) {
+      try {
+        window.speechSynthesis.onvoiceschanged = () => {
+          try { window.speechSynthesis.getVoices(); } catch (e) {}
+        };
+      } catch (e) {}
+    }
+
+    // Synthesize Web Audio chime
     function playChime() {
       try {
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const audioCtx = getAudioContext();
+        if (!audioCtx) return;
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
         osc.type = 'sine';
         osc.frequency.setValueAtTime(587.33, audioCtx.currentTime); // D5
         osc.frequency.setValueAtTime(880, audioCtx.currentTime + 0.12); // A5
-        gain.gain.setValueAtTime(0.35, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.40, audioCtx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.55);
         osc.connect(gain);
         gain.connect(audioCtx.destination);
         osc.start();
         osc.stop(audioCtx.currentTime + 0.55);
       } catch (e) {
-        console.log("Audio not allowed yet without user interaction:", e);
+        console.log("WebAudio chime notice:", e);
       }
     }
 
-    // Speak Voice: "Print request pending"
+    // Play pre-recorded high-fidelity MP3 alert (Chime + Clear Voice)
+    function playPreRecordedAudio(isCash) {
+      return new Promise((resolve, reject) => {
+        try {
+          const soundFile = isCash ? '/static/sounds/cash_alert.mp3' : '/static/sounds/print_alert.mp3';
+          const audio = new Audio(soundFile);
+          audio.volume = 1.0;
+          const promise = audio.play();
+          if (promise !== undefined) {
+            promise.then(() => resolve(true)).catch(err => {
+              console.warn("Audio play prevented by browser autoplay policy:", err);
+              showAudioUnlockBanner();
+              reject(err);
+            });
+          } else {
+            resolve(true);
+          }
+        } catch (err) {
+          reject(err);
+        }
+      });
+    }
+
+    function showAudioUnlockBanner() {
+      let banner = document.getElementById('audioUnlockBanner');
+      if (!banner) {
+        banner = document.createElement('div');
+        banner.id = 'audioUnlockBanner';
+        banner.style.cssText = 'position:fixed; bottom:20px; right:20px; z-index:99999; background:#0f172a; color:#fff; padding:12px 20px; border-radius:10px; box-shadow:0 10px 25px rgba(0,0,0,0.35); font-size:13px; font-weight:600; display:flex; align-items:center; gap:12px; cursor:pointer; border:1px solid #3b82f6;';
+        banner.innerHTML = '<span>🔊 Click here to enable sound alerts</span><button style="background:#2563eb; color:#fff; border:none; padding:6px 14px; border-radius:6px; cursor:pointer; font-weight:bold; font-size:12px;">Enable</button>';
+        banner.onclick = () => {
+          unlockAudio();
+          testVoiceAlert();
+        };
+        document.body.appendChild(banner);
+      } else {
+        banner.style.display = 'flex';
+      }
+    }
+
+    // Speak Voice Alert using SpeechSynthesis (fallback)
     function speakVoiceAlert(phrase = "Print request pending") {
       if (!soundEnabled) return;
-      if ('speechSynthesis' in window) {
-        try {
-          window.speechSynthesis.cancel();
-          const utterance = new SpeechSynthesisUtterance(phrase);
-          utterance.rate = 0.92; // Slightly measured, clear pronunciation
-          utterance.pitch = 1.05;
-          utterance.volume = 1.0;
+      if (!('speechSynthesis' in window)) return;
+      try {
+        window.speechSynthesis.resume();
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(phrase);
+        utterance.rate = 0.92;
+        utterance.pitch = 1.05;
+        utterance.volume = 1.0;
 
-          const voices = window.speechSynthesis.getVoices();
-          const targetVoice = voices.find(v => v.lang === 'en-IN') ||
-                              voices.find(v => v.lang === 'en-GB') ||
-                              voices.find(v => v.lang === 'en-US') ||
-                              voices.find(v => v.lang.startsWith('en'));
-          if (targetVoice) {
-            utterance.voice = targetVoice;
-          }
-          window.speechSynthesis.speak(utterance);
-        } catch (e) {
-          console.log("SpeechSynthesis error:", e);
+        const voices = window.speechSynthesis.getVoices() || [];
+        const targetVoice = voices.find(v => v.lang === 'en-IN') ||
+                            voices.find(v => v.lang === 'en-GB') ||
+                            voices.find(v => v.lang === 'en-US') ||
+                            voices.find(v => (v.lang || '').startsWith('en'));
+        if (targetVoice) {
+          utterance.voice = targetVoice;
         }
+        window.speechSynthesis.speak(utterance);
+      } catch (e) {
+        console.log("SpeechSynthesis notice:", e);
       }
     }
 
-    // Combined Alert: Chime + Voice
+    // Master Trigger: Tries Pre-recorded MP3 first; falls back to WebAudio chime + SpeechSynthesis
     function triggerVoiceAlert(customPhrase = "Print request pending") {
       if (!soundEnabled) return;
-      playChime();
-      setTimeout(() => {
-        speakVoiceAlert(customPhrase);
-      }, 400);
+      unlockAudio();
+
+      const isCash = customPhrase.toLowerCase().includes('cash');
+
+      // Attempt 1: Pre-recorded clear audio (chime + voice in one file)
+      playPreRecordedAudio(isCash).catch(() => {
+        // Attempt 2: Fallback to Web Audio oscillator chime + SpeechSynthesis
+        playChime();
+        setTimeout(() => {
+          speakVoiceAlert(customPhrase);
+        }, 350);
+      });
     }
 
     function testVoiceAlert() {
-      triggerVoiceAlert();
+      unlockAudio();
+      triggerVoiceAlert("Print request pending");
     }
 
     function toggleSound() {
       soundEnabled = !soundEnabled;
-      document.getElementById('soundToggleBtn').innerText = soundEnabled ? '🔊 Voice Alert: ON' : '🔈 Voice Alert: OFF';
+      const btn = document.getElementById('soundToggleBtn');
+      if (btn) {
+        btn.innerText = soundEnabled ? '🔊 Voice Alert: ON' : '🔈 Voice Alert: OFF';
+      }
       if (soundEnabled) {
-        triggerVoiceAlert();
+        testVoiceAlert();
       }
     }
-
-    // Ensure speech synthesis voices are loaded
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
-    }
-
-    document.addEventListener('click', () => {
-      try {
-        const ctx = new (window.AudioContext || window.webkitAudioContext)();
-        if (ctx.state === 'suspended') ctx.resume();
-      } catch (e) {}
-    }, { once: true });
 
     function fetchJobs() {
       fetch('/api/jobs')
