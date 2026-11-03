@@ -3,11 +3,22 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>QuickPrint - Realistic Kannada Shop Promotional Video | Ameer Solapur</title>
+  <title>QuickPrint - Realistic 3D Cartoon Kannada Promo Video | Ameer Solapur</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Kannada:wght@400;600;700;800;900&family=Plus+Jakarta+Sans:wght@600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Kannada:wght@400;600;700;800;900&family=Plus+Jakarta+Sans:wght@500;600;700;800;900&display=swap" rel="stylesheet">
   <style>
+    :root {
+      --bg: #070b14;
+      --card-bg: #0f172a;
+      --card-border: #1e293b;
+      --accent-blue: #3b82f6;
+      --accent-green: #22c55e;
+      --accent-gold: #f59e0b;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+
     * {
       box-sizing: border-box;
       margin: 0;
@@ -15,986 +26,606 @@
     }
 
     body {
-      background: #090d16;
+      background: var(--bg);
       font-family: 'Noto Sans Kannada', 'Plus Jakarta Sans', -apple-system, sans-serif;
-      color: #ffffff;
+      color: var(--text-main);
       min-height: 100vh;
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
-      padding: 16px 8px;
-      overflow-x: hidden;
+      padding: 20px 12px 60px 12px;
+      line-height: 1.5;
     }
 
-    /* Top Control Bar */
-    .controls-bar {
+    .container {
       width: 100%;
-      max-width: 960px;
-      background: #131b2e;
-      border: 1px solid #1e293b;
-      border-radius: 14px;
-      padding: 12px 18px;
+      max-width: 1060px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+    }
+
+    /* Top Brand Header */
+    .header-card {
+      width: 100%;
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      border: 1px solid #334155;
+      border-radius: 18px;
+      padding: 20px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+
+    .header-top {
       display: flex;
       justify-content: space-between;
       align-items: center;
       flex-wrap: wrap;
-      gap: 12px;
-      margin-bottom: 16px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      gap: 14px;
     }
 
-    .brand-pill {
-      display: flex;
+    .distributor-pill {
+      display: inline-flex;
       align-items: center;
-      gap: 10px;
-      font-weight: 800;
-      font-size: 15px;
-      color: #60a5fa;
+      gap: 8px;
+      background: rgba(245, 158, 11, 0.15);
+      border: 1px solid rgba(245, 158, 11, 0.4);
+      padding: 6px 14px;
+      border-radius: 999px;
+      color: #fbbf24;
+      font-size: 13px;
+      font-weight: 700;
     }
 
-    .btn-group {
+    .contact-btns {
       display: flex;
       gap: 10px;
-      align-items: center;
       flex-wrap: wrap;
     }
 
-    .btn {
-      padding: 9px 16px;
-      font-size: 13px;
+    .btn-contact {
+      padding: 8px 16px;
+      border-radius: 10px;
+      font-size: 13.5px;
       font-weight: 700;
-      border-radius: 8px;
-      border: none;
-      cursor: pointer;
+      text-decoration: none;
       display: inline-flex;
       align-items: center;
       gap: 8px;
       transition: all 0.2s;
-      font-family: inherit;
     }
 
-    .btn-download {
-      background: linear-gradient(135deg, #16a34a, #15803d);
-      color: #ffffff;
-      box-shadow: 0 4px 14px rgba(22,163,74,0.4);
-      font-size: 13.5px;
+    .btn-call {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: #000;
     }
-    .btn-download:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 6px 18px rgba(22,163,74,0.5);
-      background: #15803d;
-    }
+    .btn-call:hover { transform: translateY(-2px); }
 
-    .btn-primary {
-      background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    .btn-wa {
+      background: #25d366;
       color: #ffffff;
     }
+    .btn-wa:hover { transform: translateY(-2px); }
 
-    .btn-aspect {
-      background: #1e293b;
-      color: #94a3b8;
-      border: 1px solid #334155;
-    }
-    .btn-aspect.active {
-      background: #3b82f6;
+    .header-title-box h1 {
+      font-size: 24px;
+      font-weight: 900;
       color: #ffffff;
-      border-color: #3b82f6;
-    }
-
-    /* Video Player Container */
-    .player-container {
-      position: relative;
-      background: #000000;
-      border-radius: 18px;
-      overflow: hidden;
-      box-shadow: 0 25px 60px rgba(0,0,0,0.85), 0 0 0 2px #1e293b;
+      margin-bottom: 4px;
       display: flex;
       align-items: center;
-      justify-content: center;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      gap: 10px;
+      flex-wrap: wrap;
     }
 
-    /* 9:16 Reel Mode */
-    .player-container.reel-mode {
-      width: 440px;
-      height: 780px;
-      max-width: 96vw;
-      max-height: 82vh;
+    .header-title-box p {
+      font-size: 14px;
+      color: var(--text-muted);
     }
 
-    /* 16:9 Landscape Mode */
-    .player-container.landscape-mode {
-      width: 960px;
-      height: 540px;
-      max-width: 96vw;
-      max-height: 80vh;
-    }
-
-    #videoCanvas {
+    /* Video Player Card */
+    .video-card {
       width: 100%;
-      height: 100%;
-      object-fit: contain;
-      background: #0f172a;
-    }
-
-    /* Overlay Controls */
-    .overlay-hud {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      background: linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.5) 60%, transparent 100%);
-      padding: 16px 18px 12px 18px;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 18px;
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      align-items: center;
+      gap: 16px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.6);
     }
 
-    .progress-bar-container {
+    /* Video Toolbar */
+    .video-toolbar {
       width: 100%;
-      height: 6px;
-      background: rgba(255,255,255,0.2);
-      border-radius: 4px;
-      cursor: pointer;
-      position: relative;
-    }
-
-    .progress-fill {
-      height: 100%;
-      width: 0%;
-      background: linear-gradient(90deg, #3b82f6, #60a5fa);
-      border-radius: 4px;
-    }
-
-    .hud-row {
       display: flex;
       justify-content: space-between;
       align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #1e293b;
+    }
+
+    .format-switcher {
+      display: flex;
+      background: #090d16;
+      padding: 4px;
+      border-radius: 12px;
+      border: 1px solid #1e293b;
+      gap: 4px;
+    }
+
+    .format-btn {
+      padding: 8px 16px;
+      border-radius: 8px;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
       font-size: 13px;
       font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+      font-family: inherit;
     }
 
-    .hud-actions {
+    .format-btn.active {
+      background: var(--accent-blue);
+      color: #ffffff;
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+    }
+
+    .action-group {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .btn-download-mp4 {
+      background: linear-gradient(135deg, #16a34a, #15803d);
+      color: #ffffff;
+      padding: 10px 20px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 800;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 14px rgba(22, 163, 74, 0.4);
+      transition: all 0.2s;
+    }
+    .btn-download-mp4:hover {
+      background: #15803d;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 18px rgba(22, 163, 74, 0.6);
+    }
+
+    /* Video Frame */
+    .player-wrapper {
+      position: relative;
+      width: 100%;
+      background: #000000;
+      border-radius: 16px;
+      overflow: hidden;
+      border: 2px solid #1e293b;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      transition: all 0.3s ease;
+    }
+
+    .player-wrapper.mode-16x9 {
+      max-width: 980px;
+      aspect-ratio: 16 / 9;
+    }
+
+    .player-wrapper.mode-9x16 {
+      max-width: 440px;
+      aspect-ratio: 9 / 16;
+      max-height: 80vh;
+    }
+
+    video {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      background: #000;
+      outline: none;
+    }
+
+    /* Scene Storyboard / Feature Gallery */
+    .storyboard-title {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 10px;
+    }
+    .storyboard-title h2 {
+      font-size: 20px;
+      font-weight: 800;
+      color: #ffffff;
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 8px;
     }
 
-    .hud-btn {
-      background: none;
-      border: none;
-      color: #ffffff;
-      font-size: 20px;
-      cursor: pointer;
+    .scenes-grid {
+      width: 100%;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
     }
 
-    .scene-indicator {
-      font-size: 12px;
-      background: rgba(59, 130, 246, 0.3);
-      border: 1px solid rgba(59, 130, 246, 0.6);
-      padding: 3px 10px;
-      border-radius: 12px;
-      color: #93c5fd;
+    .scene-card {
+      background: #0f172a;
+      border: 1px solid #1e293b;
+      border-radius: 14px;
+      overflow: hidden;
+      transition: all 0.2s;
+      display: flex;
+      flex-direction: column;
+    }
+    .scene-card:hover {
+      transform: translateY(-3px);
+      border-color: var(--accent-blue);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
     }
 
-    /* Start Overlay */
-    .start-overlay {
+    .scene-img-box {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      position: relative;
+      background: #020617;
+      overflow: hidden;
+    }
+    .scene-img-box img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.3s;
+    }
+    .scene-card:hover .scene-img-box img {
+      transform: scale(1.05);
+    }
+
+    .scene-num-badge {
       position: absolute;
-      inset: 0;
-      background: rgba(15, 23, 42, 0.9);
-      backdrop-filter: blur(8px);
+      top: 8px;
+      left: 8px;
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 800;
+      color: #fbbf24;
+      backdrop-filter: blur(4px);
+    }
+
+    .scene-body {
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      flex: 1;
+    }
+
+    .scene-speaker-tag {
+      font-size: 12px;
+      font-weight: 800;
+      padding: 3px 8px;
+      border-radius: 6px;
+      display: inline-block;
+      width: fit-content;
+    }
+    .tag-customer { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+    .tag-shopkeeper { background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
+    .tag-distributor { background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+
+    .scene-kannada-text {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: #f1f5f9;
+      line-height: 1.4;
+    }
+
+    .scene-benefit {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: auto;
+      border-top: 1px solid #1e293b;
+      padding-top: 8px;
+    }
+
+    /* Grand Footer Card */
+    .grand-footer {
+      width: 100%;
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+      border: 2px solid #f59e0b;
+      border-radius: 18px;
+      padding: 24px;
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
-      gap: 16px;
-      z-index: 10;
       text-align: center;
-      padding: 24px;
+      gap: 14px;
+      box-shadow: 0 15px 40px rgba(245, 158, 11, 0.15);
     }
 
-    .play-circle {
-      width: 84px;
-      height: 84px;
-      background: linear-gradient(135deg, #2563eb, #1d4ed8);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 36px;
-      color: #ffffff;
-      cursor: pointer;
-      box-shadow: 0 10px 30px rgba(37,99,235,0.5);
-      transition: transform 0.2s;
+    .grand-footer h3 {
+      font-size: 22px;
+      color: #fbbf24;
+      font-weight: 900;
     }
-    .play-circle:hover {
-      transform: scale(1.1);
+
+    .grand-footer p {
+      font-size: 14.5px;
+      color: #cbd5e1;
+      max-width: 680px;
+    }
+
+    .contact-big-strip {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-top: 6px;
+    }
+
+    .btn-big-call {
+      background: #ffffff;
+      color: #0f172a;
+      padding: 12px 28px;
+      border-radius: 12px;
+      font-size: 17px;
+      font-weight: 900;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 6px 20px rgba(255,255,255,0.2);
+      transition: all 0.2s;
+    }
+    .btn-big-call:hover { transform: scale(1.03); background: #f8fafc; }
+
+    .btn-big-wa {
+      background: #25d366;
+      color: #ffffff;
+      padding: 12px 28px;
+      border-radius: 12px;
+      font-size: 17px;
+      font-weight: 900;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 6px 20px rgba(37,211,102,0.3);
+      transition: all 0.2s;
+    }
+    .btn-big-wa:hover { transform: scale(1.03); }
+
+    @media (max-width: 640px) {
+      .header-title-box h1 { font-size: 18px; }
+      .grand-footer h3 { font-size: 18px; }
+      .btn-big-call, .btn-big-wa { width: 100%; justify-content: center; }
+      .format-btn { font-size: 11.5px; padding: 6px 10px; }
+      .btn-download-mp4 { font-size: 12px; padding: 8px 14px; }
     }
   </style>
 </head>
 <body>
 
-  <!-- Controls Bar -->
-  <div class="controls-bar">
-    <div class="brand-pill">
-      <span>🎬</span> QuickPrint Realistic Kannada Video Ad
-    </div>
-
-    <div class="btn-group">
-      <button class="btn btn-aspect active" id="btnReelMode" onclick="setAspect('reel')">📱 Reel (9:16)</button>
-      <button class="btn btn-aspect" id="btnWideMode" onclick="setAspect('wide')">🖥️ Landscape (16:9)</button>
-      <button class="btn btn-primary" onclick="restartVideo()">🔄 Replay</button>
-      <button class="btn btn-download" onclick="startExportMP4()">📥 Direct Download MP4 Video</button>
-    </div>
-  </div>
-
-  <!-- Player Stage -->
-  <div class="player-container reel-mode" id="playerWrapper">
-    <canvas id="videoCanvas" width="720" height="1280"></canvas>
-
-    <!-- Initial Play Overlay -->
-    <div class="start-overlay" id="startOverlay">
-      <div class="play-circle" onclick="startVideoWithSound()">▶</div>
-      <div style="font-size:23px; font-weight:900; color:#ffffff;">
-        ಕ್ವಿಕ್‌ಪ್ರಿಂಟ್ ರಿಯಲ್ ಶಾಪ್ ವಿಡಿಯೋ
-      </div>
-      <div style="font-size:14px; color:#94a3b8; max-width:340px; line-height:1.5;">
-        ರಿಯಲ್ ಕಸ್ಟಮರ್ & ಅಂಗಡಿಯವರ ಕನ್ನಡ ಸಂಭಾಷಣೆಯೊಂದಿಗೆ!
-      </div>
-      <div style="margin-top:6px; font-size:12.5px; color:#60a5fa; font-weight:700;">
-        (ಪ್ಲೇ ಮಾಡಲು Click ಮಾಡಿ)
-      </div>
-    </div>
-
-    <!-- HUD Overlay -->
-    <div class="overlay-hud">
-      <div class="progress-bar-container" onclick="seekVideo(event)">
-        <div class="progress-fill" id="progressFill"></div>
-      </div>
-      <div class="hud-row">
-        <div class="hud-actions">
-          <button class="hud-btn" id="btnPlayPause" onclick="togglePlay()">⏸</button>
-          <button class="hud-btn" id="btnMute" onclick="toggleMute()">🔊</button>
-          <span id="timeDisplay" style="color:#cbd5e1; font-family:'Plus Jakarta Sans', monospace;">0:00 / 0:32</span>
+  <div class="container">
+    
+    <!-- Top Header Card -->
+    <div class="header-card">
+      <div class="header-top">
+        <div class="distributor-pill">
+          <span>⭐</span> ಕರ್ನಾಟಕ ಅಧಿಕೃತ ವಿತರಕರು (Official Distributor)
         </div>
-        <div class="scene-indicator" id="sceneIndicator">
-          ದೃಶ್ಯ 1: ಕಸ್ಟಮರ್ ಎಂಟ್ರಿ
+        <div class="contact-btns">
+          <a href="tel:7760606262" class="btn-contact btn-call">
+            📞 7760606262
+          </a>
+          <a href="https://wa.me/917760606262?text=Hello%20Ameer%20Sir,%20I%20want%20QuickPrint%20Kiosk%20Software%20for%20my%20Xerox%20Shop" target="_blank" class="btn-contact btn-wa">
+            💬 WhatsApp
+          </a>
         </div>
       </div>
+      <div class="header-title-box">
+        <h1>⚡ QuickPrint - 3D ಕಾರ್ಟೂನ್ ಪ್ರೊಮೋ ವಿಡಿಯೋ (Kannada)</h1>
+        <p>ಅಮೀರ್ ಸೋಲಾಪುರ್ • ಮೊಬೈಲ್: 7760606262 • ಝೆರಾಕ್ಸ್ & ಸಿಎಸ್‌ಸಿ ಸೆಂಟರ್‌ಗಳಲ್ಲಿ ವಾಟ್ಸಾಪ್ ಜಂಜಾಟ ಮುಕ್ತ ಆಟೋ ಪ್ರಿಂಟಿಂಗ್!</p>
+      </div>
     </div>
+
+    <!-- Video Showcase Card -->
+    <div class="video-card">
+      
+      <!-- Video Toolbar -->
+      <div class="video-toolbar">
+        <div class="format-switcher">
+          <button class="format-btn active" id="btn16x9" onclick="switchVideoFormat('16x9')">
+            📺 Landscape (16:9 HD)
+          </button>
+          <button class="format-btn" id="btn9x16" onclick="switchVideoFormat('9x16')">
+            📱 Reel / Shorts (9:16)
+          </button>
+        </div>
+
+        <div class="action-group">
+          <a href="/static/promo/QuickPrint_Kannada_Promotional_Video.mp4" download="QuickPrint_Kannada_Promotional_Video.mp4" id="btnDownload" class="btn-download-mp4">
+            📥 ಡೌನ್‌ಲೋಡ್ HD ವಿಡಿಯೋ (.MP4)
+          </a>
+          <button class="format-btn" onclick="shareVideo()" style="background:#1e293b; border:1px solid #334155;">
+            🔗 ಶೇರ್ (Share)
+          </button>
+        </div>
+      </div>
+
+      <!-- Real HTML5 Video Player -->
+      <div class="player-wrapper mode-16x9" id="playerWrapper">
+        <video id="mainVideo" controls autoplay playsinline poster="/static/promo/scene2.jpg">
+          <source id="videoSource" src="/static/promo/QuickPrint_Kannada_Promotional_Video.mp4" type="video/mp4">
+          ನಿಮ್ಮ ಬ್ರೌಸರ್ ವಿಡಿಯೋ ಸಪೋರ್ಟ್ ಮಾಡುತ್ತಿಲ್ಲ. ದಯವಿಟ್ಟು ಡೌನ್‌ಲೋಡ್ ಮಾಡಿ.
+        </video>
+      </div>
+
+    </div>
+
+    <!-- 3D Scene Storyboard Section -->
+    <div class="storyboard-title">
+      <h2>🎬 ವಿಡಿಯೋ ಕಥಾ ಸಾರಾಂಶ (3D Animated Scenes)</h2>
+    </div>
+
+    <div class="scenes-grid">
+      
+      <!-- Scene 1 -->
+      <div class="scene-card">
+        <div class="scene-img-box">
+          <img src="/static/promo/scene1.jpg" alt="Scene 1: Customer in WhatsApp Queue">
+          <div class="scene-num-badge">ದೃಶ್ಯ 1: ಹಳೆಯ ಸಮಸ್ಯೆ</div>
+        </div>
+        <div class="scene-body">
+          <div class="scene-speaker-tag tag-customer">🗣️ ಗ್ರಾಹಕ (Customer)</div>
+          <p class="scene-kannada-text">"ಅಣ್ಣಾ, ಈ ಡಾಕ್ಯುಮೆಂಟ್ ಪ್ರಿಂಟ್ ತೆಗಿಬೇಕು, ನಿಮ್ಮ ವಾಟ್ಸಾಪ್ ನಂಬರ್ ಕೊಡ್ತೀರಾ?"</p>
+          <div class="scene-benefit">⚠️ ಹಳೆಯ ಜಂಜಾಟ: ಮೊಬೈಲ್ ನಂಬರ್ ನೀಡಬೇಕು, ಮೆಮೊರಿ ಫುಲ್, ಕೌಂಟರ್‌ನಲ್ಲಿ ಜನಜಂಗುಳಿ!</div>
+        </div>
+      </div>
+
+      <!-- Scene 2 -->
+      <div class="scene-card">
+        <div class="scene-img-box">
+          <img src="/static/promo/scene2.jpg" alt="Scene 2: Shopkeeper pointing to QR Code Stand">
+          <div class="scene-num-badge">ದೃಶ್ಯ 2: ಸ್ಮಾರ್ಟ್ ಪರಿಹಾರ</div>
+        </div>
+        <div class="scene-body">
+          <div class="scene-speaker-tag tag-shopkeeper">🗣️ ಅಂಗಡಿಯವರು (Shopkeeper)</div>
+          <p class="scene-kannada-text">"ನೋಡಿ ತಮ್ಮಾ, WhatsApp ಬೇಡ! ಇಲ್ಲಿರೋ QR ಸ್ಕ್ಯಾನ್ ಮಾಡಿ, ಪ್ರಿಂಟ್ ತಾನಾಗಿಯೇ ಬರುತ್ತೆ!"</p>
+          <div class="scene-benefit">⚡ ಕ್ವಿಕ್‌ಪ್ರಿಂಟ್ ಪರಿಹಾರ: ನೇರ QR ಕೋಡ್ ಸ್ಕ್ಯಾನ್ & ಕಸ್ಟಮರ್ ಫೈಲ್ ಅಪ್ಲೋಡ್!</div>
+        </div>
+      </div>
+
+      <!-- Scene 3 -->
+      <div class="scene-card">
+        <div class="scene-img-box">
+          <img src="/static/promo/scene3.jpg" alt="Scene 3: Customer Instant UPI payment and auto print">
+          <div class="scene-num-badge">ದೃಶ್ಯ 3: ಆಟೋ ಪಾವತಿ & ಪ್ರಿಂಟ್</div>
+        </div>
+        <div class="scene-body">
+          <div class="scene-speaker-tag tag-customer">🗣️ ಗ್ರಾಹಕ (Customer)</div>
+          <p class="scene-kannada-text">"ಅರೆ ವಾವ್! 1 ಸೆಕೆಂಡಿನಲ್ಲಿ ಸ್ಕ್ಯಾನ್ ಆಯ್ತು, GPay ಆಯ್ತು, ಪ್ರಿಂಟ್ ಕೂಡ ಬಂತು! ಎಷ್ಟು ಸುಲಭ!"</p>
+          <div class="scene-benefit">💰 GPay / PhonePe ಆಟೋ ಪಾವತಿ & ತಕ್ಷಣ ಸೈಲೆಂಟ್ ಪ್ರಿಂಟಿಂಗ್!</div>
+        </div>
+      </div>
+
+      <!-- Scene 4 -->
+      <div class="scene-card">
+        <div class="scene-img-box">
+          <img src="/static/promo/scene4.jpg" alt="Scene 4: Happy Shopkeeper, Privacy and Rush Free">
+          <div class="scene-num-badge">ದೃಶ್ಯ 4: 100% ಗೌಪ್ಯತೆ</div>
+        </div>
+        <div class="scene-body">
+          <div class="scene-speaker-tag tag-shopkeeper">🗣️ ಅಂಗಡಿಯವರು (Shopkeeper)</div>
+          <p class="scene-kannada-text">"ಪ್ರಿಂಟ್ ಆದ ಕೂಡಲೇ ಫೈಲ್ ಆಟೋ ಡಿಲೀಟ್! 100% ಗೌಪ್ಯತೆ, ರಶ್ ಫ್ರೀ ಶಾಪ್!"</p>
+          <div class="scene-benefit">🔒 Zero Data Retention • ಡಾಕ್ಯುಮೆಂಟ್ ಭದ್ರತೆ • ಒಬ್ಬರೇ ಸುಲಭ ಮ್ಯಾನೇಜ್!</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Grand Distributor Call-to-Action Card -->
+    <div class="grand-footer">
+      <h3>🎉 ನಿಮ್ಮ ಝೆರಾಕ್ಸ್ & ಸಿಎಸ್‌ಸಿ ಸೆಂಟರ್‌ಗೂ ಇಂದೇ ಕ್ವಿಕ್‌ಪ್ರಿಂಟ್ ಅಳವಡಿಸಿ!</h3>
+      <p>ವಾಟ್ಸಾಪ್ ನಂಬರ್ ಹಂಚುವ ಜಂಜಾಟವಿಲ್ಲದೆ ಗ್ರಾಹಕರೇ ನೇರವಾಗಿ QR ಸ್ಕ್ಯಾನ್ ಮಾಡಿ ಪ್ರಿಂಟ್ ಪಡೆಯುವ ಕರ್ನಾಟಕದ ನಂಬರ್ 1 ಸಾಫ್ಟ್‌ವೇರ್.</p>
+      
+      <div class="contact-big-strip">
+        <a href="tel:7760606262" class="btn-big-call">
+          📞 ಕರೆ ಮಾಡಿ: 7760606262 (ಅಮೀರ್ ಸೋಲಾಪುರ್)
+        </a>
+        <a href="https://wa.me/917760606262?text=Hello%20Ameer%20Sir,%20I%20saw%20QuickPrint%20Promo%20Video.%20I%20want%20Live%20Demo%20for%20my%20Xerox%20Shop" target="_blank" class="btn-big-wa">
+          💬 WhatsApp ಲೈವ್ ಡೆಮೊ
+        </a>
+      </div>
+      <p style="font-size: 13px; color: #94a3b8; margin-top: 4px;">
+        ಉಚಿತ ಲೈವ್ ಡೆಮೊ & ಇನ್‌ಸ್ಟಾಲೇಶನ್ ಸಹಾಯ ಲಭ್ಯವಿದೆ • Karnataka Official Distributor Ameer Solapur
+      </p>
+    </div>
+
   </div>
 
   <script>
-    let audioCtx = null;
-    let isMuted = false;
-    let isPlaying = false;
-    let mediaRecorder = null;
-    let recordedChunks = [];
-
-    const canvas = document.getElementById('videoCanvas');
-    const ctx = canvas.getContext('2d');
-    const startOverlay = document.getElementById('startOverlay');
-    const progressFill = document.getElementById('progressFill');
-    const timeDisplay = document.getElementById('timeDisplay');
-    const sceneIndicator = document.getElementById('sceneIndicator');
-    const btnPlayPause = document.getElementById('btnPlayPause');
-    const btnMute = document.getElementById('btnMute');
-
-    const TOTAL_DURATION = 32.0;
-    let currentTime = 0.0;
-    let lastTimestamp = 0;
-
-    // Scenes with Real Character Dialogues
-    const SCENES = [
-      {
-        id: 1,
-        start: 0.0,
-        end: 7.5,
-        title: "ದೃಶ್ಯ 1: ಕಸ್ಟಮರ್ & ಅಂಗಡಿಯವರ ಮಾತುಕತೆ",
-        speaker: "customer",
-        dialogue: "ಕಸ್ಟಮರ್: 'ಅಣ್ಣಾ, ಈ ಡಾಕ್ಯುಮೆಂಟ್ ಪ್ರಿಂಟ್ ತೆಗಿಬೇಕು, WhatsApp ನಂಬರ್ ಕೊಡ್ತೀರಾ?'",
-        reply: "ಅಂಗಡಿಯವರು: 'ನೋಡಿ ತಮ್ಮಾ, WhatsApp ಬೇಡ! ಈ QR ಕೋಡ್ ಸ್ಕ್ಯಾನ್ ಮಾಡಿ!'",
-        voiceText: "ಅಣ್ಣಾ, ಈ ಡಾಕ್ಯುಮೆಂಟ್ ಪ್ರಿಂಟ್ ತೆಗಿಬೇಕು, WhatsApp ನಂಬರ್ ಕೊಡ್ತೀರಾ?"
+    const videoData = {
+      '16x9': {
+        src: '/static/promo/QuickPrint_Kannada_Promotional_Video.mp4',
+        filename: 'QuickPrint_Kannada_Promotional_Video.mp4'
       },
-      {
-        id: 2,
-        start: 7.5,
-        end: 15.0,
-        title: "ದೃಶ್ಯ 2: 1 ಸೆಕೆಂಡಿನಲ್ಲಿ ಕ್ಯೂಆರ್ ಸ್ಕ್ಯಾನ್ & ಅಪ್ಲೋಡ್",
-        speaker: "shopkeeper",
-        dialogue: "ಅಂಗಡಿಯವರು: 'QR ಸ್ಕ್ಯಾನ್ ಮಾಡಿ, ಫೈಲ್ ಅಪ್ಲೋಡ್ ಮಾಡಿ, GPay ಮಾಡಿ ಸಾಕು!'",
-        reply: "ಕಸ್ಟಮರ್: 'ಅರೆ ವಾವ್! 1 ಸೆಕೆಂಡಿನಲ್ಲಿ ಕನೆಕ್ಟ್ ಆಯ್ತು!'",
-        voiceText: "ನೋಡಿ ತಮ್ಮಾ, WhatsApp ಬೇಡ! ಇಲ್ಲಿರೋ QR ಸ್ಕ್ಯಾನ್ ಮಾಡಿ, ಫೋನ್‌ನಲ್ಲೇ GPay ಮಾಡಿ ಸಾಕು!"
-      },
-      {
-        id: 3,
-        start: 15.0,
-        end: 22.0,
-        title: "ದೃಶ್ಯ 3: ಆಟೋ ಪಾವತಿ & ಲೈವ್ ಪ್ರಿಂಟ್",
-        speaker: "customer",
-        dialogue: "ಕಸ್ಟಮರ್: 'ಅದ್ಭುತ! GPay ಆಗ್ತಿದ್ದಂತೆ ಪ್ರಿಂಟರ್‌ನಿಂದ ಪ್ರಿಂಟ್ ಬಂತು!'",
-        reply: "ಅಂಗಡಿಯವರು: '100% ಆಟೋಮ್ಯಾಟಿಕ್ ಸಿಸ್ಟಮ್ ತಮ್ಮಾ!'",
-        voiceText: "ಅರೆ ವಾವ್! GPay ಆಗ್ತಿದ್ದಂತೆ ಪ್ರಿಂಟರ್‌ನಿಂದ ಪ್ರಿಂಟ್ ಬಂತು! ಎಷ್ಟು ಸುಲಭ ಮತ್ತು ಫಾಸ್ಟ್!"
-      },
-      {
-        id: 4,
-        start: 22.0,
-        end: 26.5,
-        title: "ದೃಶ್ಯ 4: 100% ಗೌಪ್ಯತೆ & ರಶ್ ಫ್ರೀ ಶಾಪ್",
-        speaker: "shopkeeper",
-        dialogue: "ಅಂಗಡಿಯವರು: 'ಫೈಲ್ ತಕ್ಷಣ ಡಿಲೀಟ್ ಆಗುತ್ತೆ, ರಶ್ ಇಲ್ಲ, ಗ್ಯಾಲರಿ ಫುಲ್ ಆಗೋ ಆತಂಕವಿಲ್ಲ!'",
-        reply: "ಒಬ್ಬನೇ ವ್ಯಕ್ತಿ ನೂರಾರು ಪ್ರಿಂಟ್ ಸುಲಭವಾಗಿ ನಿಭಾಯಿಸಬಹುದು!",
-        voiceText: "ಫೈಲ್ ತಕ್ಷಣ ಆಟೋ ಡಿಲೀಟ್ ಆಗುತ್ತೆ! ರಶ್ ಇಲ್ಲ, ಗ್ಯಾಲರಿ ಫುಲ್ ಆಗೋ ಆತಂಕವಿಲ್ಲ!"
-      },
-      {
-        id: 5,
-        start: 26.5,
-        end: 32.0,
-        title: "ದೃಶ್ಯ 5: ಅಮೀರ್ ಸೋಲಾಪುರ್ - 7760606262",
-        speaker: "narrator",
-        dialogue: "ನಿಮ್ಮ ಅಂಗಡಿಗೂ ಇಂದೇ ಅಳವಡಿಸಿ: ಅಮೀರ್ ಸೋಲಾಪುರ್ - 7760606262",
-        reply: "ಕರ್ನಾಟಕ ಅಧಿಕೃತ ವಿತರಕರು • ಉಚಿತ ಲೈವ್ ಡೆಮೊ ಲಭ್ಯವಿದೆ!",
-        voiceText: "ನಿಮ್ಮ ಝೆರಾಕ್ಸ್ ಅಂಗಡಿಗೂ ಇಂದೇ ಕ್ವಿಕ್‌ಪ್ರಿಂಟ್ ಅಳವಡಿಸಿ. ಲೈವ್ ಡೆಮೊಗಾಗಿ ಸಂಪರ್ಕಿಸಿ: ಅಮೀರ್ ಸೋಲಾಪುರ್, 7760606262!"
+      '9x16': {
+        src: '/static/promo/QuickPrint_Kannada_Promo_Reel_9x16.mp4',
+        filename: 'QuickPrint_Kannada_Promo_Reel_9x16.mp4'
       }
-    ];
+    };
 
-    let spokenScenes = new Set();
+    function switchVideoFormat(format) {
+      const playerWrapper = document.getElementById('playerWrapper');
+      const video = document.getElementById('mainVideo');
+      const videoSource = document.getElementById('videoSource');
+      const btn16 = document.getElementById('btn16x9');
+      const btn9 = document.getElementById('btn9x16');
+      const btnDownload = document.getElementById('btnDownload');
 
-    function initAudio() {
-      if (!audioCtx) {
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      }
-      if (audioCtx.state === 'suspended') {
-        audioCtx.resume();
-      }
-    }
+      const wasPlaying = !video.paused;
+      const currTime = video.currentTime;
 
-    function playSound(type) {
-      if (isMuted || !audioCtx) return;
-      try {
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-        const t = audioCtx.currentTime;
-
-        if (type === 'beep') {
-          osc.type = 'sine';
-          osc.frequency.setValueAtTime(1400, t);
-          gain.gain.setValueAtTime(0.3, t);
-          gain.gain.exponentialRampToValueAtTime(0.01, t + 0.12);
-          osc.start(t);
-          osc.stop(t + 0.12);
-        } else if (type === 'success') {
-          osc.type = 'triangle';
-          osc.frequency.setValueAtTime(587.33, t);
-          osc.frequency.setValueAtTime(880, t + 0.1);
-          gain.gain.setValueAtTime(0.35, t);
-          gain.gain.exponentialRampToValueAtTime(0.01, t + 0.5);
-          osc.start(t);
-          osc.stop(t + 0.5);
-        } else if (type === 'print') {
-          osc.type = 'square';
-          osc.frequency.setValueAtTime(85, t);
-          osc.frequency.exponentialRampToValueAtTime(150, t + 0.5);
-          gain.gain.setValueAtTime(0.18, t);
-          gain.gain.exponentialRampToValueAtTime(0.01, t + 0.5);
-          osc.start(t);
-          osc.stop(t + 0.5);
-        }
-      } catch (e) {}
-    }
-
-    function speakKannada(text, speaker) {
-      if (isMuted || !('speechSynthesis' in window)) return;
-      try {
-        window.speechSynthesis.cancel();
-        const utter = new SpeechSynthesisUtterance(text);
-        utter.rate = 1.05;
-        
-        if (speaker === 'customer') {
-          utter.pitch = 1.25;
-        } else if (speaker === 'shopkeeper') {
-          utter.pitch = 0.95;
-        } else {
-          utter.pitch = 1.05;
-        }
-
-        const voices = window.speechSynthesis.getVoices();
-        const knVoice = voices.find(v => v.lang.includes('kn') || v.lang.includes('KN')) || 
-                        voices.find(v => v.lang.includes('hi') || v.lang.includes('IN'));
-        if (knVoice) utter.voice = knVoice;
-
-        window.speechSynthesis.speak(utter);
-      } catch (e) {}
-    }
-
-    function startVideoWithSound() {
-      initAudio();
-      startOverlay.style.display = 'none';
-      currentTime = 0;
-      spokenScenes.clear();
-      isPlaying = true;
-      btnPlayPause.innerText = '⏸';
-      requestAnimationFrame(gameLoop);
-    }
-
-    function togglePlay() {
-      initAudio();
-      isPlaying = !isPlaying;
-      btnPlayPause.innerText = isPlaying ? '⏸' : '▶';
-      if (isPlaying) {
-        lastTimestamp = performance.now();
-        requestAnimationFrame(gameLoop);
-      }
-    }
-
-    function toggleMute() {
-      isMuted = !isMuted;
-      btnMute.innerText = isMuted ? '🔇' : '🔊';
-      if (isMuted && 'speechSynthesis' in window) window.speechSynthesis.cancel();
-    }
-
-    function restartVideo() {
-      initAudio();
-      currentTime = 0;
-      spokenScenes.clear();
-      isPlaying = true;
-      btnPlayPause.innerText = '⏸';
-      startOverlay.style.display = 'none';
-      lastTimestamp = performance.now();
-      requestAnimationFrame(gameLoop);
-    }
-
-    function seekVideo(e) {
-      const rect = e.currentTarget.getBoundingClientRect();
-      const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-      currentTime = pct * TOTAL_DURATION;
-      spokenScenes.clear();
-      drawFrame(currentTime);
-    }
-
-    function setAspect(mode) {
-      const wrap = document.getElementById('playerWrapper');
-      const btnR = document.getElementById('btnReelMode');
-      const btnW = document.getElementById('btnWideMode');
-      if (mode === 'reel') {
-        wrap.className = 'player-container reel-mode';
-        canvas.width = 720;
-        canvas.height = 1280;
-        btnR.classList.add('active');
-        btnW.classList.remove('active');
+      if (format === '9x16') {
+        playerWrapper.classList.remove('mode-16x9');
+        playerWrapper.classList.add('mode-9x16');
+        btn9.classList.add('active');
+        btn16.classList.remove('active');
       } else {
-        wrap.className = 'player-container landscape-mode';
-        canvas.width = 1280;
-        canvas.height = 720;
-        btnW.classList.add('active');
-        btnR.classList.remove('active');
-      }
-      drawFrame(currentTime);
-    }
-
-    function gameLoop(timestamp) {
-      if (!isPlaying) return;
-      if (!lastTimestamp) lastTimestamp = timestamp;
-      const delta = (timestamp - lastTimestamp) / 1000.0;
-      lastTimestamp = timestamp;
-
-      currentTime += delta;
-      if (currentTime >= TOTAL_DURATION) {
-        currentTime = TOTAL_DURATION;
-        isPlaying = false;
-        btnPlayPause.innerText = '▶';
-        drawFrame(currentTime);
-        return;
+        playerWrapper.classList.remove('mode-9x16');
+        playerWrapper.classList.add('mode-16x9');
+        btn16.classList.add('active');
+        btn9.classList.remove('active');
       }
 
-      drawFrame(currentTime);
-      requestAnimationFrame(gameLoop);
-    }
-
-    function drawFrame(t) {
-      const W = canvas.width;
-      const H = canvas.height;
-      const isReel = H > W;
-
-      const pct = (t / TOTAL_DURATION) * 100;
-      progressFill.style.width = pct + '%';
+      const activeData = videoData[format];
+      videoSource.src = activeData.src;
+      btnDownload.href = activeData.src;
+      btnDownload.setAttribute('download', activeData.filename);
       
-      const curSec = Math.floor(t);
-      timeDisplay.innerText = `0:${curSec < 10 ? '0' : ''}${curSec} / 0:32`;
-
-      const scene = SCENES.find(s => t >= s.start && t < s.end) || SCENES[SCENES.length - 1];
-      sceneIndicator.innerText = scene.title;
-
-      if (!spokenScenes.has(scene.id) && isPlaying) {
-        spokenScenes.add(scene.id);
-        speakKannada(scene.voiceText, scene.speaker);
-        if (scene.id === 2) playSound('beep');
-        if (scene.id === 3) {
-          playSound('success');
-          setTimeout(() => playSound('print'), 700);
-        }
-      }
-
-      drawRealisticShop(W, H, isReel, t, scene);
-      drawDialogueOverlay(scene, W, H, isReel, t);
-    }
-
-    function drawRealisticShop(W, H, isReel, t, scene) {
-      const wallGrad = ctx.createLinearGradient(0, 0, 0, H * 0.75);
-      wallGrad.addColorStop(0, '#1e293b');
-      wallGrad.addColorStop(1, '#0f172a');
-      ctx.fillStyle = wallGrad;
-      ctx.fillRect(0, 0, W, H);
-
-      ctx.fillStyle = '#1e3a8a';
-      ctx.fillRect(W * 0.1, isReel ? 120 : 40, W * 0.8, isReel ? 60 : 45);
-      ctx.strokeStyle = '#f59e0b';
-      ctx.lineWidth = 3;
-      ctx.strokeRect(W * 0.1, isReel ? 120 : 40, W * 0.8, isReel ? 60 : 45);
-
-      ctx.fillStyle = '#fde047';
-      ctx.font = 'bold 20px "Noto Sans Kannada"';
-      ctx.textAlign = 'center';
-      ctx.fillText("🏛️ ಕರ್ನಾಟಕ ಸಿಎಸ್‌ಸಿ & ಝೆರಾಕ್ಸ್ ಕೇಂದ್ರ", W / 2, isReel ? 158 : 70);
-
-      ctx.fillStyle = '#334155';
-      ctx.fillRect(W * 0.08, isReel ? 210 : 105, W * 0.28, 90);
-      for (let r = 0; r < 3; r++) {
-        ctx.fillStyle = r % 2 === 0 ? '#f8fafc' : '#38bdf8';
-        ctx.fillRect(W * 0.1, (isReel ? 220 : 115) + r * 25, W * 0.24, 18);
-      }
-
-      const counterY = isReel ? H * 0.65 : H * 0.62;
-      const counterH = H - counterY;
-
-      const skX = W * 0.72;
-      const skY = counterY - 30;
-      drawRealisticShopkeeper(skX, skY, t, scene);
-
-      ctx.fillStyle = '#78350f';
-      ctx.fillRect(0, counterY, W, counterH);
-
-      ctx.fillStyle = '#94a3b8';
-      ctx.fillRect(0, counterY - 8, W, 12);
-      ctx.fillStyle = '#cbd5e1';
-      ctx.fillRect(0, counterY - 8, W, 4);
-
-      drawDesktopMonitor(W * 0.58, counterY - 14, t);
-      drawMultiFunctionPrinter(W * 0.82, counterY - 14, t, scene);
-      drawAcrylicQRStand(W * 0.44, counterY - 14, t, scene);
-
-      const custX = W * 0.24;
-      const custY = counterY + (isReel ? 20 : 35);
-      drawRealisticCustomer(custX, custY, t, scene);
-
-      if (scene.id === 2) {
-        drawLaserBeam(custX + 60, custY - 170, W * 0.44, counterY - 100, t);
+      video.load();
+      video.currentTime = currTime;
+      if (wasPlaying) {
+        video.play().catch(e => console.log('Autoplay handled:', e));
       }
     }
 
-    function drawRealisticShopkeeper(x, y, t, scene) {
-      ctx.save();
-      ctx.translate(x, y);
-
-      ctx.fillStyle = '#1e3a8a';
-      ctx.beginPath();
-      ctx.moveTo(-50, 20);
-      ctx.lineTo(-40, -60);
-      ctx.lineTo(40, -60);
-      ctx.lineTo(50, 20);
-      ctx.closePath();
-      ctx.fill();
-
-      ctx.fillStyle = '#ffffff';
-      ctx.beginPath();
-      ctx.moveTo(-15, -60);
-      ctx.lineTo(0, -35);
-      ctx.lineTo(15, -60);
-      ctx.fill();
-
-      ctx.fillStyle = '#fbcfe8';
-      ctx.fillRect(-12, -75, 24, 20);
-
-      ctx.fillStyle = '#fcd34d';
-      ctx.beginPath();
-      ctx.arc(0, -95, 30, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.fillStyle = '#1e293b';
-      ctx.beginPath();
-      ctx.arc(0, -106, 32, Math.PI, 0);
-      ctx.fill();
-
-      ctx.fillStyle = '#0f172a';
-      ctx.fillRect(-12, -100, 6, 4);
-      ctx.fillRect(6, -100, 6, 4);
-
-      ctx.fillStyle = '#1e293b';
-      ctx.fillRect(-14, -86, 28, 5);
-
-      if (scene.speaker === 'shopkeeper') {
-        const mouthOpen = 4 + Math.sin(t * 18) * 4;
-        ctx.fillStyle = '#b91c1c';
-        ctx.beginPath();
-        ctx.ellipse(0, -78, 8, mouthOpen, 0, 0, Math.PI * 2);
-        ctx.fill();
-      }
-
-      const handY = -30 + Math.sin(t * 5) * 6;
-      ctx.fillStyle = '#fcd34d';
-      ctx.beginPath();
-      ctx.arc(-55, handY, 14, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 12px sans-serif';
-      ctx.fillText("👉", -60, handY + 5);
-
-      ctx.fillStyle = '#fde047';
-      ctx.font = 'bold 15px "Noto Sans Kannada"';
-      ctx.textAlign = 'center';
-      ctx.fillText("ಅಂಗಡಿಯವರು (Shopkeeper)", 0, -135);
-
-      ctx.restore();
-    }
-
-    function drawRealisticCustomer(x, y, t, scene) {
-      ctx.save();
-      ctx.translate(x, y);
-
-      ctx.fillStyle = '#1e293b';
-      ctx.fillRect(-28, 40, 24, 180);
-      ctx.fillRect(4, 40, 24, 180);
-
-      ctx.fillStyle = '#991b1b';
-      ctx.roundRect(-35, -90, 70, 130, 12);
-      ctx.fill();
-
-      ctx.fillStyle = '#fcd34d';
-      ctx.fillRect(-10, -105, 20, 20);
-
-      ctx.beginPath();
-      ctx.arc(0, -125, 28, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.fillStyle = '#0f172a';
-      ctx.beginPath();
-      ctx.arc(0, -136, 30, Math.PI * 0.9, Math.PI * 0.1);
-      ctx.fill();
-
-      ctx.fillRect(-10, -130, 5, 4);
-      ctx.fillRect(8, -130, 5, 4);
-
-      if (scene.speaker === 'customer') {
-        const mouthOpen = 4 + Math.sin(t * 18) * 4;
-        ctx.fillStyle = '#b91c1c';
-        ctx.beginPath();
-        ctx.ellipse(0, -112, 7, mouthOpen, 0, 0, Math.PI * 2);
-        ctx.fill();
+    function shareVideo() {
+      const shareUrl = window.location.href;
+      const text = "⚡ QuickPrint Smart Kiosk Software for Xerox & Cyber Cafes! Watch Kannada 3D Promotional Video: " + shareUrl + " | Contact Ameer Solapur: 7760606262";
+      if (navigator.share) {
+        navigator.share({
+          title: 'QuickPrint Kannada 3D Promo Video',
+          text: text,
+          url: shareUrl
+        }).catch(err => console.log('Share dismissed', err));
       } else {
-        ctx.strokeStyle = '#78350f';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.arc(0, -114, 7, 0, Math.PI);
-        ctx.stroke();
-      }
-
-      ctx.fillStyle = '#991b1b';
-      ctx.beginPath();
-      ctx.moveTo(25, -70);
-      ctx.lineTo(65, -85);
-      ctx.lineTo(65, -60);
-      ctx.lineTo(25, -45);
-      ctx.fill();
-
-      const phoneBob = Math.sin(t * 4) * 4;
-      ctx.fillStyle = '#fcd34d';
-      ctx.beginPath();
-      ctx.arc(68, -75 + phoneBob, 12, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.fillStyle = '#0f172a';
-      ctx.roundRect(65, -115 + phoneBob, 42, 80, 8);
-      ctx.fill();
-      ctx.strokeStyle = '#38bdf8';
-      ctx.lineWidth = 2;
-      ctx.stroke();
-
-      if (scene.id === 1) {
-        ctx.fillStyle = '#22c55e';
-        ctx.fillRect(68, -110 + phoneBob, 36, 70);
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 9px sans-serif';
-        ctx.fillText("WhatsApp", 86, -75 + phoneBob);
-      } else if (scene.id === 2) {
-        ctx.fillStyle = '#3b82f6';
-        ctx.fillRect(68, -110 + phoneBob, 36, 70);
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 9px sans-serif';
-        ctx.fillText("UPLOAD", 86, -75 + phoneBob);
-      } else {
-        ctx.fillStyle = '#15803d';
-        ctx.fillRect(68, -110 + phoneBob, 36, 70);
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 12px sans-serif';
-        ctx.fillText("₹10 ✅", 86, -75 + phoneBob);
-      }
-
-      ctx.fillStyle = '#60a5fa';
-      ctx.font = 'bold 15px "Noto Sans Kannada"';
-      ctx.textAlign = 'center';
-      ctx.fillText("ಗ್ರಾಹಕ (Customer)", 0, -165);
-
-      ctx.restore();
-    }
-
-    function drawAcrylicQRStand(x, y, t, scene) {
-      ctx.save();
-      ctx.translate(x, y);
-
-      ctx.shadowColor = '#38bdf8';
-      ctx.shadowBlur = scene.id === 2 ? 35 : 15;
-
-      ctx.fillStyle = '#e2e8f0';
-      ctx.fillRect(-45, -6, 90, 8);
-
-      ctx.fillStyle = '#ffffff';
-      ctx.roundRect(-40, -135, 80, 130, 8);
-      ctx.fill();
-      ctx.restore();
-
-      ctx.fillStyle = '#1e3a8a';
-      ctx.font = 'bold 11px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText("QuickPrint", x, y - 118);
-      ctx.fillStyle = '#dc2626';
-      ctx.font = 'bold 8px "Noto Sans Kannada"';
-      ctx.fillText("Scan & Print", x, y - 105);
-
-      ctx.fillStyle = '#0f172a';
-      ctx.fillRect(x - 26, y - 98, 52, 52);
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(x - 20, y - 92, 12, 12);
-      ctx.fillRect(x + 8, y - 92, 12, 12);
-      ctx.fillRect(x - 20, y - 64, 12, 12);
-
-      ctx.fillStyle = '#15803d';
-      ctx.fillRect(x - 34, y - 36, 68, 16);
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 8px "Noto Sans Kannada"';
-      ctx.fillText("ಕೌಂಟರ್ QR", x, y - 24);
-    }
-
-    function drawDesktopMonitor(x, y, t) {
-      ctx.save();
-      ctx.translate(x, y);
-
-      ctx.fillStyle = '#475569';
-      ctx.fillRect(-10, -25, 20, 25);
-      ctx.fillRect(-25, -4, 50, 6);
-
-      ctx.fillStyle = '#0f172a';
-      ctx.roundRect(-75, -125, 150, 100, 6);
-      ctx.fill();
-
-      ctx.fillStyle = '#1e293b';
-      ctx.fillRect(-70, -120, 140, 90);
-
-      ctx.fillStyle = '#0284c7';
-      ctx.fillRect(-70, -120, 140, 16);
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 8px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText("Karnataka CSC Center 🟢", 0, -108);
-
-      ctx.fillStyle = '#22c55e';
-      ctx.beginPath();
-      ctx.arc(58, -112, 3, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.restore();
-    }
-
-    function drawMultiFunctionPrinter(x, y, t, scene) {
-      ctx.save();
-      ctx.translate(x, y);
-
-      ctx.fillStyle = '#334155';
-      ctx.roundRect(-65, -95, 130, 95, 8);
-      ctx.fill();
-
-      ctx.fillStyle = '#1e293b';
-      ctx.roundRect(-60, -92, 120, 25, 4);
-      ctx.fill();
-
-      ctx.fillStyle = '#0f172a';
-      ctx.fillRect(-45, -35, 90, 15);
-
-      if (scene.id >= 3) {
-        const paperDrop = Math.min(45, (t - 15.0) * 22);
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(-38, -30, 76, paperDrop);
-        ctx.strokeStyle = '#cbd5e1';
-        ctx.strokeRect(-38, -30, 76, paperDrop);
-
-        ctx.fillStyle = '#94a3b8';
-        for (let l = 0; l < 4; l++) {
-          if (paperDrop > (l + 1) * 8) {
-            ctx.fillRect(-30, -25 + l * 8, 60, 3);
-          }
-        }
-      }
-
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 9px sans-serif';
-      ctx.fillText("Canon G3010", 0, -50);
-
-      ctx.fillStyle = '#22c55e';
-      ctx.beginPath();
-      ctx.arc(-48, -48, 3, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.restore();
-    }
-
-    function drawLaserBeam(x1, y1, x2, y2, t) {
-      ctx.save();
-      ctx.strokeStyle = '#22c55e';
-      ctx.lineWidth = 3;
-      ctx.shadowColor = '#22c55e';
-      ctx.shadowBlur = 18;
-
-      ctx.beginPath();
-      ctx.moveTo(x1, y1);
-      ctx.lineTo(x2, y2);
-      ctx.stroke();
-
-      ctx.fillStyle = 'rgba(34, 197, 94, 0.4)';
-      ctx.beginPath();
-      ctx.arc(x2, y2, 20 + Math.sin(t * 12) * 8, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.restore();
-    }
-
-    function drawDialogueOverlay(scene, W, H, isReel, t) {
-      const topY = isReel ? 190 : 85;
-
-      ctx.save();
-      ctx.fillStyle = 'rgba(15, 23, 42, 0.92)';
-      ctx.roundRect(W * 0.06, topY, W * 0.88, isReel ? 110 : 85, 14);
-      ctx.fill();
-      ctx.strokeStyle = '#3b82f6';
-      ctx.lineWidth = 2;
-      ctx.stroke();
-
-      ctx.fillStyle = '#fde047';
-      ctx.font = 'bold 18px "Noto Sans Kannada"';
-      ctx.textAlign = 'center';
-      ctx.fillText(scene.dialogue, W / 2, topY + 38);
-
-      ctx.fillStyle = '#ffffff';
-      ctx.font = '600 15px "Noto Sans Kannada"';
-      ctx.fillText(scene.reply, W / 2, topY + 70);
-      ctx.restore();
-
-      if (scene.id === 5) {
-        drawGrandCTACard(W, H, isReel);
+        navigator.clipboard.writeText(shareUrl).then(() => {
+          alert('ಲಿಂಕ್ ಕಾಪಿ ಮಾಡಲಾಗಿದೆ! ನಿಮ್ಮ ವಾಟ್ಸಾಪ್ ಗ್ರೂಪ್‌ಗಳಿಗೆ ಶೇರ್ ಮಾಡಿ: ' + shareUrl);
+        });
       }
     }
-
-    function drawGrandCTACard(W, H, isReel) {
-      const cx = W / 2;
-      const cy = H * 0.46;
-
-      ctx.save();
-      ctx.shadowColor = '#f59e0b';
-      ctx.shadowBlur = 30;
-      ctx.fillStyle = 'rgba(15, 23, 42, 0.96)';
-      ctx.roundRect(cx - 290, cy - 180, 580, 360, 20);
-      ctx.fill();
-      ctx.strokeStyle = '#f59e0b';
-      ctx.lineWidth = 3.5;
-      ctx.stroke();
-      ctx.restore();
-
-      ctx.fillStyle = '#fde047';
-      ctx.font = 'bold 17px "Noto Sans Kannada"';
-      ctx.textAlign = 'center';
-      ctx.fillText("ಕರ್ನಾಟಕ ಅಧಿಕೃತ ವಿತರಕರು ಮತ್ತು ತಾಂತ್ರಿಕ ಬೆಂಬಲ", cx, cy - 130);
-
-      ctx.fillStyle = '#ffffff';
-      ctx.font = '900 36px "Noto Sans Kannada"';
-      ctx.fillText("ಅಮೀರ್ ಸೋಲಾಪುರ್", cx, cy - 80);
-
-      ctx.font = '700 19px "Plus Jakarta Sans"';
-      ctx.fillStyle = '#93c5fd';
-      ctx.fillText("Ameer Solapur • QuickPrint Kiosk Solutions", cx, cy - 48);
-
-      ctx.fillStyle = '#ffffff';
-      ctx.roundRect(cx - 230, cy - 20, 460, 85, 14);
-      ctx.fill();
-
-      ctx.fillStyle = '#15803d';
-      ctx.font = 'bold 15px "Noto Sans Kannada"';
-      ctx.fillText("📞 ಕರೆ & WhatsApp ಗಾಗಿ:", cx, cy + 10);
-
-      ctx.fillStyle = '#0f172a';
-      ctx.font = '900 38px "Plus Jakarta Sans"';
-      ctx.fillText("7760606262", cx, cy + 50);
-
-      ctx.fillStyle = '#f59e0b';
-      ctx.roundRect(cx - 250, cy + 85, 500, 44, 10);
-      ctx.fill();
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 16px "Noto Sans Kannada"';
-      ctx.fillText("🎉 ಉಚಿತ ಲೈವ್ ಡೆಮೊ & ಇನ್‌ಸ್ಟಾಲೇಶನ್‌ಗಾಗಿ ಇಂದೇ ಕರೆ ಮಾಡಿ!", cx, cy + 114);
-    }
-
-    function startExportMP4() {
-      initAudio();
-      recordedChunks = [];
-      const stream = canvas.captureStream(30);
-
-      const mimeTypes = [
-        'video/mp4',
-        'video/webm;codecs=vp9',
-        'video/webm;codecs=vp8',
-        'video/webm'
-      ];
-      let selectedMime = mimeTypes.find(m => MediaRecorder.isTypeSupported(m)) || 'video/webm';
-
-      mediaRecorder = new MediaRecorder(stream, { mimeType: selectedMime });
-      mediaRecorder.ondataavailable = e => {
-        if (e.data.size > 0) recordedChunks.push(e.data);
-      };
-
-      mediaRecorder.onstop = () => {
-        const ext = selectedMime.includes('mp4') ? 'mp4' : 'webm';
-        const blob = new Blob(recordedChunks, { type: selectedMime });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `QuickPrint_Kannada_Promotional_Video.${ext}`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        alert(`✅ ವಿಡಿಯೋ ಯಶಸ್ವಿಯಾಗಿ ಡೌನ್‌ಲೋಡ್ ಆಗಿದೆ! (QuickPrint_Kannada_Promotional_Video.${ext})`);
-      };
-
-      mediaRecorder.start();
-      restartVideo();
-
-      setTimeout(() => {
-        if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-          mediaRecorder.stop();
-        }
-      }, (TOTAL_DURATION + 0.5) * 1000);
-    }
-
-    drawFrame(0);
   </script>
 </body>
 </html>
