@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>QuickPrint - Kannada Promotional Video Ad | Ameer Solapur</title>
+  <title>QuickPrint - Realistic Kannada Shop Promotional Video | Ameer Solapur</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Kannada:wght@400;600;700;800;900&family=Plus+Jakarta+Sans:wght@600;700;800;900&display=swap" rel="stylesheet">
@@ -23,24 +23,24 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 20px 10px;
+      padding: 16px 8px;
       overflow-x: hidden;
     }
 
     /* Top Control Bar */
     .controls-bar {
       width: 100%;
-      max-width: 900px;
+      max-width: 960px;
       background: #131b2e;
       border: 1px solid #1e293b;
       border-radius: 14px;
-      padding: 12px 20px;
+      padding: 12px 18px;
       display: flex;
       justify-content: space-between;
       align-items: center;
       flex-wrap: wrap;
       gap: 12px;
-      margin-bottom: 20px;
+      margin-bottom: 16px;
       box-shadow: 0 10px 25px rgba(0,0,0,0.5);
     }
 
@@ -74,24 +74,21 @@
       font-family: inherit;
     }
 
+    .btn-download {
+      background: linear-gradient(135deg, #16a34a, #15803d);
+      color: #ffffff;
+      box-shadow: 0 4px 14px rgba(22,163,74,0.4);
+      font-size: 13.5px;
+    }
+    .btn-download:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 18px rgba(22,163,74,0.5);
+      background: #15803d;
+    }
+
     .btn-primary {
       background: linear-gradient(135deg, #2563eb, #1d4ed8);
       color: #ffffff;
-      box-shadow: 0 4px 14px rgba(37,99,235,0.4);
-    }
-    .btn-primary:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 6px 18px rgba(37,99,235,0.5);
-    }
-
-    .btn-record {
-      background: linear-gradient(135deg, #dc2626, #b91c1c);
-      color: #ffffff;
-      box-shadow: 0 4px 14px rgba(220,38,38,0.4);
-    }
-    .btn-record.recording {
-      animation: pulse 1s infinite alternate;
-      background: #991b1b;
     }
 
     .btn-aspect {
@@ -105,13 +102,13 @@
       border-color: #3b82f6;
     }
 
-    /* Video Player Canvas Container */
+    /* Video Player Container */
     .player-container {
       position: relative;
       background: #000000;
       border-radius: 18px;
       overflow: hidden;
-      box-shadow: 0 25px 60px rgba(0,0,0,0.8), 0 0 0 2px #1e293b;
+      box-shadow: 0 25px 60px rgba(0,0,0,0.85), 0 0 0 2px #1e293b;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -120,17 +117,17 @@
 
     /* 9:16 Reel Mode */
     .player-container.reel-mode {
-      width: 420px;
-      height: 746px;
-      max-width: 95vw;
+      width: 440px;
+      height: 780px;
+      max-width: 96vw;
       max-height: 82vh;
     }
 
     /* 16:9 Landscape Mode */
     .player-container.landscape-mode {
-      width: 890px;
-      height: 500px;
-      max-width: 95vw;
+      width: 960px;
+      height: 540px;
+      max-width: 96vw;
       max-height: 80vh;
     }
 
@@ -147,12 +144,11 @@
       bottom: 0;
       left: 0;
       right: 0;
-      background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 60%, transparent 100%);
-      padding: 18px 20px 14px 20px;
+      background: linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.5) 60%, transparent 100%);
+      padding: 16px 18px 12px 18px;
       display: flex;
       flex-direction: column;
       gap: 10px;
-      pointer-events: auto;
     }
 
     .progress-bar-container {
@@ -169,7 +165,6 @@
       width: 0%;
       background: linear-gradient(90deg, #3b82f6, #60a5fa);
       border-radius: 4px;
-      transition: width 0.1s linear;
     }
 
     .hud-row {
@@ -192,10 +187,6 @@
       color: #ffffff;
       font-size: 20px;
       cursor: pointer;
-      transition: transform 0.1s;
-    }
-    .hud-btn:hover {
-      transform: scale(1.15);
     }
 
     .scene-indicator {
@@ -207,11 +198,11 @@
       color: #93c5fd;
     }
 
-    /* Big Start Button */
+    /* Start Overlay */
     .start-overlay {
       position: absolute;
       inset: 0;
-      background: rgba(15, 23, 42, 0.88);
+      background: rgba(15, 23, 42, 0.9);
       backdrop-filter: blur(8px);
       display: flex;
       flex-direction: column;
@@ -224,14 +215,14 @@
     }
 
     .play-circle {
-      width: 80px;
-      height: 80px;
+      width: 84px;
+      height: 84px;
       background: linear-gradient(135deg, #2563eb, #1d4ed8);
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 34px;
+      font-size: 36px;
       color: #ffffff;
       cursor: pointer;
       box-shadow: 0 10px 30px rgba(37,99,235,0.5);
@@ -240,11 +231,6 @@
     .play-circle:hover {
       transform: scale(1.1);
     }
-
-    @keyframes pulse {
-      0% { opacity: 1; transform: scale(1); }
-      100% { opacity: 0.75; transform: scale(1.05); }
-    }
   </style>
 </head>
 <body>
@@ -252,14 +238,14 @@
   <!-- Controls Bar -->
   <div class="controls-bar">
     <div class="brand-pill">
-      <span>🎬</span> QuickPrint Animated Video Ad (ಕನ್ನಡ)
+      <span>🎬</span> QuickPrint Realistic Kannada Video Ad
     </div>
 
     <div class="btn-group">
-      <button class="btn btn-aspect active" id="btnReelMode" onclick="setAspect('reel')">📱 Reel / Shorts (9:16)</button>
+      <button class="btn btn-aspect active" id="btnReelMode" onclick="setAspect('reel')">📱 Reel (9:16)</button>
       <button class="btn btn-aspect" id="btnWideMode" onclick="setAspect('wide')">🖥️ Landscape (16:9)</button>
       <button class="btn btn-primary" onclick="restartVideo()">🔄 Replay</button>
-      <button class="btn btn-record" id="btnRecord" onclick="toggleRecording()">🎥 Record & Download MP4</button>
+      <button class="btn btn-download" onclick="startExportMP4()">📥 Direct Download MP4 Video</button>
     </div>
   </div>
 
@@ -270,14 +256,14 @@
     <!-- Initial Play Overlay -->
     <div class="start-overlay" id="startOverlay">
       <div class="play-circle" onclick="startVideoWithSound()">▶</div>
-      <div style="font-size:22px; font-weight:900; color:#ffffff;">
-        ಕ್ವಿಕ್‌ಪ್ರಿಂಟ್ ಪ್ರಮೋಷನಲ್ ವಿಡಿಯೋ
+      <div style="font-size:23px; font-weight:900; color:#ffffff;">
+        ಕ್ವಿಕ್‌ಪ್ರಿಂಟ್ ರಿಯಲ್ ಶಾಪ್ ವಿಡಿಯೋ
       </div>
-      <div style="font-size:13px; color:#94a3b8; max-width:320px; line-height:1.5;">
-        ಗ್ರಾಹಕರ ರಶ್ ಕಡಿಮೆ ಮಾಡಿ, ಝೆರಾಕ್ಸ್ ಅಂಗಡಿಯನ್ನು 100% ಸ್ಮಾರ್ಟ್ ಮಾಡುವ ಅದ್ಭುತ ವಿಡಿಯೋ!
+      <div style="font-size:14px; color:#94a3b8; max-width:340px; line-height:1.5;">
+        ರಿಯಲ್ ಕಸ್ಟಮರ್ & ಅಂಗಡಿಯವರ ಕನ್ನಡ ಸಂಭಾಷಣೆಯೊಂದಿಗೆ!
       </div>
-      <div style="margin-top:6px; font-size:12px; color:#60a5fa; font-weight:700;">
-        (ಆಡಿಯೋ ಮತ್ತು ಧ್ವನಿಯೊಂದಿಗೆ ವೀಕ್ಷಿಸಲು Click ಮಾಡಿ)
+      <div style="margin-top:6px; font-size:12.5px; color:#60a5fa; font-weight:700;">
+        (ಪ್ಲೇ ಮಾಡಲು Click ಮಾಡಿ)
       </div>
     </div>
 
@@ -293,18 +279,16 @@
           <span id="timeDisplay" style="color:#cbd5e1; font-family:'Plus Jakarta Sans', monospace;">0:00 / 0:32</span>
         </div>
         <div class="scene-indicator" id="sceneIndicator">
-          ದೃಶ್ಯ 1: ಹಳೆಯ WhatsApp ಜಂಜಾಟ
+          ದೃಶ್ಯ 1: ಕಸ್ಟಮರ್ ಎಂಟ್ರಿ
         </div>
       </div>
     </div>
   </div>
 
   <script>
-    // Audio Context for synthetic sound effects & voiceover
     let audioCtx = null;
     let isMuted = false;
     let isPlaying = false;
-    let isRecording = false;
     let mediaRecorder = null;
     let recordedChunks = [];
 
@@ -316,49 +300,62 @@
     const sceneIndicator = document.getElementById('sceneIndicator');
     const btnPlayPause = document.getElementById('btnPlayPause');
     const btnMute = document.getElementById('btnMute');
-    const btnRecord = document.getElementById('btnRecord');
 
-    // Total Duration: 32 seconds (Fast, high-retention reel)
     const TOTAL_DURATION = 32.0;
     let currentTime = 0.0;
     let lastTimestamp = 0;
 
-    // Scenes Definition
+    // Scenes with Real Character Dialogues
     const SCENES = [
       {
         id: 1,
         start: 0.0,
-        end: 7.0,
-        title: "ದೃಶ್ಯ 1: ಹಳೆಯ WhatsApp ಜಂಜಾಟ",
-        narration: "ಪ್ರತಿದಿನ ನಿಮ್ಮ ಝೆರಾಕ್ಸ್ ಅಂಗಡಿಯಲ್ಲಿ ಗ್ರಾಹಕರ ವಾಟ್ಸಾಪ್ ನಂಬರ್ ಕೇಳುವ ಜಂಜಾಟದಿಂದ ಬೇಸತ್ತಿದ್ದೀರಾ?"
+        end: 7.5,
+        title: "ದೃಶ್ಯ 1: ಕಸ್ಟಮರ್ & ಅಂಗಡಿಯವರ ಮಾತುಕತೆ",
+        speaker: "customer",
+        dialogue: "ಕಸ್ಟಮರ್: 'ಅಣ್ಣಾ, ಈ ಡಾಕ್ಯುಮೆಂಟ್ ಪ್ರಿಂಟ್ ತೆಗಿಬೇಕು, WhatsApp ನಂಬರ್ ಕೊಡ್ತೀರಾ?'",
+        reply: "ಅಂಗಡಿಯವರು: 'ನೋಡಿ ತಮ್ಮಾ, WhatsApp ಬೇಡ! ಈ QR ಕೋಡ್ ಸ್ಕ್ಯಾನ್ ಮಾಡಿ!'",
+        voiceText: "ಅಣ್ಣಾ, ಈ ಡಾಕ್ಯುಮೆಂಟ್ ಪ್ರಿಂಟ್ ತೆಗಿಬೇಕು, WhatsApp ನಂಬರ್ ಕೊಡ್ತೀರಾ?"
       },
       {
         id: 2,
-        start: 7.0,
-        end: 14.0,
-        title: "ದೃಶ್ಯ 2: ಕ್ವಿಕ್‌ಪ್ರಿಂಟ್ QR ಕೋಡ್ ಮ್ಯಾಜಿಕ್",
-        narration: "ಈಗಲೇ ಅಳವಡಿಸಿ ಕ್ವಿಕ್‌ಪ್ರಿಂಟ್! ಕೌಂಟರ್ ಕ್ಯೂಆರ್ ಕೋಡ್ ಸ್ಕ್ಯಾನ್ ಮಾಡಿ, ವಾಟ್ಸಾಪ್ ಇಲ್ಲದೆ ನೇರ ಪ್ರಿಂಟ್!"
+        start: 7.5,
+        end: 15.0,
+        title: "ದೃಶ್ಯ 2: 1 ಸೆಕೆಂಡಿನಲ್ಲಿ ಕ್ಯೂಆರ್ ಸ್ಕ್ಯಾನ್ & ಅಪ್ಲೋಡ್",
+        speaker: "shopkeeper",
+        dialogue: "ಅಂಗಡಿಯವರು: 'QR ಸ್ಕ್ಯಾನ್ ಮಾಡಿ, ಫೈಲ್ ಅಪ್ಲೋಡ್ ಮಾಡಿ, GPay ಮಾಡಿ ಸಾಕು!'",
+        reply: "ಕಸ್ಟಮರ್: 'ಅರೆ ವಾವ್! 1 ಸೆಕೆಂಡಿನಲ್ಲಿ ಕನೆಕ್ಟ್ ಆಯ್ತು!'",
+        voiceText: "ನೋಡಿ ತಮ್ಮಾ, WhatsApp ಬೇಡ! ಇಲ್ಲಿರೋ QR ಸ್ಕ್ಯಾನ್ ಮಾಡಿ, ಫೋನ್‌ನಲ್ಲೇ GPay ಮಾಡಿ ಸಾಕು!"
       },
       {
         id: 3,
-        start: 14.0,
-        end: 21.0,
-        title: "ದೃಶ್ಯ 3: ಆಟೋ ಪೇಮೆಂಟ್ & ಫೈಲ್ ಸುರಕ್ಷತೆ",
-        narration: "ಗೂಗಲ್ ಪೇ, ಫೋನ್ ಪೇ ಆಟೋ ಪಾವತಿ! ಪ್ರಿಂಟ್ ಮುಗಿದ ತಕ್ಷಣ ಡಾಕ್ಯುಮೆಂಟ್ ಶಾಶ್ವತವಾಗಿ ಡಿಲೀಟ್!"
+        start: 15.0,
+        end: 22.0,
+        title: "ದೃಶ್ಯ 3: ಆಟೋ ಪಾವತಿ & ಲೈವ್ ಪ್ರಿಂಟ್",
+        speaker: "customer",
+        dialogue: "ಕಸ್ಟಮರ್: 'ಅದ್ಭುತ! GPay ಆಗ್ತಿದ್ದಂತೆ ಪ್ರಿಂಟರ್‌ನಿಂದ ಪ್ರಿಂಟ್ ಬಂತು!'",
+        reply: "ಅಂಗಡಿಯವರು: '100% ಆಟೋಮ್ಯಾಟಿಕ್ ಸಿಸ್ಟಮ್ ತಮ್ಮಾ!'",
+        voiceText: "ಅರೆ ವಾವ್! GPay ಆಗ್ತಿದ್ದಂತೆ ಪ್ರಿಂಟರ್‌ನಿಂದ ಪ್ರಿಂಟ್ ಬಂತು! ಎಷ್ಟು ಸುಲಭ ಮತ್ತು ಫಾಸ್ಟ್!"
       },
       {
         id: 4,
-        start: 21.0,
+        start: 22.0,
         end: 26.5,
-        title: "ದೃಶ್ಯ 4: ಒಬ್ಬನೇ ವ್ಯಕ್ತಿ - ಯಾವುದೇ ರಶ್ ಇಲ್ಲ!",
-        narration: "ಎಷ್ಟೇ ಜನರ ರಶ್ ಇದ್ದರೂ ಒಬ್ಬನೇ ವ್ಯಕ್ತಿ ಸುಲಭವಾಗಿ ವ್ಯಾಪಾರ ನಿಭಾಯಿಸಿ ದುಪ್ಪಟ್ಟು ಲಾಭ ಗಳಿಸಿ!"
+        title: "ದೃಶ್ಯ 4: 100% ಗೌಪ್ಯತೆ & ರಶ್ ಫ್ರೀ ಶಾಪ್",
+        speaker: "shopkeeper",
+        dialogue: "ಅಂಗಡಿಯವರು: 'ಫೈಲ್ ತಕ್ಷಣ ಡಿಲೀಟ್ ಆಗುತ್ತೆ, ರಶ್ ಇಲ್ಲ, ಗ್ಯಾಲರಿ ಫುಲ್ ಆಗೋ ಆತಂಕವಿಲ್ಲ!'",
+        reply: "ಒಬ್ಬನೇ ವ್ಯಕ್ತಿ ನೂರಾರು ಪ್ರಿಂಟ್ ಸುಲಭವಾಗಿ ನಿಭಾಯಿಸಬಹುದು!",
+        voiceText: "ಫೈಲ್ ತಕ್ಷಣ ಆಟೋ ಡಿಲೀಟ್ ಆಗುತ್ತೆ! ರಶ್ ಇಲ್ಲ, ಗ್ಯಾಲರಿ ಫುಲ್ ಆಗೋ ಆತಂಕವಿಲ್ಲ!"
       },
       {
         id: 5,
         start: 26.5,
         end: 32.0,
         title: "ದೃಶ್ಯ 5: ಅಮೀರ್ ಸೋಲಾಪುರ್ - 7760606262",
-        narration: "ಇಂದೇ ನಿಮ್ಮ ಅಂಗಡಿಗೆ ಲೈವ್ ಡೆಮೊ ಪಡೆಯಲು ಸಂಪರ್ಕಿಸಿ: ಅಮೀರ್ ಸೋಲಾಪುರ್, 7760606262!"
+        speaker: "narrator",
+        dialogue: "ನಿಮ್ಮ ಅಂಗಡಿಗೂ ಇಂದೇ ಅಳವಡಿಸಿ: ಅಮೀರ್ ಸೋಲಾಪುರ್ - 7760606262",
+        reply: "ಕರ್ನಾಟಕ ಅಧಿಕೃತ ವಿತರಕರು • ಉಚಿತ ಲೈವ್ ಡೆಮೊ ಲಭ್ಯವಿದೆ!",
+        voiceText: "ನಿಮ್ಮ ಝೆರಾಕ್ಸ್ ಅಂಗಡಿಗೂ ಇಂದೇ ಕ್ವಿಕ್‌ಪ್ರಿಂಟ್ ಅಳವಡಿಸಿ. ಲೈವ್ ಡೆಮೊಗಾಗಿ ಸಂಪರ್ಕಿಸಿ: ಅಮೀರ್ ಸೋಲಾಪುರ್, 7760606262!"
       }
     ];
 
@@ -373,7 +370,6 @@
       }
     }
 
-    // Play synthetic sound effects
     function playSound(type) {
       if (isMuted || !audioCtx) return;
       try {
@@ -384,58 +380,52 @@
         const t = audioCtx.currentTime;
 
         if (type === 'beep') {
-          // Scanner beep
           osc.type = 'sine';
-          osc.frequency.setValueAtTime(1200, t);
+          osc.frequency.setValueAtTime(1400, t);
           gain.gain.setValueAtTime(0.3, t);
-          gain.gain.exponentialRampToValueAtTime(0.01, t + 0.15);
+          gain.gain.exponentialRampToValueAtTime(0.01, t + 0.12);
           osc.start(t);
-          osc.stop(t + 0.15);
+          osc.stop(t + 0.12);
         } else if (type === 'success') {
-          // Payment Ding
           osc.type = 'triangle';
-          osc.frequency.setValueAtTime(587.33, t); // D5
-          osc.frequency.setValueAtTime(880, t + 0.1); // A5
-          gain.gain.setValueAtTime(0.3, t);
+          osc.frequency.setValueAtTime(587.33, t);
+          osc.frequency.setValueAtTime(880, t + 0.1);
+          gain.gain.setValueAtTime(0.35, t);
           gain.gain.exponentialRampToValueAtTime(0.01, t + 0.5);
           osc.start(t);
           osc.stop(t + 0.5);
-        } else if (type === 'buzz') {
-          // Error buzz
-          osc.type = 'sawtooth';
-          osc.frequency.setValueAtTime(150, t);
-          gain.gain.setValueAtTime(0.25, t);
-          gain.gain.exponentialRampToValueAtTime(0.01, t + 0.3);
-          osc.start(t);
-          osc.stop(t + 0.3);
         } else if (type === 'print') {
-          // Motor / Paper roll sound
           osc.type = 'square';
-          osc.frequency.setValueAtTime(80, t);
-          osc.frequency.exponentialRampToValueAtTime(140, t + 0.4);
-          gain.gain.setValueAtTime(0.15, t);
-          gain.gain.exponentialRampToValueAtTime(0.01, t + 0.4);
+          osc.frequency.setValueAtTime(85, t);
+          osc.frequency.exponentialRampToValueAtTime(150, t + 0.5);
+          gain.gain.setValueAtTime(0.18, t);
+          gain.gain.exponentialRampToValueAtTime(0.01, t + 0.5);
           osc.start(t);
-          osc.stop(t + 0.4);
+          osc.stop(t + 0.5);
         }
       } catch (e) {}
     }
 
-    // Kannada Speech Voice-over using Web Speech API
-    function speakKannada(text) {
+    function speakKannada(text, speaker) {
       if (isMuted || !('speechSynthesis' in window)) return;
       try {
         window.speechSynthesis.cancel();
         const utter = new SpeechSynthesisUtterance(text);
         utter.rate = 1.05;
-        utter.pitch = 1.0;
         
-        // Find Kannada or Indian voice
+        if (speaker === 'customer') {
+          utter.pitch = 1.25;
+        } else if (speaker === 'shopkeeper') {
+          utter.pitch = 0.95;
+        } else {
+          utter.pitch = 1.05;
+        }
+
         const voices = window.speechSynthesis.getVoices();
         const knVoice = voices.find(v => v.lang.includes('kn') || v.lang.includes('KN')) || 
-                        voices.find(v => v.lang.includes('hi') || v.lang.includes('HI') || v.lang.includes('IN'));
+                        voices.find(v => v.lang.includes('hi') || v.lang.includes('IN'));
         if (knVoice) utter.voice = knVoice;
-        
+
         window.speechSynthesis.speak(utter);
       } catch (e) {}
     }
@@ -457,17 +447,13 @@
       if (isPlaying) {
         lastTimestamp = performance.now();
         requestAnimationFrame(gameLoop);
-      } else {
-        if ('speechSynthesis' in window) window.speechSynthesis.pause();
       }
     }
 
     function toggleMute() {
       isMuted = !isMuted;
       btnMute.innerText = isMuted ? '🔇' : '🔊';
-      if (isMuted && 'speechSynthesis' in window) {
-        window.speechSynthesis.cancel();
-      }
+      if (isMuted && 'speechSynthesis' in window) window.speechSynthesis.cancel();
     }
 
     function restartVideo() {
@@ -483,20 +469,16 @@
 
     function seekVideo(e) {
       const rect = e.currentTarget.getBoundingClientRect();
-      const clickX = e.clientX - rect.left;
-      const pct = Math.max(0, Math.min(1, clickX / rect.width));
+      const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
       currentTime = pct * TOTAL_DURATION;
       spokenScenes.clear();
-      if (!isPlaying) {
-        drawFrame(currentTime);
-      }
+      drawFrame(currentTime);
     }
 
     function setAspect(mode) {
       const wrap = document.getElementById('playerWrapper');
       const btnR = document.getElementById('btnReelMode');
       const btnW = document.getElementById('btnWideMode');
-
       if (mode === 'reel') {
         wrap.className = 'player-container reel-mode';
         canvas.width = 720;
@@ -513,7 +495,6 @@
       drawFrame(currentTime);
     }
 
-    // Main Animation Loop
     function gameLoop(timestamp) {
       if (!isPlaying) return;
       if (!lastTimestamp) lastTimestamp = timestamp;
@@ -526,7 +507,6 @@
         isPlaying = false;
         btnPlayPause.innerText = '▶';
         drawFrame(currentTime);
-        if (isRecording) stopRecording();
         return;
       }
 
@@ -534,459 +514,486 @@
       requestAnimationFrame(gameLoop);
     }
 
-    // Rendering Engine: draws the scene at `t`
     function drawFrame(t) {
       const W = canvas.width;
       const H = canvas.height;
       const isReel = H > W;
 
-      // Update UI Progress Bar
       const pct = (t / TOTAL_DURATION) * 100;
       progressFill.style.width = pct + '%';
       
       const curSec = Math.floor(t);
-      const curMin = Math.floor(curSec / 60);
-      const curRemSec = curSec % 60;
-      timeDisplay.innerText = `${curMin}:${curRemSec < 10 ? '0' : ''}${curRemSec} / 0:32`;
+      timeDisplay.innerText = `0:${curSec < 10 ? '0' : ''}${curSec} / 0:32`;
 
-      // Find Active Scene
       const scene = SCENES.find(s => t >= s.start && t < s.end) || SCENES[SCENES.length - 1];
       sceneIndicator.innerText = scene.title;
 
-      // Trigger Voiceover on Scene Enter
       if (!spokenScenes.has(scene.id) && isPlaying) {
         spokenScenes.add(scene.id);
-        speakKannada(scene.narration);
-        if (scene.id === 1) playSound('buzz');
+        speakKannada(scene.voiceText, scene.speaker);
         if (scene.id === 2) playSound('beep');
-        if (scene.id === 3) playSound('success');
-        if (scene.id === 4) playSound('print');
+        if (scene.id === 3) {
+          playSound('success');
+          setTimeout(() => playSound('print'), 700);
+        }
       }
 
-      // 1. Draw Background Gradient
-      const bgGrad = ctx.createLinearGradient(0, 0, W, H);
-      bgGrad.addColorStop(0, '#0f172a');
-      bgGrad.addColorStop(1, '#020617');
-      ctx.fillStyle = bgGrad;
+      drawRealisticShop(W, H, isReel, t, scene);
+      drawDialogueOverlay(scene, W, H, isReel, t);
+    }
+
+    function drawRealisticShop(W, H, isReel, t, scene) {
+      const wallGrad = ctx.createLinearGradient(0, 0, 0, H * 0.75);
+      wallGrad.addColorStop(0, '#1e293b');
+      wallGrad.addColorStop(1, '#0f172a');
+      ctx.fillStyle = wallGrad;
       ctx.fillRect(0, 0, W, H);
 
-      // Scene Switching
-      if (scene.id === 1) {
-        renderScene1_Problem(t - scene.start, W, H, isReel);
-      } else if (scene.id === 2) {
-        renderScene2_SmartQR(t - scene.start, W, H, isReel);
-      } else if (scene.id === 3) {
-        renderScene3_AutoPay(t - scene.start, W, H, isReel);
-      } else if (scene.id === 4) {
-        renderScene4_OneManArmy(t - scene.start, W, H, isReel);
-      } else if (scene.id === 5) {
-        renderScene5_ContactCTA(t - scene.start, W, H, isReel);
-      }
-
-      // Draw Subtitle / Dialogue Caption Box at Bottom
-      drawSubtitles(scene.narration, W, H, isReel);
-    }
-
-    // ================= SCENE 1: THE WHATSAPP CHAOS =================
-    function renderScene1_Problem(relT, W, H, isReel) {
-      // Header Banner
-      drawBanner(W, H, "⚠️ ಹಳೆಯ ಸಮಸ್ಯೆ: WHATSAPP ಜಂಜಾಟ & ರಶ್!", "#dc2626", isReel);
-
-      // Crowded Shop Illustration
-      const cx = W / 2;
-      const cy = H * 0.45;
-
-      // Draw Queue of Customers
-      const peopleCount = 5;
-      for (let i = 0; i < peopleCount; i++) {
-        const px = cx - 180 + i * 90;
-        const py = cy + Math.sin(relT * 4 + i) * 8;
-        drawPerson(px, py, i === 0 ? "😰 ಅಂಗಡಿಯವರು" : `👤 ಗ್ರಾಹಕ ${i}`, i === 0 ? "#ef4444" : "#3b82f6");
-      }
-
-      // Chat Speech Bubbles
-      if (relT > 1.0) {
-        drawSpeechBubble(cx - 70, cy - 140, "ಅಣ್ಣಾ, ನಂಬರ್ ಕೊಡಿ WhatsApp ಮಾಡ್ತೀನಿ!", "#ffffff", "#0f172a");
-      }
-      if (relT > 3.0) {
-        drawSpeechBubble(cx + 120, cy - 80, "ನಂಬರ್ ಸೇವ್ ಆಗ್ತಿಲ್ಲ... ಡೌನ್‌ಲೋಡ್ ಫೇಲ್!", "#fee2e2", "#991b1b");
-      }
-
-      // Big Warning Badges
-      const pulseScale = 1 + Math.sin(relT * 6) * 0.05;
-      ctx.save();
-      ctx.translate(cx, cy + 180);
-      ctx.scale(pulseScale, pulseScale);
-      drawBadge("❌ ಮೊಬೈಲ್ ಹ್ಯಾಂಗ್ | ಗ್ಯಾಲರಿ ಫುಲ್ | ರಶ್ & ಗಲಾಟೆ!", -260, 0, 520, 50, "#ef4444");
-      ctx.restore();
-    }
-
-    // ================= SCENE 2: THE QUICKPRINT SMART QR =================
-    function renderScene2_SmartQR(relT, W, H, isReel) {
-      drawBanner(W, H, "✨ ಪರಿಹಾರ: ಕ್ವಿಕ್‌ಪ್ರಿಂಟ್ ಕೌಂಟರ್ QR ಕೋಡ್!", "#2563eb", isReel);
-
-      const cx = W / 2;
-      const cy = H * 0.44;
-
-      // Glowing Counter QR Poster Stand
-      ctx.save();
-      ctx.shadowColor = '#3b82f6';
-      ctx.shadowBlur = 30 + Math.sin(relT * 4) * 15;
-      ctx.fillStyle = '#ffffff';
-      ctx.roundRect(cx - 140, cy - 160, 280, 320, 16);
-      ctx.fill();
-      ctx.restore();
-
-      // Poster Header
       ctx.fillStyle = '#1e3a8a';
-      ctx.font = 'bold 22px "Noto Sans Kannada"';
-      ctx.textAlign = 'center';
-      ctx.fillText("🖨️ QuickPrint", cx, cy - 110);
-      ctx.font = 'bold 15px "Noto Sans Kannada"';
-      ctx.fillStyle = '#dc2626';
-      ctx.fillText("ಸ್ಕ್ಯಾನ್ ಮಾಡಿ ತಕ್ಷಣ ಪ್ರಿಂಟ್ ಪಡೆಯಿರಿ", cx, cy - 85);
-
-      // Fake QR Pattern
-      ctx.fillStyle = '#0f172a';
-      const qSize = 130;
-      ctx.fillRect(cx - qSize/2, cy - 65, qSize, qSize);
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(cx - qSize/2 + 20, cy - 45, 25, 25);
-      ctx.fillRect(cx + qSize/2 - 45, cy - 45, 25, 25);
-      ctx.fillRect(cx - qSize/2 + 20, cy + 20, 25, 25);
-
-      // Customer Phone Scanning Animation
-      const phoneX = cx + 90 + Math.sin(relT * 3) * 20;
-      const phoneY = cy + 40;
-      drawSmartphone(phoneX, phoneY, "📷 Scanning QR...", "#10b981");
-
-      // Laser Scanner Beam
-      ctx.strokeStyle = '#ef4444';
+      ctx.fillRect(W * 0.1, isReel ? 120 : 40, W * 0.8, isReel ? 60 : 45);
+      ctx.strokeStyle = '#f59e0b';
       ctx.lineWidth = 3;
-      ctx.beginPath();
-      const beamY = cy - 60 + ((relT * 120) % qSize);
-      ctx.moveTo(cx - qSize/2 - 10, beamY);
-      ctx.lineTo(cx + qSize/2 + 10, beamY);
-      ctx.stroke();
+      ctx.strokeRect(W * 0.1, isReel ? 120 : 40, W * 0.8, isReel ? 60 : 45);
 
-      // Green Badge
-      drawBadge("⚡ WhatsApp ನಂಬರ್ ಬೇಡ! 1 ಸೆಕೆಂಡಿನಲ್ಲಿ ಕನೆಕ್ಟ್!", cx - 250, cy + 200, 500, 48, "#16a34a");
+      ctx.fillStyle = '#fde047';
+      ctx.font = 'bold 20px "Noto Sans Kannada"';
+      ctx.textAlign = 'center';
+      ctx.fillText("🏛️ ಕರ್ನಾಟಕ ಸಿಎಸ್‌ಸಿ & ಝೆರಾಕ್ಸ್ ಕೇಂದ್ರ", W / 2, isReel ? 158 : 70);
+
+      ctx.fillStyle = '#334155';
+      ctx.fillRect(W * 0.08, isReel ? 210 : 105, W * 0.28, 90);
+      for (let r = 0; r < 3; r++) {
+        ctx.fillStyle = r % 2 === 0 ? '#f8fafc' : '#38bdf8';
+        ctx.fillRect(W * 0.1, (isReel ? 220 : 115) + r * 25, W * 0.24, 18);
+      }
+
+      const counterY = isReel ? H * 0.65 : H * 0.62;
+      const counterH = H - counterY;
+
+      const skX = W * 0.72;
+      const skY = counterY - 30;
+      drawRealisticShopkeeper(skX, skY, t, scene);
+
+      ctx.fillStyle = '#78350f';
+      ctx.fillRect(0, counterY, W, counterH);
+
+      ctx.fillStyle = '#94a3b8';
+      ctx.fillRect(0, counterY - 8, W, 12);
+      ctx.fillStyle = '#cbd5e1';
+      ctx.fillRect(0, counterY - 8, W, 4);
+
+      drawDesktopMonitor(W * 0.58, counterY - 14, t);
+      drawMultiFunctionPrinter(W * 0.82, counterY - 14, t, scene);
+      drawAcrylicQRStand(W * 0.44, counterY - 14, t, scene);
+
+      const custX = W * 0.24;
+      const custY = counterY + (isReel ? 20 : 35);
+      drawRealisticCustomer(custX, custY, t, scene);
+
+      if (scene.id === 2) {
+        drawLaserBeam(custX + 60, custY - 170, W * 0.44, counterY - 100, t);
+      }
     }
 
-    // ================= SCENE 3: AUTO PAYMENT & SHREDDER =================
-    function renderScene3_AutoPay(relT, W, H, isReel) {
-      drawBanner(W, H, "💳 ಆಟೋ ಪೇಮೆಂಟ್ & 100% ಫೈಲ್ ಸುರಕ್ಷತೆ!", "#16a34a", isReel);
+    function drawRealisticShopkeeper(x, y, t, scene) {
+      ctx.save();
+      ctx.translate(x, y);
 
-      const cx = W / 2;
-      const cy = H * 0.44;
-
-      // Two Cards: Left = UPI Payment, Right = Instant Shredder
-      // Card 1: UPI Auto-Pay
-      ctx.fillStyle = '#1e293b';
-      ctx.roundRect(cx - 260, cy - 130, 240, 260, 14);
+      ctx.fillStyle = '#1e3a8a';
+      ctx.beginPath();
+      ctx.moveTo(-50, 20);
+      ctx.lineTo(-40, -60);
+      ctx.lineTo(40, -60);
+      ctx.lineTo(50, 20);
+      ctx.closePath();
       ctx.fill();
-      ctx.strokeStyle = '#22c55e';
+
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.moveTo(-15, -60);
+      ctx.lineTo(0, -35);
+      ctx.lineTo(15, -60);
+      ctx.fill();
+
+      ctx.fillStyle = '#fbcfe8';
+      ctx.fillRect(-12, -75, 24, 20);
+
+      ctx.fillStyle = '#fcd34d';
+      ctx.beginPath();
+      ctx.arc(0, -95, 30, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#1e293b';
+      ctx.beginPath();
+      ctx.arc(0, -106, 32, Math.PI, 0);
+      ctx.fill();
+
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(-12, -100, 6, 4);
+      ctx.fillRect(6, -100, 6, 4);
+
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(-14, -86, 28, 5);
+
+      if (scene.speaker === 'shopkeeper') {
+        const mouthOpen = 4 + Math.sin(t * 18) * 4;
+        ctx.fillStyle = '#b91c1c';
+        ctx.beginPath();
+        ctx.ellipse(0, -78, 8, mouthOpen, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      const handY = -30 + Math.sin(t * 5) * 6;
+      ctx.fillStyle = '#fcd34d';
+      ctx.beginPath();
+      ctx.arc(-55, handY, 14, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 12px sans-serif';
+      ctx.fillText("👉", -60, handY + 5);
+
+      ctx.fillStyle = '#fde047';
+      ctx.font = 'bold 15px "Noto Sans Kannada"';
+      ctx.textAlign = 'center';
+      ctx.fillText("ಅಂಗಡಿಯವರು (Shopkeeper)", 0, -135);
+
+      ctx.restore();
+    }
+
+    function drawRealisticCustomer(x, y, t, scene) {
+      ctx.save();
+      ctx.translate(x, y);
+
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(-28, 40, 24, 180);
+      ctx.fillRect(4, 40, 24, 180);
+
+      ctx.fillStyle = '#991b1b';
+      ctx.roundRect(-35, -90, 70, 130, 12);
+      ctx.fill();
+
+      ctx.fillStyle = '#fcd34d';
+      ctx.fillRect(-10, -105, 20, 20);
+
+      ctx.beginPath();
+      ctx.arc(0, -125, 28, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#0f172a';
+      ctx.beginPath();
+      ctx.arc(0, -136, 30, Math.PI * 0.9, Math.PI * 0.1);
+      ctx.fill();
+
+      ctx.fillRect(-10, -130, 5, 4);
+      ctx.fillRect(8, -130, 5, 4);
+
+      if (scene.speaker === 'customer') {
+        const mouthOpen = 4 + Math.sin(t * 18) * 4;
+        ctx.fillStyle = '#b91c1c';
+        ctx.beginPath();
+        ctx.ellipse(0, -112, 7, mouthOpen, 0, 0, Math.PI * 2);
+        ctx.fill();
+      } else {
+        ctx.strokeStyle = '#78350f';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(0, -114, 7, 0, Math.PI);
+        ctx.stroke();
+      }
+
+      ctx.fillStyle = '#991b1b';
+      ctx.beginPath();
+      ctx.moveTo(25, -70);
+      ctx.lineTo(65, -85);
+      ctx.lineTo(65, -60);
+      ctx.lineTo(25, -45);
+      ctx.fill();
+
+      const phoneBob = Math.sin(t * 4) * 4;
+      ctx.fillStyle = '#fcd34d';
+      ctx.beginPath();
+      ctx.arc(68, -75 + phoneBob, 12, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#0f172a';
+      ctx.roundRect(65, -115 + phoneBob, 42, 80, 8);
+      ctx.fill();
+      ctx.strokeStyle = '#38bdf8';
       ctx.lineWidth = 2;
       ctx.stroke();
 
-      ctx.fillStyle = '#22c55e';
-      ctx.font = 'bold 20px "Noto Sans Kannada"';
+      if (scene.id === 1) {
+        ctx.fillStyle = '#22c55e';
+        ctx.fillRect(68, -110 + phoneBob, 36, 70);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 9px sans-serif';
+        ctx.fillText("WhatsApp", 86, -75 + phoneBob);
+      } else if (scene.id === 2) {
+        ctx.fillStyle = '#3b82f6';
+        ctx.fillRect(68, -110 + phoneBob, 36, 70);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 9px sans-serif';
+        ctx.fillText("UPLOAD", 86, -75 + phoneBob);
+      } else {
+        ctx.fillStyle = '#15803d';
+        ctx.fillRect(68, -110 + phoneBob, 36, 70);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 12px sans-serif';
+        ctx.fillText("₹10 ✅", 86, -75 + phoneBob);
+      }
+
+      ctx.fillStyle = '#60a5fa';
+      ctx.font = 'bold 15px "Noto Sans Kannada"';
       ctx.textAlign = 'center';
-      ctx.fillText("⚡ ಆಟೋ ಪಾವತಿ", cx - 140, cy - 80);
+      ctx.fillText("ಗ್ರಾಹಕ (Customer)", 0, -165);
 
-      ctx.font = 'bold 36px "Plus Jakarta Sans"';
+      ctx.restore();
+    }
+
+    function drawAcrylicQRStand(x, y, t, scene) {
+      ctx.save();
+      ctx.translate(x, y);
+
+      ctx.shadowColor = '#38bdf8';
+      ctx.shadowBlur = scene.id === 2 ? 35 : 15;
+
+      ctx.fillStyle = '#e2e8f0';
+      ctx.fillRect(-45, -6, 90, 8);
+
       ctx.fillStyle = '#ffffff';
-      ctx.fillText("₹ 10.00", cx - 140, cy - 20);
+      ctx.roundRect(-40, -135, 80, 130, 8);
+      ctx.fill();
+      ctx.restore();
 
-      drawBadge("✅ ಪಾವತಿ ಯಶಸ್ವಿಯಾಗಿದೆ", cx - 240, cy + 20, 200, 36, "#15803d");
-      ctx.font = '13px "Noto Sans Kannada"';
-      ctx.fillStyle = '#94a3b8';
-      ctx.fillText("GPay • PhonePe • Paytm", cx - 140, cy + 90);
+      ctx.fillStyle = '#1e3a8a';
+      ctx.font = 'bold 11px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText("QuickPrint", x, y - 118);
+      ctx.fillStyle = '#dc2626';
+      ctx.font = 'bold 8px "Noto Sans Kannada"';
+      ctx.fillText("Scan & Print", x, y - 105);
 
-      // Card 2: Instant File Shredder
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(x - 26, y - 98, 52, 52);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(x - 20, y - 92, 12, 12);
+      ctx.fillRect(x + 8, y - 92, 12, 12);
+      ctx.fillRect(x - 20, y - 64, 12, 12);
+
+      ctx.fillStyle = '#15803d';
+      ctx.fillRect(x - 34, y - 36, 68, 16);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 8px "Noto Sans Kannada"';
+      ctx.fillText("ಕೌಂಟರ್ QR", x, y - 24);
+    }
+
+    function drawDesktopMonitor(x, y, t) {
+      ctx.save();
+      ctx.translate(x, y);
+
+      ctx.fillStyle = '#475569';
+      ctx.fillRect(-10, -25, 20, 25);
+      ctx.fillRect(-25, -4, 50, 6);
+
+      ctx.fillStyle = '#0f172a';
+      ctx.roundRect(-75, -125, 150, 100, 6);
+      ctx.fill();
+
       ctx.fillStyle = '#1e293b';
-      ctx.roundRect(cx + 20, cy - 130, 240, 260, 14);
+      ctx.fillRect(-70, -120, 140, 90);
+
+      ctx.fillStyle = '#0284c7';
+      ctx.fillRect(-70, -120, 140, 16);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 8px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText("Karnataka CSC Center 🟢", 0, -108);
+
+      ctx.fillStyle = '#22c55e';
+      ctx.beginPath();
+      ctx.arc(58, -112, 3, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.restore();
+    }
+
+    function drawMultiFunctionPrinter(x, y, t, scene) {
+      ctx.save();
+      ctx.translate(x, y);
+
+      ctx.fillStyle = '#334155';
+      ctx.roundRect(-65, -95, 130, 95, 8);
+      ctx.fill();
+
+      ctx.fillStyle = '#1e293b';
+      ctx.roundRect(-60, -92, 120, 25, 4);
+      ctx.fill();
+
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(-45, -35, 90, 15);
+
+      if (scene.id >= 3) {
+        const paperDrop = Math.min(45, (t - 15.0) * 22);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(-38, -30, 76, paperDrop);
+        ctx.strokeStyle = '#cbd5e1';
+        ctx.strokeRect(-38, -30, 76, paperDrop);
+
+        ctx.fillStyle = '#94a3b8';
+        for (let l = 0; l < 4; l++) {
+          if (paperDrop > (l + 1) * 8) {
+            ctx.fillRect(-30, -25 + l * 8, 60, 3);
+          }
+        }
+      }
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 9px sans-serif';
+      ctx.fillText("Canon G3010", 0, -50);
+
+      ctx.fillStyle = '#22c55e';
+      ctx.beginPath();
+      ctx.arc(-48, -48, 3, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.restore();
+    }
+
+    function drawLaserBeam(x1, y1, x2, y2, t) {
+      ctx.save();
+      ctx.strokeStyle = '#22c55e';
+      ctx.lineWidth = 3;
+      ctx.shadowColor = '#22c55e';
+      ctx.shadowBlur = 18;
+
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
+      ctx.stroke();
+
+      ctx.fillStyle = 'rgba(34, 197, 94, 0.4)';
+      ctx.beginPath();
+      ctx.arc(x2, y2, 20 + Math.sin(t * 12) * 8, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.restore();
+    }
+
+    function drawDialogueOverlay(scene, W, H, isReel, t) {
+      const topY = isReel ? 190 : 85;
+
+      ctx.save();
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.92)';
+      ctx.roundRect(W * 0.06, topY, W * 0.88, isReel ? 110 : 85, 14);
       ctx.fill();
       ctx.strokeStyle = '#3b82f6';
       ctx.lineWidth = 2;
       ctx.stroke();
 
-      ctx.fillStyle = '#60a5fa';
-      ctx.font = 'bold 20px "Noto Sans Kannada"';
-      ctx.fillText("🔒 ಗೌಪ್ಯತೆ ಖಚಿತ", cx + 140, cy - 80);
-
-      ctx.font = '40px sans-serif';
-      ctx.fillText("🗑️ ⚡", cx + 140, cy - 15);
-
-      drawBadge("100% ಆಟೋ ಡಿಲೀಟ್", cx + 40, cy + 20, 200, 36, "#2563eb");
-      ctx.font = '12.5px "Noto Sans Kannada"';
-      ctx.fillStyle = '#cbd5e1';
-      ctx.fillText("ಪ್ರಿಂಟ್ ಆದ ಕೂಡಲೇ ಫೈಲ್ ನಾಶ!", cx + 140, cy + 90);
-
-      // Bottom Message
-      drawBadge("🚀 ಯಾವುದೇ UTR ಚೆಕಿಂಗ್ ಇಲ್ಲ • ಚಿಲ್ಲರೆ ಸಮಸ್ಯೆ ಇಲ್ಲ!", cx - 260, cy + 180, 520, 48, "#d97706");
-    }
-
-    // ================= SCENE 4: ONE MAN ARMY (RELAXED SHOPKEEPER) =================
-    function renderScene4_OneManArmy(relT, W, H, isReel) {
-      drawBanner(W, H, "😎 ಒಬ್ಬನೇ ವ್ಯಕ್ತಿ - ಯಾವುದೇ ರಶ್ ಇಲ್ಲ!", "#f59e0b", isReel);
-
-      const cx = W / 2;
-      const cy = H * 0.44;
-
-      // Smiling Shopkeeper with Thumbs Up
-      drawPerson(cx - 100, cy, "😎 ಅಂಗಡಿಯವರು (Zero Tension)", "#22c55e", 1.3);
-
-      // Fast Animated Auto-Printer
-      drawPrinter(cx + 100, cy, relT);
-
-      // Success Stats Bubble
-      ctx.fillStyle = '#1e293b';
-      ctx.roundRect(cx - 240, cy + 160, 480, 90, 14);
-      ctx.fill();
-      ctx.strokeStyle = '#eab308';
-      ctx.lineWidth = 2;
-      ctx.stroke();
-
-      ctx.fillStyle = '#fef08a';
+      ctx.fillStyle = '#fde047';
       ctx.font = 'bold 18px "Noto Sans Kannada"';
       ctx.textAlign = 'center';
-      ctx.fillText("🔥 10x ವೇಗ • ರಶ್ ಕಂಟ್ರೋಲ್ • 2x ಆದಾಯ!", cx, cy + 195);
-      ctx.font = '14px "Noto Sans Kannada"';
-      ctx.fillStyle = '#cbd5e1';
-      ctx.fillText("1 ರಿಂದ 5 ಕಂಪ್ಯೂಟರ್‌ಗಳಿಗೂ ಪ್ರತ್ಯೇಕ ಕೌಂಟರ್ ಸಪೋರ್ಟ್!", cx, cy + 225);
+      ctx.fillText(scene.dialogue, W / 2, topY + 38);
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '600 15px "Noto Sans Kannada"';
+      ctx.fillText(scene.reply, W / 2, topY + 70);
+      ctx.restore();
+
+      if (scene.id === 5) {
+        drawGrandCTACard(W, H, isReel);
+      }
     }
 
-    // ================= SCENE 5: CALL TO ACTION (AMEER SOLAPUR) =================
-    function renderScene5_ContactCTA(relT, W, H, isReel) {
-      drawBanner(W, H, "📞 ಇಂದೇ ನಿಮ್ಮ ಅಂಗಡಿಗೆ ಅಳವಡಿಸಿಕೊಳ್ಳಿ!", "#2563eb", isReel);
-
+    function drawGrandCTACard(W, H, isReel) {
       const cx = W / 2;
-      const cy = H * 0.44;
+      const cy = H * 0.46;
 
-      // Golden Card
       ctx.save();
-      ctx.shadowColor = '#eab308';
-      ctx.shadowBlur = 25;
-      const grad = ctx.createLinearGradient(cx - 280, cy - 160, cx + 280, cy + 180);
-      grad.addColorStop(0, '#1e3a8a');
-      grad.addColorStop(1, '#0f172a');
-      ctx.fillStyle = grad;
-      ctx.roundRect(cx - 280, cy - 160, 560, 320, 18);
+      ctx.shadowColor = '#f59e0b';
+      ctx.shadowBlur = 30;
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.96)';
+      ctx.roundRect(cx - 290, cy - 180, 580, 360, 20);
       ctx.fill();
       ctx.strokeStyle = '#f59e0b';
-      ctx.lineWidth = 3;
+      ctx.lineWidth = 3.5;
       ctx.stroke();
       ctx.restore();
 
-      // Distributor Tag
       ctx.fillStyle = '#fde047';
-      ctx.font = 'bold 16px "Noto Sans Kannada"';
+      ctx.font = 'bold 17px "Noto Sans Kannada"';
       ctx.textAlign = 'center';
-      ctx.fillText("ಕರ್ನಾಟಕ ಅಧಿಕೃತ ವಿತರಕರು ಮತ್ತು ತಾಂತ್ರಿಕ ಬೆಂಬಲ", cx, cy - 110);
+      ctx.fillText("ಕರ್ನಾಟಕ ಅಧಿಕೃತ ವಿತರಕರು ಮತ್ತು ತಾಂತ್ರಿಕ ಬೆಂಬಲ", cx, cy - 130);
 
-      // Name
       ctx.fillStyle = '#ffffff';
-      ctx.font = '900 34px "Noto Sans Kannada"';
-      ctx.fillText("ಅಮೀರ್ ಸೋಲಾಪುರ್", cx, cy - 65);
-      ctx.font = '700 18px "Plus Jakarta Sans"';
+      ctx.font = '900 36px "Noto Sans Kannada"';
+      ctx.fillText("ಅಮೀರ್ ಸೋಲಾಪುರ್", cx, cy - 80);
+
+      ctx.font = '700 19px "Plus Jakarta Sans"';
       ctx.fillStyle = '#93c5fd';
-      ctx.fillText("Ameer Solapur • QuickPrint Kiosk Solutions", cx, cy - 35);
+      ctx.fillText("Ameer Solapur • QuickPrint Kiosk Solutions", cx, cy - 48);
 
-      // Big Phone Box
       ctx.fillStyle = '#ffffff';
-      ctx.roundRect(cx - 220, cy - 10, 440, 80, 14);
+      ctx.roundRect(cx - 230, cy - 20, 460, 85, 14);
       ctx.fill();
 
       ctx.fillStyle = '#15803d';
-      ctx.font = 'bold 14px "Noto Sans Kannada"';
-      ctx.fillText("📞 ಕರೆ & WhatsApp ಗಾಗಿ:", cx, cy + 16);
-
-      ctx.fillStyle = '#0f172a';
-      ctx.font = '900 36px "Plus Jakarta Sans"';
-      ctx.fillText("7760606262", cx, cy + 54);
-
-      // Launch Offer Badge
-      drawBadge("🎉 ಉಚಿತ ಲೈವ್ ಡೆಮೊ & ಇನ್‌ಸ್ಟಾಲೇಶನ್ ಲಭ್ಯವಿದೆ!", cx - 240, cy + 90, 480, 42, "#f59e0b");
-    }
-
-    // ================= DRAWING HELPERS =================
-    function drawBanner(W, H, text, color, isReel) {
-      const by = isReel ? 100 : 45;
-      ctx.save();
-      ctx.shadowColor = color;
-      ctx.shadowBlur = 18;
-      ctx.fillStyle = color;
-      ctx.roundRect(W/2 - 280, by, 560, 46, 23);
-      ctx.fill();
-      ctx.restore();
-
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 18px "Noto Sans Kannada"';
-      ctx.textAlign = 'center';
-      ctx.fillText(text, W/2, by + 30);
-    }
-
-    function drawBadge(text, x, y, w, h, bg) {
-      ctx.fillStyle = bg;
-      ctx.roundRect(x, y, w, h, 10);
-      ctx.fill();
-
-      ctx.fillStyle = '#ffffff';
       ctx.font = 'bold 15px "Noto Sans Kannada"';
-      ctx.textAlign = 'center';
-      ctx.fillText(text, x + w/2, y + h/2 + 5);
-    }
-
-    function drawPerson(x, y, label, color, scale = 1.0) {
-      ctx.save();
-      ctx.translate(x, y);
-      ctx.scale(scale, scale);
-
-      // Head
-      ctx.fillStyle = '#fde047';
-      ctx.beginPath();
-      ctx.arc(0, -50, 24, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Body
-      ctx.fillStyle = color;
-      ctx.beginPath();
-      ctx.roundRect(-22, -22, 44, 60, 10);
-      ctx.fill();
-
-      // Label below
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 13px "Noto Sans Kannada"';
-      ctx.textAlign = 'center';
-      ctx.fillText(label, 0, 60);
-
-      ctx.restore();
-    }
-
-    function drawSpeechBubble(x, y, text, bg, textColor) {
-      ctx.fillStyle = bg;
-      ctx.roundRect(x - 110, y - 25, 220, 50, 10);
-      ctx.fill();
-
-      ctx.fillStyle = textColor;
-      ctx.font = 'bold 12px "Noto Sans Kannada"';
-      ctx.textAlign = 'center';
-      ctx.fillText(text, x, y + 5);
-    }
-
-    function drawSmartphone(x, y, text, screenColor) {
-      ctx.fillStyle = '#0f172a';
-      ctx.roundRect(x - 50, y - 90, 100, 180, 14);
-      ctx.fill();
-      ctx.strokeStyle = '#475569';
-      ctx.lineWidth = 2;
-      ctx.stroke();
-
-      ctx.fillStyle = screenColor;
-      ctx.roundRect(x - 42, y - 76, 84, 152, 8);
-      ctx.fill();
-
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 11px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText(text, x, y + 5);
-    }
-
-    function drawPrinter(x, y, relT) {
-      // Base
-      ctx.fillStyle = '#334155';
-      ctx.roundRect(x - 70, y - 40, 140, 80, 12);
-      ctx.fill();
-
-      // Output tray
-      ctx.fillStyle = '#1e293b';
-      ctx.fillRect(x - 50, y + 10, 100, 20);
-
-      // Paper coming out
-      const paperShift = (relT * 30) % 40;
-      ctx.fillStyle = '#ffffff';
-      ctx.roundRect(x - 40, y + 15, 80, 45 + paperShift, 4);
-      ctx.fill();
+      ctx.fillText("📞 ಕರೆ & WhatsApp ಗಾಗಿ:", cx, cy + 10);
 
       ctx.fillStyle = '#0f172a';
-      ctx.font = 'bold 11px sans-serif';
-      ctx.fillText("📄 PRINTING...", x, y + 45);
+      ctx.font = '900 38px "Plus Jakarta Sans"';
+      ctx.fillText("7760606262", cx, cy + 50);
 
-      ctx.fillStyle = '#38bdf8';
-      ctx.font = 'bold 13px "Noto Sans Kannada"';
-      ctx.textAlign = 'center';
-      ctx.fillText("🖨️ ಆಟೋ ಪ್ರಿಂಟರ್", x, y + 85);
-    }
-
-    function drawSubtitles(text, W, H, isReel) {
-      const subY = isReel ? H - 120 : H - 85;
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
-      ctx.roundRect(40, subY - 30, W - 80, 60, 12);
+      ctx.fillStyle = '#f59e0b';
+      ctx.roundRect(cx - 250, cy + 85, 500, 44, 10);
       ctx.fill();
-      ctx.strokeStyle = '#3b82f6';
-      ctx.lineWidth = 1.5;
-      ctx.stroke();
-
       ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 18px "Noto Sans Kannada"';
-      ctx.textAlign = 'center';
-      ctx.fillText(text, W / 2, subY + 8);
+      ctx.font = 'bold 16px "Noto Sans Kannada"';
+      ctx.fillText("🎉 ಉಚಿತ ಲೈವ್ ಡೆಮೊ & ಇನ್‌ಸ್ಟಾಲೇಶನ್‌ಗಾಗಿ ಇಂದೇ ಕರೆ ಮಾಡಿ!", cx, cy + 114);
     }
 
-    // ================= EXPORT & RECORD VIDEO (MP4 / WebM) =================
-    function toggleRecording() {
-      if (isRecording) {
-        stopRecording();
-      } else {
-        startRecording();
-      }
-    }
-
-    function startRecording() {
+    function startExportMP4() {
       initAudio();
       recordedChunks = [];
-      const stream = canvas.captureStream(30); // 30 FPS
-      
-      const options = { mimeType: 'video/webm;codecs=vp9' };
-      if (!MediaRecorder.isTypeSupported(options.mimeType)) {
-        options.mimeType = 'video/webm';
-      }
+      const stream = canvas.captureStream(30);
 
-      mediaRecorder = new MediaRecorder(stream, options);
+      const mimeTypes = [
+        'video/mp4',
+        'video/webm;codecs=vp9',
+        'video/webm;codecs=vp8',
+        'video/webm'
+      ];
+      let selectedMime = mimeTypes.find(m => MediaRecorder.isTypeSupported(m)) || 'video/webm';
+
+      mediaRecorder = new MediaRecorder(stream, { mimeType: selectedMime });
       mediaRecorder.ondataavailable = e => {
         if (e.data.size > 0) recordedChunks.push(e.data);
       };
 
       mediaRecorder.onstop = () => {
-        const blob = new Blob(recordedChunks, { type: 'video/webm' });
+        const ext = selectedMime.includes('mp4') ? 'mp4' : 'webm';
+        const blob = new Blob(recordedChunks, { type: selectedMime });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = 'QuickPrint_Kannada_Promotional_Ad.webm';
+        a.download = `QuickPrint_Kannada_Promotional_Video.${ext}`;
+        document.body.appendChild(a);
         a.click();
-        btnRecord.innerText = '🎥 Record & Download MP4';
-        btnRecord.classList.remove('recording');
-        alert('✅ ವಿಡಿಯೋ ಯಶಸ್ವಿಯಾಗಿ ಡೌನ್‌ಲೋಡ್ ಆಗಿದೆ! (QuickPrint Video Downloaded)');
+        document.body.removeChild(a);
+        alert(`✅ ವಿಡಿಯೋ ಯಶಸ್ವಿಯಾಗಿ ಡೌನ್‌ಲೋಡ್ ಆಗಿದೆ! (QuickPrint_Kannada_Promotional_Video.${ext})`);
       };
 
       mediaRecorder.start();
-      isRecording = true;
-      btnRecord.innerText = '⏹️ ರೆಕಾರ್ಡಿಂಗ್ ನಿಲ್ಲಿಸಿ (Stop)';
-      btnRecord.classList.add('recording');
-
-      // Restart and play entire video
       restartVideo();
+
+      setTimeout(() => {
+        if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+          mediaRecorder.stop();
+        }
+      }, (TOTAL_DURATION + 0.5) * 1000);
     }
 
-    function stopRecording() {
-      if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-        mediaRecorder.stop();
-      }
-      isRecording = false;
-    }
-
-    // Initial first frame draw
     drawFrame(0);
   </script>
 </body>
