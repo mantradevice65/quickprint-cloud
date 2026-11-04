@@ -9,16 +9,16 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #090d16;
-      --card-bg: #111827;
-      --border: #1f2937;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --border: #e2e8f0;
       --accent: #2563eb;
       --accent-hover: #1d4ed8;
-      --success: #10b981;
-      --warning: #f59e0b;
-      --danger: #ef4444;
-      --text: #f9fafb;
-      --muted: #9ca3af;
+      --success: #16a34a;
+      --warning: #d97706;
+      --danger: #dc2626;
+      --text: #0f172a;
+      --muted: #64748b;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -31,8 +31,8 @@
 
     /* Top Navbar */
     .navbar {
-      background: rgba(17, 24, 39, 0.85);
-      backdrop-filter: blur(12px);
+      background: #ffffff;
+      box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
       border-bottom: 1px solid var(--border);
       position: sticky;
       top: 0;
@@ -48,11 +48,11 @@
       gap: 12px;
       font-size: 18px;
       font-weight: 900;
-      color: white;
+      color: #0f172a;
       text-decoration: none;
     }
     .brand-badge {
-      background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+      background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
       color: white;
       font-size: 10px;
       font-weight: 800;
@@ -62,9 +62,9 @@
       text-transform: uppercase;
     }
     .nav-btn {
-      background: #1f2937;
-      border: 1px solid #374151;
-      color: #e5e7eb;
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      color: #334155;
       padding: 8px 14px;
       border-radius: 10px;
       font-size: 13px;
@@ -72,7 +72,7 @@
       cursor: pointer;
       transition: all 0.2s;
     }
-    .nav-btn:hover { background: #374151; }
+    .nav-btn:hover { background: #e2e8f0; color: #0f172a; }
 
     /* Layout Container */
     .container {
@@ -95,6 +95,7 @@
       padding: 20px;
       position: relative;
       overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
     }
     .stat-title {
       font-size: 12px;
@@ -107,7 +108,7 @@
     .stat-val {
       font-size: 32px;
       font-weight: 900;
-      color: white;
+      color: #0f172a;
     }
     .stat-icon {
       position: absolute;
@@ -127,14 +128,20 @@
       margin-bottom: 20px;
     }
     .search-input {
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      color: white;
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      color: #0f172a;
       padding: 10px 16px;
       border-radius: 12px;
       font-size: 14px;
       width: 320px;
       max-width: 100%;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+    }
+    .search-input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(37,99,235,0.12);
     }
     .btn-primary {
       background: var(--accent);
@@ -149,6 +156,7 @@
       align-items: center;
       gap: 8px;
       transition: background 0.2s;
+      box-shadow: 0 2px 4px rgba(37,99,235,0.2);
     }
     .btn-primary:hover { background: var(--accent-hover); }
 
@@ -158,6 +166,7 @@
       border: 1px solid var(--border);
       border-radius: 18px;
       overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
     }
     .table-responsive {
       overflow-x: auto;
@@ -169,9 +178,9 @@
       font-size: 13px;
     }
     th {
-      background: #1e293b;
+      background: #f8fafc;
       padding: 14px 18px;
-      color: #94a3b8;
+      color: #475569;
       font-weight: 800;
       text-transform: uppercase;
       font-size: 11px;
@@ -180,11 +189,12 @@
     }
     td {
       padding: 16px 18px;
-      border-bottom: 1px solid #1f2937;
+      border-bottom: 1px solid #f1f5f9;
       vertical-align: middle;
+      color: #1e293b;
     }
     tr:last-child td { border-bottom: none; }
-    tr:hover td { background: #172033; }
+    tr:hover td { background: #f8fafc; }
 
     /* Badges */
     .badge {
@@ -196,14 +206,14 @@
       font-size: 11px;
       font-weight: 800;
     }
-    .badge-success { background: #064e3b; color: #6ee7b7; border: 1px solid #047857; }
-    .badge-warning { background: #78350f; color: #fde68a; border: 1px solid #b45309; }
-    .badge-danger { background: #7f1d1d; color: #fca5a5; border: 1px solid #b91c1c; }
+    .badge-success { background: #dcfce7; color: #15803d; border: 1px solid #86efac; }
+    .badge-warning { background: #fef3c7; color: #b45309; border: 1px solid #fde68a; }
+    .badge-danger { background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; }
 
     .action-btn {
-      background: #1f2937;
-      border: 1px solid #374151;
-      color: white;
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      color: #334155;
       padding: 6px 12px;
       border-radius: 8px;
       font-size: 12px;
@@ -214,15 +224,16 @@
       align-items: center;
       gap: 4px;
       transition: all 0.2s;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.03);
     }
-    .action-btn:hover { background: #374151; }
+    .action-btn:hover { background: #f1f5f9; color: #0f172a; border-color: #94a3b8; }
 
     /* Modals */
     .modal-backdrop {
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,0.75);
-      backdrop-filter: blur(6px);
+      background: rgba(15, 23, 42, 0.45);
+      backdrop-filter: blur(4px);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -238,11 +249,13 @@
       max-height: 90vh;
       overflow-y: auto;
       padding: 26px;
-      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+      box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1);
+      color: #0f172a;
     }
     .modal-title {
       font-size: 18px;
       font-weight: 900;
+      color: #0f172a;
       margin-bottom: 16px;
       display: flex;
       justify-content: space-between;
@@ -254,22 +267,24 @@
     .form-label {
       font-size: 12px;
       font-weight: 700;
-      color: var(--muted);
+      color: #475569;
       display: block;
       margin-bottom: 6px;
     }
     .form-input, .form-select {
       width: 100%;
-      background: #1f2937;
-      border: 1px solid #374151;
-      color: white;
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      color: #0f172a;
       padding: 10px 14px;
       border-radius: 10px;
       font-size: 14px;
+      transition: border-color 0.15s;
     }
     .form-input:focus, .form-select:focus {
       outline: none;
       border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(37,99,235,0.12);
     }
     .grid-2 {
       display: grid;
@@ -284,16 +299,18 @@
       align-items: center;
       justify-content: center;
       padding: 20px;
+      background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
     }
     .login-card {
-      background: var(--card-bg);
-      border: 1px solid var(--border);
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
       border-radius: 24px;
       width: 100%;
       max-width: 400px;
       padding: 36px 28px;
       text-align: center;
-      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+      box-shadow: 0 20px 25px -5px rgba(0,0,0,0.08), 0 8px 10px -6px rgba(0,0,0,0.04);
+      color: #0f172a;
     }
   </style>
 </head>
@@ -397,10 +414,10 @@
     <div class="action-bar" style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
       <input type="text" id="searchInput" class="search-input" placeholder="🔍 Search by shop name, owner, or phone..." oninput="filterShops()" style="flex: 1; min-width: 240px;">
       <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-        <a href="/api/super/shops/backup" class="action-btn" title="Download JSON backup of all registered kiosks" style="text-decoration:none; display:inline-flex; align-items:center; gap:6px; background:#1e293b; color:#38bdf8; border:1px solid #334155; font-weight:700;">
+        <a href="/api/super/shops/backup" class="action-btn" title="Download JSON backup of all registered kiosks" style="text-decoration:none; display:inline-flex; align-items:center; gap:6px; background:#f0f9ff; color:#0284c7; border:1px solid #bae6fd; font-weight:700;">
           <span>📥</span> Backup Kiosks (.json)
         </a>
-        <button type="button" class="action-btn" onclick="triggerRestoreJson()" title="Upload backup file to restore kiosks" style="display:inline-flex; align-items:center; gap:6px; background:#1e293b; color:#34d399; border:1px solid #334155; font-weight:700;">
+        <button type="button" class="action-btn" onclick="triggerRestoreJson()" title="Upload backup file to restore kiosks" style="display:inline-flex; align-items:center; gap:6px; background:#ecfdf5; color:#059669; border:1px solid #a7f3d0; font-weight:700;">
           <span>📤</span> Restore Backup
         </button>
         <input type="file" id="restoreJsonInput" accept=".json" style="display:none;" onchange="handleRestoreJsonFile(event)">
@@ -496,7 +513,7 @@
           </div>
           <div class="form-group">
             <label class="form-label">Terminal Setup Note</label>
-            <div style="font-size:11px; color:#94a3b8; margin-top:8px; line-height:1.4;">
+            <div style="font-size:11px; color:#64748b; margin-top:8px; line-height:1.4;">
               All systems use the <b>same single Kiosk API Key</b>. Each system selects its Counter on first launch.
             </div>
           </div>
@@ -514,8 +531,8 @@
         </div>
 
         <!-- Payment Settings -->
-        <div style="background:#1e293b; border-radius:12px; padding:14px; margin-bottom:14px;">
-          <div style="font-size:12px; font-weight:800; color:#38bdf8; text-transform:uppercase; margin-bottom:10px;">Payment Gateway Settings</div>
+        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:14px; margin-bottom:14px;">
+          <div style="font-size:12px; font-weight:800; color:#0284c7; text-transform:uppercase; margin-bottom:10px;">Payment Gateway Settings</div>
           <div class="grid-2">
             <div class="form-group">
               <label class="form-label">UPI ID</label>
@@ -600,7 +617,7 @@
           </div>
           <div class="form-group">
             <label class="form-label">Terminal Setup Note</label>
-            <div style="font-size:11px; color:#94a3b8; margin-top:8px; line-height:1.4;">
+            <div style="font-size:11px; color:#64748b; margin-top:8px; line-height:1.4;">
               All systems use the <b>same single Kiosk API Key</b>. Each system selects its Counter on first launch.
             </div>
           </div>
@@ -618,8 +635,8 @@
         </div>
 
         <!-- Payment Settings -->
-        <div style="background:#1e293b; border-radius:12px; padding:14px; margin-bottom:14px; border:1px solid #334155;">
-          <div style="font-size:12px; font-weight:800; color:#38bdf8; text-transform:uppercase; margin-bottom:10px;">Payment Gateway Settings</div>
+        <div style="background:#f8fafc; border-radius:12px; padding:14px; margin-bottom:14px; border:1px solid #e2e8f0;">
+          <div style="font-size:12px; font-weight:800; color:#0284c7; text-transform:uppercase; margin-bottom:10px;">Payment Gateway Settings</div>
           <div class="grid-2">
             <div class="form-group">
               <label class="form-label">UPI ID</label>
@@ -631,9 +648,9 @@
             </div>
           </div>
 
-          <div style="background:#0f172a; border:1px solid #3b82f6; border-radius:10px; padding:10px; margin-bottom:10px;">
-            <div style="font-size:11px; color:#93c5fd; font-weight:700;">🔒 Strict Shop Isolation Active:</div>
-            <div style="font-size:11px; color:#cbd5e1; margin-top:2px;">Enter this shop's own Razorpay keys. Customer payments go 100% directly to this shop's bank account. If left empty, online payment is safely disabled.</div>
+          <div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:10px; padding:10px; margin-bottom:10px;">
+            <div style="font-size:11px; color:#1d4ed8; font-weight:700;">🔒 Strict Shop Isolation Active:</div>
+            <div style="font-size:11px; color:#1e40af; margin-top:2px;">Enter this shop's own Razorpay keys. Customer payments go 100% directly to this shop's bank account. If left empty, online payment is safely disabled.</div>
           </div>
 
           <div class="grid-2">
@@ -673,7 +690,7 @@
       </div>
 
       <div style="margin-bottom: 16px;">
-        <b id="renewShopTitle" style="font-size: 16px; color: white;">Shop Name</b>
+        <b id="renewShopTitle" style="font-size: 16px; color: #0f172a;">Shop Name</b>
         <div id="renewCurrentExpiry" style="font-size: 12px; color: var(--muted); margin-top: 4px;">Current Expiry: -</div>
       </div>
 
@@ -708,17 +725,17 @@
         Install QuickPrint on the shop PC. In their <code>config.json</code> or Settings, paste this unique API key so their PC syncs only their orders.
       </p>
 
-      <div style="background:#1e293b; border:1px solid #334155; border-radius:12px; padding:14px; margin-bottom:16px;">
-        <div style="font-size:11px; color:#94a3b8; font-weight:700; text-transform:uppercase;">Shop Kiosk API Key</div>
-        <div id="displayKioskApiKey" style="font-family:monospace; font-size:14px; color:#38bdf8; font-weight:800; word-break:break-all; margin:8px 0;">-</div>
+      <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:14px; margin-bottom:16px;">
+        <div style="font-size:11px; color:#64748b; font-weight:700; text-transform:uppercase;">Shop Kiosk API Key</div>
+        <div id="displayKioskApiKey" style="font-family:monospace; font-size:14px; color:#0284c7; font-weight:800; word-break:break-all; margin:8px 0;">-</div>
         <button type="button" class="action-btn" onclick="copyKioskKey()" style="width:100%; justify-content:center;">
           📋 <span id="copyKeyBtnText">Copy API Key</span>
         </button>
       </div>
 
-      <div style="background:#1e293b; border:1px solid #334155; border-radius:12px; padding:14px;">
-        <div style="font-size:11px; color:#94a3b8; font-weight:700; text-transform:uppercase;">Customer Portal URL</div>
-        <div id="displayCustomerUrl" style="font-family:monospace; font-size:13px; color:#a7f3d0; margin-top:4px; word-break:break-all;">-</div>
+      <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:14px;">
+        <div style="font-size:11px; color:#64748b; font-weight:700; text-transform:uppercase;">Customer Portal URL</div>
+        <div id="displayCustomerUrl" style="font-family:monospace; font-size:13px; color:#059669; font-weight:700; margin-top:4px; word-break:break-all;">-</div>
       </div>
     </div>
   </div>
@@ -848,16 +865,16 @@
 
         const numCounters = parseInt(s.num_counters || 1);
         const counterBadge = numCounters > 1 
-          ? `<span class="badge" style="background:#1e3a8a; color:#93c5fd; font-size:10px; margin-left:4px;">🖥️ ${numCounters} Systems</span>` 
-          : `<span class="badge" style="background:#1e293b; color:#94a3b8; font-size:10px; margin-left:4px;">🖥️ 1 System</span>`;
+          ? `<span class="badge" style="background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe; font-size:10px; margin-left:4px;">🖥️ ${numCounters} Systems</span>` 
+          : `<span class="badge" style="background:#f1f5f9; color:#475569; border:1px solid #cbd5e1; font-size:10px; margin-left:4px;">🖥️ 1 System</span>`;
 
         let expirySub = '';
         if (s.plan_type === 'lifetime' || s.subscription_expiry === '2099-12-31') {
-          expirySub = `<div style="font-size:11px; color:#10b981; font-weight:700;">Lifetime Access</div>`;
+          expirySub = `<div style="font-size:11px; color:#16a34a; font-weight:700;">Lifetime Access</div>`;
         } else if (s.is_expired) {
-          expirySub = `<div style="font-size:11px; color:#f87171; font-weight:700;">Expired ${Math.abs(s.days_remaining)} days ago</div>`;
+          expirySub = `<div style="font-size:11px; color:#dc2626; font-weight:700;">Expired ${Math.abs(s.days_remaining)} days ago</div>`;
         } else {
-          expirySub = `<div style="font-size:11px; color:#38bdf8; font-weight:700;">${s.days_remaining} days left</div>`;
+          expirySub = `<div style="font-size:11px; color:#0284c7; font-weight:700;">${s.days_remaining} days left</div>`;
         }
 
         let posterBtnsHtml = '';
@@ -880,31 +897,31 @@
         return `
           <tr>
             <td>
-              <div style="font-size:15px; font-weight:800; color:white;">${s.shop_name}</div>
-              <div style="font-size:11px; color:#94a3b8; font-family:monospace; margin-top:2px;">/s/${s.slug}</div>
-              <div style="margin-top:4px; display:inline-flex; align-items:center; gap:6px; background:#0f172a; padding:3px 8px; border-radius:6px; border:1px solid #334155;">
-                <span style="font-size:10px; font-family:monospace; color:#38bdf8; font-weight:700;">🔑 ${s.kiosk_api_key}</span>
-                <button type="button" onclick="copyDirectKey('${s.kiosk_api_key}', this)" style="border:none; background:#1e293b; color:#38bdf8; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:800; cursor:pointer;" title="Click to copy API key">📋 Copy</button>
+              <div style="font-size:15px; font-weight:800; color:#0f172a;">${s.shop_name}</div>
+              <div style="font-size:11px; color:#64748b; font-family:monospace; margin-top:2px;">/s/${s.slug}</div>
+              <div style="margin-top:4px; display:inline-flex; align-items:center; gap:6px; background:#f1f5f9; padding:3px 8px; border-radius:6px; border:1px solid #cbd5e1;">
+                <span style="font-size:10px; font-family:monospace; color:#0284c7; font-weight:700;">🔑 ${s.kiosk_api_key}</span>
+                <button type="button" onclick="copyDirectKey('${s.kiosk_api_key}', this)" style="border:none; background:#e2e8f0; color:#0f172a; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:800; cursor:pointer;" title="Click to copy API key">📋 Copy</button>
               </div>
               <div style="margin-top:6px; display:flex; align-items:center; gap:4px; flex-wrap:wrap;">${badgeHtml} ${counterBadge}</div>
             </td>
             <td>
-              <div style="font-weight:700;">${s.owner_name || 'N/A'}</div>
+              <div style="font-weight:700; color:#0f172a;">${s.owner_name || 'N/A'}</div>
               <div style="font-size:12px; color:var(--muted);">${s.phone || 'No phone'}</div>
             </td>
             <td>
               <div>B&amp;W: <b>₹${s.rate_bw}</b> &bull; Color: <b>₹${s.rate_color}</b></div>
               <div style="font-size:11px; margin-top:2px;">
-                ${s.razorpay_enabled && s.razorpay_key_id ? '<span style="color:#34d399; font-weight:700;">⚡ RZP Active</span>' : (s.razorpay_enabled ? '<span style="color:#fbbf24; font-weight:700;">⚠️ No Key (Cash Only)</span>' : '<span style="color:#94a3b8;">No RZP</span>')} &bull; ${s.enable_cash_payment ? '<span style="color:#38bdf8;">💵 Cash</span>' : '<span style="color:#94a3b8;">No Cash</span>'}
+                ${s.razorpay_enabled && s.razorpay_key_id ? '<span style="color:#16a34a; font-weight:700;">⚡ RZP Active</span>' : (s.razorpay_enabled ? '<span style="color:#d97706; font-weight:700;">⚠️ No Key (Cash Only)</span>' : '<span style="color:#64748b;">No RZP</span>')} &bull; ${s.enable_cash_payment ? '<span style="color:#0284c7; font-weight:700;">💵 Cash</span>' : '<span style="color:#64748b;">No Cash</span>'}
               </div>
             </td>
             <td>
-              <div style="font-weight:700;">${s.subscription_expiry || 'Unlimited'}</div>
+              <div style="font-weight:700; color:#0f172a;">${s.subscription_expiry || 'Unlimited'}</div>
               ${expirySub}
             </td>
             <td>
-              <div style="font-weight:800; color:white;">${s.total_jobs || 0} Orders</div>
-              <div style="font-size:12px; color:#34d399; font-weight:700;">₹${Math.round(s.total_revenue || 0)}</div>
+              <div style="font-weight:800; color:#0f172a;">${s.total_jobs || 0} Orders</div>
+              <div style="font-size:12px; color:#16a34a; font-weight:800;">₹${Math.round(s.total_revenue || 0)}</div>
             </td>
             <td>
               <div style="display:flex; flex-wrap:wrap; gap:6px;">

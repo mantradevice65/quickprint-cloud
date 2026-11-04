@@ -929,7 +929,7 @@
   <!-- HEADER (Model 20 Official Karnataka Citizen Theme) -->
   <div class="header">
     <div class="header-top-row">
-      <span class="badge" id="kioskGovBadge">🏛️ KARNATAKA ONE</span>
+      <span class="badge" id="kioskGovBadge">🏪 {{ config.shop_name }}</span>
       <div class="header-actions">
         <button type="button" class="lang-toggle-btn" onclick="toggleKioskLang()" title="Switch Language">
           <span>🌐</span>
@@ -944,7 +944,7 @@
 
     <div style="text-align: center; padding: 4px 0 6px;">
       <h1 style="font-size: 20px; font-weight: 900; letter-spacing: -0.3px;" id="mainShopTitle">
-        ಕರ್ನಾಟಕ ಒನ್ - {{ config.shop_name }}
+        {{ config.shop_name }}
       </h1>
       <p style="font-size: 12px; color: #fef08a; margin-top: 3px;" id="mainShopSub">
         ದಾಖಲೆ ಅಪ್ಲೋಡ್ ಮಾಡಿ &bull; ಆನ್‌ಲೈನ್ ಅಥವಾ ನಗದು ಪಾವತಿಸಿ &bull; ತಕ್ಷಣ ಪ್ರಿಂಟ್ ಪಡೆಯಿರಿ
@@ -1818,7 +1818,7 @@
     const KIOSK_TEXTS = {
       kn: {
         langBtn: "English",
-        badge: "🏛️ ಕರ್ನಾಟಕ ಒನ್",
+        badge: "🏪 {{ config.shop_name }}",
         featuresBtn: "✦ ನಿಯಮಗಳು &amp; ಸೌಲಭ್ಯಗಳು ✦",
         trackBtn: "ಟ್ರ್ಯಾಕ್",
         shopSub: "ದಾಖಲೆ ಅಪ್ಲೋಡ್ ಮಾಡಿ &bull; ಆನ್‌ಲೈನ್ ಅಥವಾ ನಗದು ಪಾವತಿಸಿ &bull; ತಕ್ಷಣ ಪ್ರಿಂಟ್ ಪಡೆಯಿರಿ",
@@ -1864,7 +1864,7 @@
       },
       en: {
         langBtn: "ಕನ್ನಡ",
-        badge: "🏛️ KARNATAKA ONE",
+        badge: "🏪 {{ config.shop_name }}",
         featuresBtn: "✦ Features &amp; Terms ✦",
         trackBtn: "Track",
         shopSub: "Upload documents &bull; Pay online or cash &bull; Instant kiosk printout",
