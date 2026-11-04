@@ -222,6 +222,102 @@
       opacity: 0.95;
     }
 
+    /* 3-STEP WIZARD PROGRESS BAR */
+    .wizard-progress-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #ffffff;
+      border: 1.5px solid #fde047;
+      padding: 9px 16px;
+      border-radius: 14px;
+      margin-bottom: 12px;
+      box-shadow: 0 3px 10px rgba(180, 83, 9, 0.06);
+    }
+    .wizard-step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      cursor: pointer;
+      user-select: none;
+      min-width: 55px;
+    }
+    .wizard-circle {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: #f8fafc;
+      color: #64748b;
+      font-weight: 800;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid #cbd5e1;
+      transition: all 0.25s ease;
+    }
+    .wizard-step.active .wizard-circle {
+      background: #991b1b;
+      color: #ffffff;
+      border-color: #fde047;
+      box-shadow: 0 0 0 3px rgba(153, 27, 27, 0.2);
+    }
+    .wizard-step.completed .wizard-circle {
+      background: #15803d;
+      color: #ffffff;
+      border-color: #86efac;
+    }
+    .wizard-text {
+      font-size: 10px;
+      font-weight: 800;
+      color: #64748b;
+      text-align: center;
+      line-height: 1.15;
+    }
+    .wizard-step.active .wizard-text {
+      color: #991b1b;
+      font-weight: 900;
+    }
+    .wizard-step.completed .wizard-text {
+      color: #15803d;
+    }
+    .wizard-line {
+      flex: 1;
+      height: 2px;
+      background: #e2e8f0;
+      margin: 0 6px -12px;
+      transition: background 0.25s ease;
+    }
+    .wizard-line.active {
+      background: #991b1b;
+    }
+
+    /* PROMINENT BACK BUTTON */
+    .btn-step-back {
+      background: #ffffff;
+      border: 1.5px solid #cbd5e1;
+      color: #1e293b;
+      padding: 7px 14px;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 800;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+    .btn-step-back:hover {
+      background: #f8fafc;
+      border-color: #94a3b8;
+      color: #0f172a;
+    }
+    .btn-step-back:active {
+      transform: scale(0.97);
+    }
+
     .card {
       background: var(--card-bg);
       border-radius: var(--radius);
@@ -868,6 +964,24 @@
 
   <div class="container">
 
+    <!-- 3-STEP WIZARD PROGRESS BAR -->
+    <div class="wizard-progress-bar" id="wizardProgressBar">
+      <div class="wizard-step active" id="wizStep1" onclick="if(currentStep > 1) goToStep(1)">
+        <div class="wizard-circle" id="wizCircle1">1</div>
+        <div class="wizard-text" id="wizText1">ದಾಖಲೆ<br><small>Upload</small></div>
+      </div>
+      <div class="wizard-line" id="wizLine1"></div>
+      <div class="wizard-step" id="wizStep2" onclick="if(currentStep > 2) goToStep(2)">
+        <div class="wizard-circle" id="wizCircle2">2</div>
+        <div class="wizard-text" id="wizText2">ಆಯ್ಕೆಗಳು<br><small>Settings</small></div>
+      </div>
+      <div class="wizard-line" id="wizLine2"></div>
+      <div class="wizard-step" id="wizStep3">
+        <div class="wizard-circle" id="wizCircle3">3</div>
+        <div class="wizard-text" id="wizText3">ಪಾವತಿ<br><small>Payment</small></div>
+      </div>
+    </div>
+
     <!-- 3 MODE TABS -->
     <div class="mode-tabs">
       <button class="mode-tab active" id="tabDoc" onclick="switchMode('doc')">
@@ -929,6 +1043,13 @@
           </button>
         </div>
         <div id="batchFilesList" style="display:flex; flex-direction:column; gap:12px;"></div>
+
+        <!-- NEXT STEP BUTTON FOR NORMAL DOC -->
+        <div id="btnDocNextStepContainer" style="margin-top: 16px;">
+          <button type="button" class="btn btn-primary" onclick="goToStep(2)" style="width: 100%; padding: 14px; font-size: 15px; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 8px;">
+            <span id="lblBtnDocNext">ಮುಂದೆ: ಮುದ್ರಣ ಆಯ್ಕೆಗಳು (Next: Print Settings)</span> &rarr;
+          </button>
+        </div>
       </div>
     </div>
 
@@ -1104,6 +1225,14 @@
 
     <!-- STEP 2: PRINT OPTIONS -->
     <div class="card" id="optionsCard" style="display:none;">
+      <!-- BACK TO STEP 1 BUTTON -->
+      <div style="margin-bottom: 14px;">
+        <button type="button" class="btn-step-back" onclick="goToStep(1)">
+          <span style="font-size:15px;">&larr;</span>
+          <span id="lblBackToUpload">ಹಿಂದಕ್ಕೆ: ದಾಖಲೆ ಬದಲಾಯಿಸಿ (Change Files)</span>
+        </button>
+      </div>
+
       <div class="card-title">
         <span class="step-number">2</span>
         <span id="lblStep2Title">Choose Print Settings</span>
@@ -1199,6 +1328,14 @@
 
     <!-- STEP 3: PAYMENT -->
     <div class="card" id="paymentCard" style="display:none;">
+      <!-- BACK TO STEP 2 BUTTON -->
+      <div style="margin-bottom: 14px;">
+        <button type="button" class="btn-step-back" onclick="goToStep(2)">
+          <span style="font-size:15px;">&larr;</span>
+          <span id="lblBackToSettings">ಹಿಂದಕ್ಕೆ: ಮುದ್ರಣ ಆಯ್ಕೆಗಳು (Change Settings)</span>
+        </button>
+      </div>
+
       <div class="card-title">
         <span class="step-number">3</span>
         <span id="lblStep3Title">Payment &amp; Print Confirmation</span>
@@ -1688,11 +1825,17 @@
         tabDoc: "ಸಾಮಾನ್ಯ ದಾಖಲೆ<br><small style=\"font-size:9px; opacity:0.85;\">Normal Doc</small>",
         tabId: "ಆಧಾರ್ ಕಾರ್ಡ್<br><small style=\"font-size:9px; opacity:0.85;\">1-Page Enlarged</small>",
         tab2in1: "2-ಇನ್-1 ಮುದ್ರಣ<br><small style=\"font-size:9px; opacity:0.85;\">2-in-1 Merged</small>",
+        wizUpload: "ದಾಖಲೆ<br><small>Upload</small>",
+        wizSettings: "ಆಯ್ಕೆಗಳು<br><small>Settings</small>",
+        wizPayment: "ಪಾವತಿ<br><small>Payment</small>",
         step1DocTitle: "ಸಾಮಾನ್ಯ ದಾಖಲೆ ಅಪ್ಲೋಡ್ (PDF / Images)",
         phoneFiles: "ಫೋನ್ ಫೈಲ್‌ಗಳು / ಗ್ಯಾಲರಿ",
         cameraScan: "ಕ್ಯಾಮೆರಾ ಫೋಟೋ ಸ್ಕ್ಯಾನ್",
         dropZoneTitle: "ದಾಖಲೆಗಳನ್ನು ಅಪ್ಲೋಡ್ ಮಾಡಲು ಇಲ್ಲಿ ಸ್ಪರ್ಶಿಸಿ",
         dropZoneSub: "ಎಲ್ಲಾ ಫೈಲ್‌ಗಳು ಲಭ್ಯ: PDF, Photos, Word, Excel, CDR, PSD (Multi-Files)",
+        btnDocNext: "ಮುಂದೆ: ಮುದ್ರಣ ಆಯ್ಕೆಗಳು (Next: Print Settings) &rarr;",
+        backToUpload: "&larr; ಹಿಂದಕ್ಕೆ: ದಾಖಲೆ ಬದಲಾಯಿಸಿ (Change Files)",
+        backToSettings: "&larr; ಹಿಂದಕ್ಕೆ: ಮುದ್ರಣ ಆಯ್ಕೆಗಳು (Change Settings)",
         step1IdTitle: "ಆಧಾರ್ / ವೋಟರ್ ಕಾರ್ಡ್ (1-Page Enlarged Print)",
         step1IdSub: "ಮುಂಭಾಗ ಮತ್ತು ಹಿಂಭಾಗ ಎರಡನ್ನೂ ಅಪ್ಲೋಡ್ ಮಾಡಿ. 1 ಹಾಳೆಯಲ್ಲಿ ಸ್ಪಷ್ಟವಾಗಿ ದೊಡ್ಡದಾಗಿ ಪ್ರಿಂಟ್ ಆಗುತ್ತದೆ.",
         idFrontTitle: "1. ಮುಂಭಾಗ (FRONT SIDE)",
@@ -1728,11 +1871,17 @@
         tabDoc: "Normal Doc<br><small style=\"font-size:9px; opacity:0.85;\">PDF / Photos</small>",
         tabId: "ID Card<br><small style=\"font-size:9px; opacity:0.85;\">1-Page Enlarged</small>",
         tab2in1: "2-in-1 Print<br><small style=\"font-size:9px; opacity:0.85;\">2-in-1 Merged</small>",
+        wizUpload: "Documents<br><small>Upload</small>",
+        wizSettings: "Settings<br><small>Print Options</small>",
+        wizPayment: "Payment<br><small>Pay & Print</small>",
         step1DocTitle: "Upload Documents (PDF / Images)",
         phoneFiles: "Phone Files / Gallery",
         cameraScan: "Camera Photo Scan",
         dropZoneTitle: "Tap to Upload Documents",
         dropZoneSub: "Supports ALL Files: PDF, Photos, PSD, CDR, HEIC, Word, Excel & more",
+        btnDocNext: "Next: Print Settings &rarr;",
+        backToUpload: "&larr; Back: Change Files",
+        backToSettings: "&larr; Back: Change Settings",
         step1IdTitle: "Upload ID Card (Aadhaar / Voter / PAN)",
         step1IdSub: "Upload both front and back. Both sides print enlarged and sharp on a single A4 page (1-page rate).",
         idFrontTitle: "1. FRONT SIDE",
@@ -1781,11 +1930,19 @@
       setT('tabLabelId', t.tabId);
       setT('tabLabel2in1', t.tab2in1);
 
+      setT('wizText1', t.wizUpload);
+      setT('wizText2', t.wizSettings);
+      setT('wizText3', t.wizPayment);
+
       setT('lblStep1DocTitle', t.step1DocTitle);
       setT('lblBtnPhoneFiles', t.phoneFiles);
       setT('lblBtnCameraScan', t.cameraScan);
       setT('dropZoneTitle', t.dropZoneTitle);
       setT('dropZoneSub', t.dropZoneSub);
+      setT('lblBtnDocNext', t.btnDocNext);
+
+      setT('lblBackToUpload', t.backToUpload);
+      setT('lblBackToSettings', t.backToSettings);
 
       setT('lblStep1IdTitle', t.step1IdTitle);
       setT('lblStep1IdSub', t.step1IdSub);
@@ -1828,6 +1985,102 @@
       console.warn('Language init:', e);
     }
 
+    // ================= 🧭 3-STEP WIZARD CONTROLLER =================
+    let currentStep = 1;
+
+    function goToStep(step) {
+      currentStep = step;
+
+      // 1. Update Wizard Progress Bar
+      const s1 = document.getElementById('wizStep1');
+      const s2 = document.getElementById('wizStep2');
+      const s3 = document.getElementById('wizStep3');
+      const l1 = document.getElementById('wizLine1');
+      const l2 = document.getElementById('wizLine2');
+      const c1 = document.getElementById('wizCircle1');
+      const c2 = document.getElementById('wizCircle2');
+      const c3 = document.getElementById('wizCircle3');
+
+      [s1, s2, s3].forEach(el => el && el.classList.remove('active', 'completed'));
+      [l1, l2].forEach(el => el && el.classList.remove('active'));
+
+      if (step === 1) {
+        if (s1) s1.classList.add('active');
+        if (c1) c1.innerHTML = '1';
+        if (c2) c2.innerHTML = '2';
+        if (c3) c3.innerHTML = '3';
+      } else if (step === 2) {
+        if (s1) s1.classList.add('completed');
+        if (c1) c1.innerHTML = '✓';
+        if (l1) l1.classList.add('active');
+        if (s2) s2.classList.add('active');
+        if (c2) c2.innerHTML = '2';
+        if (c3) c3.innerHTML = '3';
+      } else if (step === 3) {
+        if (s1) s1.classList.add('completed');
+        if (c1) c1.innerHTML = '✓';
+        if (l1) l1.classList.add('active');
+        if (s2) s2.classList.add('completed');
+        if (c2) c2.innerHTML = '✓';
+        if (l2) l2.classList.add('active');
+        if (s3) s3.classList.add('active');
+        if (c3) c3.innerHTML = '3';
+      }
+
+      // 2. Hide / Show Cards
+      const wizardBar = document.getElementById('wizardProgressBar');
+      const modeTabs = document.querySelector('.mode-tabs');
+      const uploadDoc = document.getElementById('uploadDocCard');
+      const uploadId = document.getElementById('uploadIdCard');
+      const upload2in1 = document.getElementById('upload2in1Card');
+      const optionsCard = document.getElementById('optionsCard');
+      const paymentCard = document.getElementById('paymentCard');
+      const statusCard = document.getElementById('statusCard');
+
+      if (step === 1) {
+        if (wizardBar) wizardBar.style.display = 'flex';
+        if (modeTabs) modeTabs.style.display = 'grid';
+        if (uploadDoc) uploadDoc.style.display = (currentMode === 'doc') ? 'block' : 'none';
+        if (uploadId) uploadId.style.display = (currentMode === 'id_card') ? 'block' : 'none';
+        if (upload2in1) upload2in1.style.display = (currentMode === '2in1') ? 'block' : 'none';
+        if (optionsCard) optionsCard.style.display = 'none';
+        if (paymentCard) paymentCard.style.display = 'none';
+        if (statusCard) statusCard.style.display = 'none';
+      } else if (step === 2) {
+        if (wizardBar) wizardBar.style.display = 'flex';
+        if (modeTabs) modeTabs.style.display = 'none';
+        if (uploadDoc) uploadDoc.style.display = 'none';
+        if (uploadId) uploadId.style.display = 'none';
+        if (upload2in1) upload2in1.style.display = 'none';
+        if (optionsCard) optionsCard.style.display = 'block';
+        if (paymentCard) paymentCard.style.display = 'none';
+        if (statusCard) statusCard.style.display = 'none';
+        calculateTotal();
+      } else if (step === 3) {
+        if (wizardBar) wizardBar.style.display = 'flex';
+        if (modeTabs) modeTabs.style.display = 'none';
+        if (uploadDoc) uploadDoc.style.display = 'none';
+        if (uploadId) uploadId.style.display = 'none';
+        if (upload2in1) upload2in1.style.display = 'none';
+        if (optionsCard) optionsCard.style.display = 'none';
+        if (paymentCard) paymentCard.style.display = 'block';
+        if (statusCard) statusCard.style.display = 'none';
+        const rzpAmtSpan = document.getElementById('rzpPayAmount');
+        if (rzpAmtSpan) rzpAmtSpan.innerText = currentTotal;
+      } else if (step === 4) {
+        if (wizardBar) wizardBar.style.display = 'none';
+        if (modeTabs) modeTabs.style.display = 'none';
+        if (uploadDoc) uploadDoc.style.display = 'none';
+        if (uploadId) uploadId.style.display = 'none';
+        if (upload2in1) upload2in1.style.display = 'none';
+        if (optionsCard) optionsCard.style.display = 'none';
+        if (paymentCard) paymentCard.style.display = 'none';
+        if (statusCard) statusCard.style.display = 'block';
+      }
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
     function switchMode(mode) {
       currentMode = mode;
       ['tabDoc', 'tabId', 'tab2in1'].forEach(id => document.getElementById(id).classList.remove('active'));
@@ -1838,17 +2091,12 @@
       if (mode === 'doc') {
         document.getElementById('tabDoc').classList.add('active');
         document.getElementById('uploadDocCard').style.display = 'block';
-        if (uploadedBatch.length > 0) {
-          document.getElementById('optionsCard').style.display = 'block';
-        }
       } else if (mode === 'id_card') {
         document.getElementById('tabId').classList.add('active');
         document.getElementById('uploadIdCard').style.display = 'block';
-        document.getElementById('optionsCard').style.display = 'none';
       } else if (mode === '2in1') {
         document.getElementById('tab2in1').classList.add('active');
         document.getElementById('upload2in1Card').style.display = 'block';
-        document.getElementById('optionsCard').style.display = 'none';
       }
       calculateTotal();
     }
@@ -1975,7 +2223,6 @@
         });
 
         renderUploadedBatch();
-        document.getElementById('optionsCard').style.display = 'block';
         calculateTotal();
       })
       .catch((err) => {
@@ -2864,9 +3111,7 @@
         currentJobId = data.job_id;
         totalPdfPages = 1;
 
-        document.getElementById('uploadIdCard').style.display = 'none';
-        document.querySelector('.mode-tabs').style.display = 'none';
-        document.getElementById('optionsCard').style.display = 'block';
+        goToStep(2);
         document.getElementById('pageRangeGroup').style.display = 'none';
 
         const mergedCard = document.getElementById('mergedDocPreviewCard');
@@ -2911,9 +3156,7 @@
         currentJobId = data.job_id;
         totalPdfPages = 1; // 2-in-1 is on 1 page
 
-        document.getElementById('upload2in1Card').style.display = 'none';
-        document.querySelector('.mode-tabs').style.display = 'none';
-        document.getElementById('optionsCard').style.display = 'block';
+        goToStep(2);
         document.getElementById('pageRangeGroup').style.display = 'none';
 
         const mergedCard = document.getElementById('mergedDocPreviewCard');
@@ -2956,16 +3199,19 @@
       const list = document.getElementById('batchFilesList');
       const badge = document.getElementById('batchCountBadge');
       const dropZone = document.getElementById('dropZone');
+      const nextBtnContainer = document.getElementById('btnDocNextStepContainer');
 
       if (!uploadedBatch || uploadedBatch.length === 0) {
         if (container) container.style.display = 'none';
         if (dropZone) dropZone.style.display = 'block';
-        document.getElementById('optionsCard').style.display = 'none';
+        if (nextBtnContainer) nextBtnContainer.style.display = 'none';
+        if (currentStep > 1) goToStep(1);
         return;
       }
 
       if (dropZone) dropZone.style.display = 'none';
       if (container) container.style.display = 'block';
+      if (nextBtnContainer) nextBtnContainer.style.display = 'block';
       if (badge) badge.innerText = uploadedBatch.length;
 
       list.innerHTML = uploadedBatch.map((f, idx) => {
@@ -3337,12 +3583,7 @@
         }
       }
 
-      document.getElementById('optionsCard').style.display = 'none';
-      document.getElementById('paymentCard').style.display = 'block';
-      const rzpAmtSpan = document.getElementById('rzpPayAmount');
-      if (rzpAmtSpan) {
-        rzpAmtSpan.innerText = currentTotal;
-      }
+      goToStep(3);
     }
 
     // Helper: Unlock PDF File
@@ -3762,8 +4003,7 @@
     }
 
     function backToOptions() {
-      document.getElementById('paymentCard').style.display = 'none';
-      document.getElementById('optionsCard').style.display = 'block';
+      goToStep(2);
     }
 
     function confirmPayment(paymentMode = 'upi') {
@@ -3800,9 +4040,7 @@
         })
         .then(res => res.json())
         .then(data => {
-          document.getElementById('uploadDocCard').style.display = 'none';
-          document.getElementById('paymentCard').style.display = 'none';
-          document.getElementById('statusCard').style.display = 'block';
+          goToStep(4);
 
           const finalTrackingId = data.tracking_id || (data.batch_id ? `QP-${data.batch_id.replace('BATCH-', '')}` : 'QP-CASH');
           document.getElementById('displayTrackingId').innerText = finalTrackingId;
@@ -3851,10 +4089,7 @@
         })
         .then(res => res.json())
         .then(data => {
-          document.getElementById('uploadIdCard').style.display = 'none';
-          document.getElementById('upload2in1Card').style.display = 'none';
-          document.getElementById('paymentCard').style.display = 'none';
-          document.getElementById('statusCard').style.display = 'block';
+          goToStep(4);
 
           const finalTrackingId = data.tracking_id || (currentJobId ? `QP-${currentJobId.replace('JOB-', '')}` : 'QP-CASH');
           document.getElementById('displayTrackingId').innerText = finalTrackingId;
@@ -3976,14 +4211,7 @@
               }
 
               // Success! Immediate direct transition to Step 4 status card
-              if (currentMode === 'doc') {
-                document.getElementById('uploadDocCard').style.display = 'none';
-              } else {
-                document.getElementById('uploadIdCard').style.display = 'none';
-                document.getElementById('upload2in1Card').style.display = 'none';
-              }
-              document.getElementById('paymentCard').style.display = 'none';
-              document.getElementById('statusCard').style.display = 'block';
+              goToStep(4);
 
               const finalTrackingId = result.tracking_id || (result.batch_id ? `QP-${result.batch_id.replace('BATCH-', '')}` : (result.job_id ? `QP-${result.job_id.replace('JOB-', '')}` : 'QP-PAID'));
               document.getElementById('displayTrackingId').innerText = finalTrackingId;
