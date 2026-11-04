@@ -278,6 +278,20 @@ def init_db():
         )
     """)
 
+    # Hardware Device & Multi-Counter Seat Registry
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS kiosk_devices (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            shop_slug TEXT NOT NULL,
+            machine_id TEXT NOT NULL,
+            counter_name TEXT DEFAULT 'Counter 1',
+            counter_num INTEGER DEFAULT 1,
+            last_seen TEXT,
+            ip_address TEXT,
+            UNIQUE(shop_slug, machine_id)
+        )
+    """)
+
     # Seed default primary shop if missing
     c.execute("SELECT id FROM shops WHERE slug = 'karnataka-one'")
     if not c.fetchone():
@@ -2191,9 +2205,28 @@ def api_super_get_shops():
         else:
             s["days_remaining"] = 99999
             s["is_expired"] = False
+
+        # Query bound devices count
+        try:
+            c.execute("SELECT COUNT(*) FROM kiosk_devices WHERE shop_slug = ?", (slug,))
+            dev_row = c.fetchone()
+            s["devices_count"] = dev_row[0] if dev_row else 0
+        except Exception:
+            s["devices_count"] = 0
             
     conn.close()
     return jsonify({"success": True, "shops": shops})
+
+@app.route("/api/super/shops/<slug>/reset_devices", methods=["POST"])
+@require_super_admin
+def api_super_reset_devices(slug):
+    """Releases all hardware/machine ID locks for a shop (e.g. if shop changes their PC)."""
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+    c.execute("DELETE FROM kiosk_devices WHERE shop_slug = ?", (slug,))
+    conn.commit()
+    conn.close()
+    return jsonify({"success": True, "message": f"Bound devices for shop '{slug}' have been successfully reset."})
 
 @app.route("/api/super/shops/create", methods=["POST"])
 @require_super_admin
@@ -2603,9 +2636,70 @@ def kiosk_pending_jobs():
         except Exception:
             pass
 
+    machine_id = (request.headers.get("x-machine-id") or request.args.get("machine_id") or "").strip()
+    counter_name = (request.headers.get("x-counter-name") or request.args.get("counter_name") or "Counter 1").strip()
+    
+    import re
+    m_num = re.search(r'\d+', counter_name)
+    counter_num = int(m_num.group(0)) if m_num else 1
+
     conn = sqlite3.connect(DB_FILE)
     conn.row_factory = sqlite3.Row
     c = conn.cursor()
+
+    # Hardware Machine ID & Strict Seat Enforcement (1 to 5 Systems Limit)
+    if machine_id:
+        c.execute("SELECT * FROM kiosk_devices WHERE shop_slug = ? AND machine_id = ?", (shop["slug"], machine_id))
+        dev = c.fetchone()
+        max_allowed = int(shop.get("num_counters") or 1)
+
+        if not dev:
+            c.execute("SELECT COUNT(*) FROM kiosk_devices WHERE shop_slug = ?", (shop["slug"],))
+            dev_count = c.fetchone()[0]
+            if dev_count >= max_allowed:
+                conn.close()
+                return jsonify({
+                    "error": f"⛔ License Limit Reached! Max {max_allowed} System(s) Allowed. Please upgrade in Super Admin.",
+                    "license_limit_reached": True,
+                    "max_allowed": max_allowed,
+                    "registered_count": dev_count,
+                    "pending_jobs": []
+                }), 403
+
+            # Register new hardware seat
+            now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            c.execute("""
+                INSERT INTO kiosk_devices (shop_slug, machine_id, counter_name, counter_num, last_seen, ip_address)
+                VALUES (?, ?, ?, ?, ?, ?)
+            """, (shop["slug"], machine_id, counter_name, counter_num, now_str, request.remote_addr))
+            conn.commit()
+
+        # Active Counter 1-to-1 Protection (Zero Double Print)
+        active_cutoff = (datetime.now() - timedelta(seconds=35)).strftime("%Y-%m-%d %H:%M:%S")
+        c.execute("""
+            SELECT machine_id, counter_name FROM kiosk_devices
+            WHERE shop_slug = ? AND counter_num = ? AND machine_id != ? AND last_seen > ?
+        """, (shop["slug"], counter_num, machine_id, active_cutoff))
+        clash = c.fetchone()
+        if clash:
+            conn.close()
+            return jsonify({
+                "error": f"⚠️ {counter_name} is already ACTIVE on another PC! Please select Counter 2 or higher in Settings.",
+                "counter_busy": True,
+                "active_counter": counter_num,
+                "clash_machine": clash["machine_id"],
+                "pending_jobs": []
+            }), 409
+
+        # Update heartbeat and counter
+        now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        c.execute("""
+            UPDATE kiosk_devices
+            SET last_seen = ?, counter_name = ?, counter_num = ?, ip_address = ?
+            WHERE shop_slug = ? AND machine_id = ?
+        """, (now_str, counter_name, counter_num, request.remote_addr, shop["slug"], machine_id))
+        conn.commit()
+
     c.execute("""
         SELECT id, batch_id, customer_name, filename, original_type, page_count, print_type, copies, page_range, total_price, status, utr, created_at, color_pages
         FROM jobs
@@ -2618,7 +2712,9 @@ def kiosk_pending_jobs():
         "pending_jobs": rows,
         "count": len(rows),
         "shop_slug": shop["slug"],
-        "shop_name": shop["shop_name"]
+        "shop_name": shop["shop_name"],
+        "machine_id": machine_id,
+        "counter_name": counter_name
     })
 
 @app.route("/api/kiosk/download/<job_id>", methods=["GET"])
