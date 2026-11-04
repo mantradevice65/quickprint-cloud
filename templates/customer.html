@@ -8,20 +8,22 @@
   <link rel="icon" type="image/png" href="/static/logo.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Kannada:wght@400;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/css/cropper.min.css">
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
   <style>
     :root {
-      --primary: #2563eb;
-      --primary-dark: #1d4ed8;
-      --primary-light: #eff6ff;
-      --success: #16a34a;
-      --text: #0f172a;
+      --primary: #991b1b;
+      --primary-dark: #7f1d1d;
+      --primary-light: #fefce8;
+      --gold: #b45309;
+      --gold-border: #fde047;
+      --success: #15803d;
+      --text: #1e293b;
       --muted: #64748b;
-      --border: #e2e8f0;
+      --border: #fde047;
       --card-bg: #ffffff;
-      --bg: #f8fafc;
+      --bg: #fefce8;
       --radius: 16px;
     }
 
@@ -29,7 +31,7 @@
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-family: 'Noto Sans Kannada', 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
       -webkit-tap-highlight-color: transparent;
     }
 
@@ -41,22 +43,53 @@
     }
 
     .header {
-      background: linear-gradient(135deg, #1e3a8a, #2563eb);
+      background: linear-gradient(135deg, #7f1d1d 0%, #991b1b 50%, #b45309 100%);
       color: white;
-      padding: 24px 20px 30px;
+      padding: 20px 18px 26px;
       border-bottom-left-radius: 24px;
       border-bottom-right-radius: 24px;
-      box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.25);
+      box-shadow: 0 10px 25px -5px rgba(153, 27, 27, 0.3);
     }
+
+    .trust-strip {
+      background: rgba(0, 0, 0, 0.25);
+      padding: 6px 12px;
+      border-radius: 10px;
+      margin-top: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #fef08a;
+    }
+
+    .lang-toggle-btn {
+      background: rgba(255, 255, 255, 0.22);
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      color: #fff;
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 800;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      transition: background 0.2s;
+    }
+    .lang-toggle-btn:hover { background: rgba(255, 255, 255, 0.35); }
 
     .badge {
       display: inline-block;
-      background: rgba(255, 255, 255, 0.2);
+      background: rgba(0, 0, 0, 0.25);
+      border: 1px solid rgba(254, 240, 138, 0.35);
+      color: #fef08a;
       backdrop-filter: blur(4px);
       padding: 4px 10px;
       border-radius: 999px;
       font-size: 12px;
-      font-weight: 600;
+      font-weight: 700;
       letter-spacing: 0.5px;
       text-transform: uppercase;
       margin-bottom: 8px;
@@ -85,7 +118,8 @@
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 6px;
-      background: #e2e8f0;
+      background: #fef08a;
+      border: 1px solid #fde047;
       padding: 5px;
       border-radius: 14px;
       margin-bottom: 14px;
@@ -99,38 +133,41 @@
       font-weight: 800;
       cursor: pointer;
       background: transparent;
-      color: #475569;
+      color: #854d0e;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 4px;
+      gap: 3px;
       transition: all 0.2s;
       text-align: center;
+      line-height: 1.25;
     }
 
     .mode-tab.active {
       background: white;
       color: var(--primary);
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      box-shadow: 0 2px 8px rgba(153, 27, 27, 0.15);
+      border-bottom: 2px solid var(--primary);
     }
 
     .card {
       background: var(--card-bg);
       border-radius: var(--radius);
       padding: 20px;
-      box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+      box-shadow: 0 4px 20px -2px rgba(180, 83, 9, 0.06);
       border: 1px solid var(--border);
       margin-bottom: 16px;
     }
 
     .card-title {
       font-size: 16px;
-      font-weight: 700;
+      font-weight: 800;
       display: flex;
       align-items: center;
       gap: 8px;
       margin-bottom: 14px;
+      color: var(--primary);
     }
 
     .step-number {
@@ -148,8 +185,8 @@
 
     /* UPLOAD DROPZONE */
     .upload-zone {
-      border: 2px dashed #93c5fd;
-      background: var(--primary-light);
+      border: 2px dashed #b45309;
+      background: #fffbeb;
       border-radius: var(--radius);
       padding: 28px 20px;
       text-align: center;
@@ -160,7 +197,7 @@
 
     .upload-zone:active {
       transform: scale(0.98);
-      background: #dbeafe;
+      background: #fef3c7;
     }
 
     .upload-icon {
@@ -172,15 +209,15 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 4px 10px rgba(37, 99, 235, 0.15);
+      box-shadow: 0 4px 10px rgba(180, 83, 9, 0.15);
       color: var(--primary);
       font-size: 24px;
     }
 
     .upload-zone h3 {
       font-size: 15px;
-      font-weight: 700;
-      color: #1e3a8a;
+      font-weight: 800;
+      color: var(--primary);
     }
 
     .upload-zone p {
@@ -722,22 +759,37 @@
 </head>
 <body>
 
-  <!-- HEADER -->
+  <!-- HEADER (Model 20 Official Karnataka Citizen Theme) -->
   <div class="header">
     <div style="display: flex; justify-content: space-between; align-items: center; max-width: 500px; margin: 0 auto 10px;">
-      <div style="display: flex; flex-direction: column; align-items: flex-start; gap: 4px;">
-        <div class="badge">Self-Service Print Kiosk</div>
-        <button type="button" onclick="openFeaturesTermsModal()" style="background: rgba(255,255,255,0.18); border: 1px solid rgba(255,255,255,0.35); color: #e0f2fe; padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; backdrop-filter: blur(4px); transition: all 0.2s;" title="View Kiosk Capabilities & Privacy Terms">
-          <span>✦ Features &amp; Terms ✦</span>
+      <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
+        <span class="badge">🏛️ ಕರ್ನಾಟಕ ಒನ್ / Karnataka One</span>
+        <button type="button" onclick="openFeaturesTermsModal()" style="background: rgba(255,255,255,0.18); border: 1px solid rgba(255,255,255,0.35); color: #fef08a; padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; backdrop-filter: blur(4px); transition: all 0.2s;" title="View Kiosk Capabilities & Privacy Terms">
+          <span id="txtFeatures">✦ ನಿಯಮಗಳು &amp; ಸೌಲಭ್ಯಗಳು ✦</span>
         </button>
       </div>
-      <button type="button" onclick="openTrackModal()" style="background: rgba(255,255,255,0.22); border: 1px solid rgba(255,255,255,0.45); color: white; padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 6px; backdrop-filter: blur(6px); box-shadow: 0 2px 6px rgba(0,0,0,0.15); transition: all 0.2s;">
-        <span>🔍</span>
-        <span>Track Order Status</span>
-      </button>
+      <div style="display: flex; gap: 6px; align-items: center;">
+        <button type="button" class="lang-toggle-btn" onclick="toggleKioskLang()">
+          🌐 <span id="kioskLangLabel">ENG / ಕನ್ನಡ</span>
+        </button>
+        <button type="button" onclick="openTrackModal()" style="background: rgba(255,255,255,0.22); border: 1px solid rgba(255,255,255,0.45); color: white; padding: 5px 12px; border-radius: 20px; font-size: 11px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 4px; backdrop-filter: blur(6px); box-shadow: 0 2px 6px rgba(0,0,0,0.15); transition: all 0.2s;">
+          <span>🔍</span>
+          <span id="txtTrack">ಟ್ರ್ಯಾಕ್</span>
+        </button>
+      </div>
     </div>
-    <h1>{{ config.shop_name }}</h1>
-    <p>Upload document &bull; Pay Online or Cash &bull; Instant Print</p>
+    <h1 style="font-size: 21px; font-weight: 900; letter-spacing: -0.3px;" id="mainShopTitle">
+      ಕರ್ನಾಟಕ ಒನ್ - {{ config.shop_name }}
+    </h1>
+    <p style="font-size: 12px; color: #fef08a; margin-top: 3px;" id="mainShopSub">
+      ದಾಖಲೆ ಅಪ್ಲೋಡ್ ಮಾಡಿ &bull; ಆನ್‌ಲೈನ್ ಅಥವಾ ನಗದು ಪಾವತಿಸಿ &bull; ತಕ್ಷಣ ಪ್ರಿಂಟ್ ಪಡೆಯಿರಿ
+    </p>
+
+    <!-- OFFICIAL DISTRIBUTOR TRUST BANNER -->
+    <div class="trust-strip">
+      <span>🏛️</span>
+      <span id="txtDistributor">ಅಧಿಕೃತ ವಿತರಕರು: ಅಮೀರ ಸೋಲಾಪುರ (7760606262)</span>
+    </div>
   </div>
 
   <div class="container">
@@ -745,16 +797,16 @@
     <!-- 3 MODE TABS -->
     <div class="mode-tabs">
       <button class="mode-tab active" id="tabDoc" onclick="switchMode('doc')">
-        <span style="font-size:16px;">📄</span>
-        <span>Normal Document</span>
+        <span style="font-size:16px;">📁</span>
+        <span id="tabLabelDoc">ಸಾಮಾನ್ಯ ದಾಖಲೆ<br><small style="font-size:9px; opacity:0.85;">Normal Doc</small></span>
       </button>
       <button class="mode-tab" id="tabId" onclick="switchMode('id_card')">
         <span style="font-size:16px;">🪪</span>
-        <span>ID Card (Enlarged)</span>
+        <span id="tabLabelId">ಆಧಾರ್ ಕಾರ್ಡ್<br><small style="font-size:9px; opacity:0.85;">1-Page Enlarged</small></span>
       </button>
       <button class="mode-tab" id="tab2in1" onclick="switchMode('2in1')">
         <span style="font-size:16px;">📑</span>
-        <span>2-in-1 Print</span>
+        <span id="tabLabel2in1">2-ಇನ್-1 ಮುದ್ರಣ<br><small style="font-size:9px; opacity:0.85;">2-in-1 Merged</small></span>
       </button>
     </div>
 
@@ -762,18 +814,18 @@
     <div class="card" id="uploadDocCard">
       <div class="card-title">
         <span class="step-number">1</span>
-        <span>Upload Documents (PDF / Images)</span>
+        <span id="lblStep1DocTitle">Upload Documents (PDF / Images)</span>
       </div>
 
       <!-- 2 Quick Upload Source Shortcuts (Clean & Fast) -->
       <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:12px;">
         <button type="button" class="action-btn" onclick="document.getElementById('fileInput').click()" style="background:#eff6ff; border-color:#bfdbfe; color:#1d4ed8; font-size:12px; padding:12px 8px; flex-direction:column; gap:4px; border-radius:12px; font-weight:800;">
           <span style="font-size:22px;">📁</span>
-          <span>Phone Files / Gallery</span>
+          <span id="lblBtnPhoneFiles">Phone Files / Gallery</span>
         </button>
         <button type="button" class="action-btn" onclick="document.getElementById('cameraInput').click()" style="background:#fefce8; border-color:#fde047; color:#a16207; font-size:12px; padding:12px 8px; flex-direction:column; gap:4px; border-radius:12px; font-weight:800;">
           <span style="font-size:22px;">📸</span>
-          <span>Camera Photo Scan</span>
+          <span id="lblBtnCameraScan">Camera Photo Scan</span>
         </button>
       </div>
       <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none;" onchange="handleMultipleFiles(event)">
@@ -810,9 +862,9 @@
     <div class="card" id="uploadIdCard" style="display:none;">
       <div class="card-title">
         <span class="step-number">1</span>
-        <span>Upload ID Card (Aadhaar / Voter / PAN)</span>
+        <span id="lblStep1IdTitle">Upload ID Card (Aadhaar / Voter / PAN)</span>
       </div>
-      <p style="font-size: 12px; color: var(--muted); margin-top: -6px; margin-bottom: 14px;">
+      <p id="lblStep1IdSub" style="font-size: 12px; color: var(--muted); margin-top: -6px; margin-bottom: 14px;">
         Upload both front and back. Both sides print enlarged and sharp on a single A4 page (1-page rate).
       </p>
 
@@ -821,7 +873,7 @@
         <div class="panel-header">
           <div style="display:flex; align-items:center; gap:6px;">
             <span style="font-size:16px;">🪪</span>
-            <span style="font-weight:800; font-size:13px;">1. FRONT SIDE</span>
+            <span style="font-weight:800; font-size:13px;" id="lblIdFrontTitle">1. FRONT SIDE</span>
           </div>
           <span class="tag-status" id="tagIdFront">Not Added</span>
         </div>
@@ -854,7 +906,7 @@
         <div class="panel-header">
           <div style="display:flex; align-items:center; gap:6px;">
             <span style="font-size:16px;">🔄</span>
-            <span style="font-weight:800; font-size:13px;">2. BACK SIDE</span>
+            <span style="font-weight:800; font-size:13px;" id="lblIdBackTitle">2. BACK SIDE</span>
           </div>
           <span class="tag-status" id="tagIdBack">Not Added</span>
         </div>
@@ -884,7 +936,7 @@
 
       <div style="margin-top: 16px;">
         <button class="btn btn-primary" id="btnMergeId" disabled onclick="submitIdCard()">
-          <span>Create 1-Page Enlarged ID Print</span> &rarr;
+          <span id="lblBtnMergeId">Create 1-Page Enlarged ID Print</span> &rarr;
         </button>
       </div>
     </div>
@@ -893,9 +945,9 @@
     <div class="card" id="upload2in1Card" style="display:none;">
       <div class="card-title">
         <span class="step-number">1</span>
-        <span>2-in-1 Print</span>
+        <span id="lblStep12in1Title">2-in-1 Print (Top &amp; Bottom Merged)</span>
       </div>
-      <p style="font-size: 12px; color: var(--muted); margin-top: -6px; margin-bottom: 14px;">
+      <p id="lblStep12in1Sub" style="font-size: 12px; color: var(--muted); margin-top: -6px; margin-bottom: 14px;">
         Print two separate documents on a single A4 page (top and bottom half). Pay only for 1 page!
       </p>
 
@@ -904,7 +956,7 @@
         <div class="panel-header">
           <div style="display:flex; align-items:center; gap:6px;">
             <span style="font-size:16px;">⬆️</span>
-            <span style="font-weight:800; font-size:13px;">1. TOP HALF DOCUMENT</span>
+            <span style="font-weight:800; font-size:13px;" id="lbl2in1TopTitle">1. TOP HALF DOCUMENT</span>
           </div>
           <span class="tag-status" id="tag2in1Top">Not Added</span>
         </div>
@@ -937,7 +989,7 @@
         <div class="panel-header">
           <div style="display:flex; align-items:center; gap:6px;">
             <span style="font-size:16px;">⬇️</span>
-            <span style="font-weight:800; font-size:13px;">2. BOTTOM HALF DOCUMENT</span>
+            <span style="font-weight:800; font-size:13px;" id="lbl2in1BottomTitle">2. BOTTOM HALF DOCUMENT</span>
           </div>
           <span class="tag-status" id="tag2in1Bottom">Not Added</span>
         </div>
@@ -967,7 +1019,7 @@
 
       <div style="margin-top: 16px;">
         <button class="btn btn-primary" id="btnMerge2in1" disabled onclick="submit2in1()">
-          <span>Create 2-in-1 Print</span> &rarr;
+          <span id="lblBtnMerge2in1">Create 2-in-1 Print</span> &rarr;
         </button>
       </div>
     </div>
@@ -980,7 +1032,7 @@
     <div class="card" id="optionsCard" style="display:none;">
       <div class="card-title">
         <span class="step-number">2</span>
-        <span>Choose Print Settings</span>
+        <span id="lblStep2Title">Choose Print Settings</span>
       </div>
 
       <!-- Merged Final Document Preview (for ID Card & 2-in-1) -->
@@ -1001,11 +1053,11 @@
       </div>
 
       <!-- Color Selection -->
-      <label class="form-label">Color Option</label>
+      <label class="form-label" id="lblColorHeading">Color Option</label>
       <div class="option-grid" id="colorOptionGrid">
         <div class="option-card selected" id="optBw" onclick="selectColor('bw')">
           <div class="icon">⬛</div>
-          <div class="title">Black & White</div>
+          <div class="title" id="lblOptBw">Black & White</div>
           <div class="rate">₹{{ config.rate_bw }}/page</div>
         </div>
         <div class="option-card" id="optMixed" style="display:none;" onclick="selectColor('mixed')">
@@ -1018,7 +1070,7 @@
         </div>
         <div class="option-card" id="optColor" onclick="selectColor('color')">
           <div class="icon">🌈</div>
-          <div class="title">Full Colour</div>
+          <div class="title" id="lblOptColor">Full Colour</div>
           <div class="rate">₹{{ config.rate_color }}/page</div>
         </div>
       </div>
@@ -1026,7 +1078,7 @@
 
       <!-- Copies Counter -->
       <div class="form-group">
-        <label class="form-label">Number of Copies</label>
+        <label class="form-label" id="lblCopiesHeading">Number of Copies</label>
         <div class="counter-control">
           <button class="counter-btn" onclick="changeCopies(-1)">-</button>
           <span class="counter-val" id="copiesDisplay">1</span>
@@ -1039,7 +1091,7 @@
 
       <!-- Customer Name -->
       <div class="form-group">
-        <label class="form-label">Your Name (Optional)</label>
+        <label class="form-label" id="lblCustNameHeading">Your Name (Optional)</label>
         <input type="text" class="form-input" id="custNameInput" placeholder="Enter your name">
       </div>
 
@@ -1047,26 +1099,26 @@
       <div class="bill-box">
         <div id="billBatchDocsList" style="margin-bottom:10px; display:flex; flex-direction:column; gap:6px; border-bottom:1px dashed #cbd5e1; padding-bottom:8px;"></div>
         <div class="bill-row">
-          <span>Total Pages to Print</span>
+          <span id="lblBillPagesText">Total Pages to Print</span>
           <span id="billPages" style="font-weight:700; color:var(--text);">0 Pages</span>
         </div>
         <div class="bill-row">
-          <span>Rate per Page</span>
+          <span id="lblBillRateText">Rate per Page</span>
           <span id="billRate">₹{{ config.rate_bw }}</span>
         </div>
         <div class="bill-row">
-          <span>Copies</span>
+          <span id="lblBillCopiesText">Copies</span>
           <span id="billCopies">1</span>
         </div>
         <div class="bill-row total">
-          <span>Total Amount</span>
+          <span id="lblBillTotalText">Total Amount</span>
           <span class="total-amount" id="billTotal">₹{{ config.rate_bw }}</span>
         </div>
       </div>
 
       <div style="margin-top: 16px;">
         <button class="btn btn-primary" onclick="proceedToPayment()">
-          <span>Proceed to Pay (₹<span id="btnPayAmount">{{ config.rate_bw }}</span>)</span> &rarr;
+          <span><span id="lblBtnProceedPrefix">Proceed to Pay</span> (₹<span id="btnPayAmount">{{ config.rate_bw }}</span>)</span> &rarr;
         </button>
       </div>
     </div>
@@ -1075,7 +1127,7 @@
     <div class="card" id="paymentCard" style="display:none;">
       <div class="card-title">
         <span class="step-number">3</span>
-        <span>Payment &amp; Print Confirmation</span>
+        <span id="lblStep3Title">Payment &amp; Print Confirmation</span>
       </div>
 
       {% if config.razorpay_enabled %}
@@ -1107,7 +1159,7 @@
       <div style="margin-top: 14px; text-align: center;">
         <div style="font-size: 11px; color: #64748b; margin-bottom: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">— OR PAY IN CASH —</div>
         <button type="button" class="btn" style="background: #ffffff; border: 2px dashed #94a3b8; color: #1e293b; font-weight: 700; width: 100%; padding: 12px; font-size: 14px; border-radius: 12px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px;" onclick="confirmPayment('cash')">
-          <span>💵</span> Pay Cash at Counter
+          <span>💵</span> <span id="lblBtnPayCash">Pay Cash at Counter</span>
         </button>
         <div style="font-size: 11px; color: #64748b; margin-top: 6px;">
           Submit your order and pay in cash to the store assistant.
@@ -1116,7 +1168,7 @@
       {% endif %}
 
       <button style="background:none; border:none; color:var(--muted); font-size:13px; width:100%; margin-top:16px; cursor:pointer;" onclick="backToOptions()">
-        &larr; Back to Print Options
+        <span id="lblBtnBackToOptions">&larr; Back to Print Options</span>
       </button>
     </div>
 
@@ -1546,6 +1598,157 @@
       return (str || '').replace(/[&<>"']/g, m => ({
         '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
       }[m]));
+    }
+
+    // ================= 🌐 MODEL 20 BILINGUAL LANGUAGE ENGINE =================
+    let currentKioskLang = localStorage.getItem('kiosk_lang') || 'kn';
+
+    const KIOSK_TEXTS = {
+      kn: {
+        langBtn: "ENG / ಕನ್ನಡ",
+        featuresBtn: "✦ ನಿಯಮಗಳು &amp; ಸೌಲಭ್ಯಗಳು ✦",
+        trackBtn: "ಟ್ರ್ಯಾಕ್",
+        shopSub: "ದಾಖಲೆ ಅಪ್ಲೋಡ್ ಮಾಡಿ &bull; ಆನ್‌ಲೈನ್ ಅಥವಾ ನಗದು ಪಾವತಿಸಿ &bull; ತಕ್ಷಣ ಪ್ರಿಂಟ್ ಪಡೆಯಿರಿ",
+        distributor: "ಅಧಿಕೃತ ವಿತರಕರು: ಅಮೀರ ಸೋಲಾಪುರ (7760606262)",
+        tabDoc: "ಸಾಮಾನ್ಯ ದಾಖಲೆ<br><small style=\"font-size:9px; opacity:0.85;\">Normal Doc</small>",
+        tabId: "ಆಧಾರ್ ಕಾರ್ಡ್<br><small style=\"font-size:9px; opacity:0.85;\">1-Page Enlarged</small>",
+        tab2in1: "2-ಇನ್-1 ಮುದ್ರಣ<br><small style=\"font-size:9px; opacity:0.85;\">2-in-1 Merged</small>",
+        step1DocTitle: "ಸಾಮಾನ್ಯ ದಾಖಲೆ ಅಪ್ಲೋಡ್ (PDF / Images)",
+        phoneFiles: "ಫೋನ್ ಫೈಲ್‌ಗಳು / ಗ್ಯಾಲರಿ",
+        cameraScan: "ಕ್ಯಾಮೆರಾ ಫೋಟೋ ಸ್ಕ್ಯಾನ್",
+        dropZoneTitle: "ದಾಖಲೆಗಳನ್ನು ಅಪ್ಲೋಡ್ ಮಾಡಲು ಇಲ್ಲಿ ಸ್ಪರ್ಶಿಸಿ",
+        dropZoneSub: "ಎಲ್ಲಾ ಫೈಲ್‌ಗಳು ಲಭ್ಯ: PDF, Photos, Word, Excel, CDR, PSD (Multi-Files)",
+        step1IdTitle: "ಆಧಾರ್ / ವೋಟರ್ ಕಾರ್ಡ್ (1-Page Enlarged Print)",
+        step1IdSub: "ಮುಂಭಾಗ ಮತ್ತು ಹಿಂಭಾಗ ಎರಡನ್ನೂ ಅಪ್ಲೋಡ್ ಮಾಡಿ. 1 ಹಾಳೆಯಲ್ಲಿ ಸ್ಪಷ್ಟವಾಗಿ ದೊಡ್ಡದಾಗಿ ಪ್ರಿಂಟ್ ಆಗುತ್ತದೆ.",
+        idFrontTitle: "1. ಮುಂಭಾಗ (FRONT SIDE)",
+        idBackTitle: "2. ಹಿಂಭಾಗ (BACK SIDE)",
+        btnMergeId: "1-ಪುಟ ದೊಡ್ಡದಾದ ಐಡಿ ಪ್ರಿಂಟ್ ರಚಿಸಿ",
+        step12in1Title: "2-ಇನ್-1 ಮುದ್ರಣ (Top &amp; Bottom Merged)",
+        step12in1Sub: "ಎರಡು ಪ್ರತ್ಯೇಕ ದಾಖಲೆಗಳನ್ನು ಒಂದೇ A4 ಹಾಳೆಯ ಮೇಲೆ ಅರ್ಧ-ಅರ್ಧ ಮುದ್ರಿಸಿ. ಕೇವಲ 1 ಪುಟದ ಶುಲ್ಕ!",
+        top2in1Title: "1. ಮೇಲಿನ ಅರ್ಧ ದಾಖಲೆ (TOP HALF)",
+        bottom2in1Title: "2. ಕೆಳಗಿನ ಅರ್ಧ ದಾಖಲೆ (BOTTOM HALF)",
+        btnMerge2in1: "2-ಇನ್-1 ಮುದ್ರಣ ಸಿದ್ಧಪಡಿಸಿ",
+        step2Title: "ಮುದ್ರಣ ಆಯ್ಕೆಗಳು (Print Settings)",
+        colorHeading: "ಬಣ್ಣದ ಆಯ್ಕೆ (Color Option)",
+        optBw: "ಕಪ್ಪು-ಬಿಳುಪು (B/W)",
+        optColor: "ಪೂರ್ಣ ಬಣ್ಣ (Color)",
+        copiesHeading: "ಪ್ರತಿಗಳ ಸಂಖ್ಯೆ (Copies)",
+        custNameHeading: "ನಿಮ್ಮ ಹೆಸರು (ಐಚ್ಛಿಕ)",
+        billPages: "ಒಟ್ಟು ಮುದ್ರಣ ಪುಟಗಳು",
+        billRate: "ಪುಟದ ದರ",
+        billCopies: "ಪ್ರತಿಗಳು",
+        billTotal: "ಒಟ್ಟು ಮೊತ್ತ",
+        btnProceed: "ಪಾವತಿಗೆ ಮುಂದುವರಿಯಿರಿ",
+        step3Title: "ಪಾವತಿ ಮತ್ತು ಮುದ್ರಣ ದೃಢೀಕರಣ",
+        btnPayCash: "💵 ಕೌಂಟರ್‌ನಲ್ಲಿ ನಗದು ಪಾವತಿಸಿ",
+        backToOptions: "← ಆಯ್ಕೆಗಳಿಗೆ ಹಿಂತಿರುಗಿ"
+      },
+      en: {
+        langBtn: "ಕನ್ನಡ / ENG",
+        featuresBtn: "✦ Features &amp; Terms ✦",
+        trackBtn: "Track",
+        shopSub: "Upload documents &bull; Pay online or cash &bull; Instant kiosk printout",
+        distributor: "Official Distributor: Ameer Solapur (7760606262)",
+        tabDoc: "Normal Doc<br><small style=\"font-size:9px; opacity:0.85;\">PDF / Photos</small>",
+        tabId: "ID Card<br><small style=\"font-size:9px; opacity:0.85;\">1-Page Enlarged</small>",
+        tab2in1: "2-in-1 Print<br><small style=\"font-size:9px; opacity:0.85;\">2-in-1 Merged</small>",
+        step1DocTitle: "Upload Documents (PDF / Images)",
+        phoneFiles: "Phone Files / Gallery",
+        cameraScan: "Camera Photo Scan",
+        dropZoneTitle: "Tap to Upload Documents",
+        dropZoneSub: "Supports ALL Files: PDF, Photos, PSD, CDR, HEIC, Word, Excel & more",
+        step1IdTitle: "Upload ID Card (Aadhaar / Voter / PAN)",
+        step1IdSub: "Upload both front and back. Both sides print enlarged and sharp on a single A4 page (1-page rate).",
+        idFrontTitle: "1. FRONT SIDE",
+        idBackTitle: "2. BACK SIDE",
+        btnMergeId: "Create 1-Page Enlarged ID Print",
+        step12in1Title: "2-in-1 Print (Top &amp; Bottom Merged)",
+        step12in1Sub: "Print two separate documents on a single A4 page (top and bottom half). Pay only for 1 page!",
+        top2in1Title: "1. TOP HALF DOCUMENT",
+        bottom2in1Title: "2. BOTTOM HALF DOCUMENT",
+        btnMerge2in1: "Create 2-in-1 Print",
+        step2Title: "Choose Print Settings",
+        colorHeading: "Color Option",
+        optBw: "Black &amp; White",
+        optColor: "Full Colour",
+        copiesHeading: "Number of Copies",
+        custNameHeading: "Your Name (Optional)",
+        billPages: "Total Pages to Print",
+        billRate: "Rate per Page",
+        billCopies: "Copies",
+        billTotal: "Total Amount",
+        btnProceed: "Proceed to Pay",
+        step3Title: "Payment &amp; Print Confirmation",
+        btnPayCash: "💵 Pay Cash at Counter",
+        backToOptions: "&larr; Back to Print Options"
+      }
+    };
+
+    function applyKioskLang(lang) {
+      currentKioskLang = lang;
+      try { localStorage.setItem('kiosk_lang', lang); } catch (e) {}
+      const t = KIOSK_TEXTS[lang] || KIOSK_TEXTS['kn'];
+
+      const setT = (id, val) => {
+        const el = document.getElementById(id);
+        if (el) el.innerHTML = val;
+      };
+
+      setT('kioskLangLabel', t.langBtn);
+      setT('txtFeatures', t.featuresBtn);
+      setT('txtTrack', t.trackBtn);
+      setT('mainShopSub', t.shopSub);
+      setT('txtDistributor', t.distributor);
+
+      setT('tabLabelDoc', t.tabDoc);
+      setT('tabLabelId', t.tabId);
+      setT('tabLabel2in1', t.tab2in1);
+
+      setT('lblStep1DocTitle', t.step1DocTitle);
+      setT('lblBtnPhoneFiles', t.phoneFiles);
+      setT('lblBtnCameraScan', t.cameraScan);
+      setT('dropZoneTitle', t.dropZoneTitle);
+      setT('dropZoneSub', t.dropZoneSub);
+
+      setT('lblStep1IdTitle', t.step1IdTitle);
+      setT('lblStep1IdSub', t.step1IdSub);
+      setT('lblIdFrontTitle', t.idFrontTitle);
+      setT('lblIdBackTitle', t.idBackTitle);
+      setT('lblBtnMergeId', t.btnMergeId);
+
+      setT('lblStep12in1Title', t.step12in1Title);
+      setT('lblStep12in1Sub', t.step12in1Sub);
+      setT('lbl2in1TopTitle', t.top2in1Title);
+      setT('lbl2in1BottomTitle', t.bottom2in1Title);
+      setT('lblBtnMerge2in1', t.btnMerge2in1);
+
+      setT('lblStep2Title', t.step2Title);
+      setT('lblColorHeading', t.colorHeading);
+      setT('lblOptBw', t.optBw);
+      setT('lblOptColor', t.optColor);
+      setT('lblCopiesHeading', t.copiesHeading);
+      setT('lblCustNameHeading', t.custNameHeading);
+      setT('lblBillPagesText', t.billPages);
+      setT('lblBillRateText', t.billRate);
+      setT('lblBillCopiesText', t.billCopies);
+      setT('lblBillTotalText', t.billTotal);
+      setT('lblBtnProceedPrefix', t.btnProceed);
+
+      setT('lblStep3Title', t.step3Title);
+      setT('lblBtnPayCash', t.btnPayCash);
+      setT('lblBtnBackToOptions', t.backToOptions);
+    }
+
+    function toggleKioskLang() {
+      const nextLang = (currentKioskLang === 'kn') ? 'en' : 'kn';
+      applyKioskLang(nextLang);
+    }
+
+    // Apply language on load immediately
+    try {
+      applyKioskLang(currentKioskLang);
+    } catch (e) {
+      console.warn('Language init:', e);
     }
 
     function switchMode(mode) {
