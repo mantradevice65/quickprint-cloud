@@ -1367,10 +1367,11 @@
 
       {% if config.enable_cash_payment %}
       <!-- CASH AT COUNTER OPTION -->
-      <div style="margin-top: 14px; text-align: center;">
+      <div style="margin-top: 16px; text-align: center;">
         <div style="font-size: 11px; color: #64748b; margin-bottom: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">— OR PAY IN CASH —</div>
-        <button type="button" class="btn" style="background: #ffffff; border: 2px dashed #94a3b8; color: #1e293b; font-weight: 700; width: 100%; padding: 12px; font-size: 14px; border-radius: 12px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px;" onclick="confirmPayment('cash')">
-          <span>💵</span> <span id="lblBtnPayCash">Pay Cash at Counter</span>
+        <button type="button" class="btn" style="background: linear-gradient(135deg, #d97706 0%, #b45309 100%); border: none; color: #ffffff; font-weight: 800; width: 100%; padding: 14px; font-size: 15px; border-radius: 12px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 14px rgba(180, 83, 9, 0.35);" onclick="confirmPayment('cash')">
+          <span style="font-size: 18px;">💵</span>
+          <span id="lblBtnPayCash">Pay Cash at Counter</span> &rarr;
         </button>
         <div style="font-size: 11px; color: #64748b; margin-top: 6px;">
           Submit your order and pay in cash to the store assistant.
@@ -1858,7 +1859,7 @@
         billTotal: "ಒಟ್ಟು ಮೊತ್ತ",
         btnProceed: "ಪಾವತಿಗೆ ಮುಂದುವರಿಯಿರಿ",
         step3Title: "ಪಾವತಿ ಮತ್ತು ಮುದ್ರಣ ದೃಢೀಕರಣ",
-        btnPayCash: "💵 ಕೌಂಟರ್‌ನಲ್ಲಿ ನಗದು ಪಾವತಿಸಿ",
+        btnPayCash: "ಕೌಂಟರ್‌ನಲ್ಲಿ ನಗದು ಪಾವತಿಸಿ (Pay Cash at Counter)",
         backToOptions: "← ಆಯ್ಕೆಗಳಿಗೆ ಹಿಂತಿರುಗಿ"
       },
       en: {
@@ -1904,7 +1905,7 @@
         billTotal: "Total Amount",
         btnProceed: "Proceed to Pay",
         step3Title: "Payment &amp; Print Confirmation",
-        btnPayCash: "💵 Pay Cash at Counter",
+        btnPayCash: "Pay Cash at Counter",
         backToOptions: "&larr; Back to Print Options"
       }
     };
