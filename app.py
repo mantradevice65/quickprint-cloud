@@ -953,6 +953,12 @@ def cloud_kiosk_sync_worker():
                                     except Exception as dl_err:
                                         print(f"[-] Error downloading PDF for {p_id}:", dl_err)
                                 
+                                # Normalize job status for local DB and auto-print
+                                p_status = pjob.get("status", "")
+                                p_utr = str(pjob.get("utr", "") or "")
+                                is_online_paid = (p_status in ("paid", "pending_kiosk_sync") or p_utr.startswith("RZP:")) and p_status != "pending_cash"
+                                local_status = "paid" if is_online_paid else p_status
+
                                 conn = sqlite3.connect(DB_FILE)
                                 c = conn.cursor()
                                 c.execute("""
@@ -966,17 +972,25 @@ def cloud_kiosk_sync_worker():
                                     pjob.get("filename"), str(local_pdf), pjob.get("original_type"),
                                     pjob.get("page_count"), pjob.get("print_type"), pjob.get("copies", 1),
                                     pjob.get("page_range", "all"), pjob.get("total_price", 0.0),
-                                    pjob.get("status"), pjob.get("printer_used"), pjob.get("utr"),
+                                    local_status, pjob.get("printer_used"), pjob.get("utr"),
                                     pjob.get("created_at"), pjob.get("color_pages")
                                 ))
                                 conn.commit()
                                 conn.close()
                                 
                                 # Auto print if enabled and paid
-                                if cfg.get("auto_print", True) and pjob.get("status") == "paid":
+                                if cfg.get("auto_print", True) and (local_status == "paid" or is_online_paid):
                                     ptype = pjob.get("print_type", "bw")
                                     printer = cfg.get("default_color_printer") if ptype in ("color", "mixed") else cfg.get("default_bw_printer")
                                     print_pdf_file(local_pdf, printer, int(pjob.get("copies", 1)))
+                                    try:
+                                        conn = sqlite3.connect(DB_FILE)
+                                        c = conn.cursor()
+                                        c.execute("UPDATE jobs SET status = 'printed', printer_used = ? WHERE id = ?", (printer, p_id))
+                                        conn.commit()
+                                        conn.close()
+                                    except Exception:
+                                        pass
                                     try:
                                         ack_url = f"{cloud_url}/api/kiosk/ack_job/{p_id}?api_key={api_key}"
                                         ack_req = urllib.request.Request(ack_url, data=json.dumps({"status": "printed"}).encode("utf-8"), headers={"Content-Type": "application/json"})
@@ -2065,7 +2079,7 @@ def api_razorpay_verify_payment():
             total_cost += cost
             c.execute("""
                 UPDATE jobs
-                SET batch_id = ?, customer_name = ?, print_type = ?, copies = ?, page_range = ?, total_price = ?, status = 'pending_kiosk_sync', utr = ?, shop_slug = ?
+                SET batch_id = ?, customer_name = ?, print_type = ?, copies = ?, page_range = ?, total_price = ?, status = 'paid', utr = ?, shop_slug = ?
                 WHERE id = ?
             """, (batch_id, customer_name, print_type, copies, page_range, cost, utr_string, shop_slug, job_id))
     else:
@@ -2080,7 +2094,7 @@ def api_razorpay_verify_payment():
             total_cost = cost
             c.execute("""
                 UPDATE jobs
-                SET customer_name = ?, print_type = ?, copies = ?, page_range = ?, total_price = ?, status = 'pending_kiosk_sync', utr = ?, shop_slug = ?
+                SET customer_name = ?, print_type = ?, copies = ?, page_range = ?, total_price = ?, status = 'paid', utr = ?, shop_slug = ?
                 WHERE id = ?
             """, (customer_name, print_type, copies, page_range, cost, utr_string, shop_slug, target_job_id))
             
@@ -2095,7 +2109,7 @@ def api_razorpay_verify_payment():
         "job_id": target_job_id,
         "tracking_id": tracking_id,
         "total_price": round(total_cost, 2),
-        "status": "pending_kiosk_sync",
+        "status": "paid",
         "message": "Payment verified! Your order is queued and will print at the counter."
     })
 
@@ -2706,8 +2720,17 @@ def kiosk_pending_jobs():
         WHERE status IN ('pending_kiosk_sync', 'pending_cash', 'paid') AND shop_slug = ?
         ORDER BY created_at ASC
     """, (shop["slug"],))
-    rows = [dict(r) for r in c.fetchall()]
+    raw_rows = [dict(r) for r in c.fetchall()]
     conn.close()
+
+    rows = []
+    for r in raw_rows:
+        # Guarantee online paid jobs are delivered as 'paid' so kiosk client auto-print triggers
+        u = str(r.get("utr", "") or "")
+        st = r.get("status", "")
+        if (st == "pending_kiosk_sync" or u.startswith("RZP:")) and st != "pending_cash":
+            r["status"] = "paid"
+        rows.append(r)
     return jsonify({
         "pending_jobs": rows,
         "count": len(rows),
