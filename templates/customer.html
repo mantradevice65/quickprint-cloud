@@ -53,7 +53,7 @@
 
     .header-top-row {
       display: flex;
-      justify-content: space-between;
+      justify-content: flex-end;
       align-items: center;
       max-width: 500px;
       margin: 0 auto 10px;
@@ -929,13 +929,9 @@
   <!-- HEADER (Model 20 Official Karnataka Citizen Theme) -->
   <div class="header">
     <div class="header-top-row">
-      <button type="button" class="lang-toggle-btn" onclick="toggleKioskLang()" title="Switch Language">
-        <span>🌐</span>
-        <span id="kioskLangLabel">English</span>
-      </button>
       <button type="button" class="track-btn" onclick="openTrackModal()" title="Track Print Order">
         <span>🔍</span>
-        <span id="txtTrack">ಟ್ರ್ಯಾಕ್</span>
+        <span id="txtTrack">Track</span>
       </button>
     </div>
 
@@ -944,11 +940,11 @@
         {{ config.shop_name }}
       </h1>
       <p style="font-size: 12.5px; color: #fef08a; margin-top: 3px;" id="mainShopSub">
-        ದಾಖಲೆ ಅಪ್ಲೋಡ್ ಮಾಡಿ &bull; ಆನ್‌ಲೈನ್ ಅಥವಾ ನಗದು ಪಾವತಿಸಿ &bull; ತಕ್ಷಣ ಪ್ರಿಂಟ್ ಪಡೆಯಿರಿ
+        Upload documents &bull; Pay online or cash &bull; Instant kiosk printout
       </p>
 
       <button type="button" class="terms-btn" onclick="openFeaturesTermsModal()" title="View Kiosk Capabilities & Privacy Terms">
-        <span id="txtFeatures">✦ ನಿಯಮಗಳು &amp; ಸೌಲಭ್ಯಗಳು ✦</span>
+        <span id="txtFeatures">✦ Features &amp; Terms ✦</span>
       </button>
     </div>
   </div>
@@ -1803,8 +1799,9 @@
       }[m]));
     }
 
-    // ================= 🌐 MODEL 20 BILINGUAL LANGUAGE ENGINE =================
-    let currentKioskLang = localStorage.getItem('kiosk_lang') || 'kn';
+    // ================= 🌐 MODEL 20 LANGUAGE ENGINE (ENGLISH ONLY) =================
+    let currentKioskLang = 'en';
+    try { localStorage.setItem('kiosk_lang', 'en'); } catch (e) {}
 
     const KIOSK_TEXTS = {
       kn: {
@@ -1902,9 +1899,9 @@
     };
 
     function applyKioskLang(lang) {
-      currentKioskLang = lang;
-      try { localStorage.setItem('kiosk_lang', lang); } catch (e) {}
-      const t = KIOSK_TEXTS[lang] || KIOSK_TEXTS['kn'];
+      currentKioskLang = 'en';
+      try { localStorage.setItem('kiosk_lang', 'en'); } catch (e) {}
+      const t = KIOSK_TEXTS['en'] || KIOSK_TEXTS['kn'];
 
       const setT = (id, val) => {
         const el = document.getElementById(id);
@@ -1966,8 +1963,8 @@
     }
 
     function toggleKioskLang() {
-      const nextLang = (currentKioskLang === 'kn') ? 'en' : 'kn';
-      applyKioskLang(nextLang);
+      // Kannada removed - strictly English mode
+      applyKioskLang('en');
     }
 
     // Apply language on load immediately
