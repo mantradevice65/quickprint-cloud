@@ -953,12 +953,39 @@ def cloud_kiosk_sync_worker():
                                     except Exception as dl_err:
                                         print(f"[-] Error downloading PDF for {p_id}:", dl_err)
                                 
-                                # Normalize job status for local DB and auto-print
+                                # Distinguish between Auto-Printed Online Orders vs Counter Cash Orders
                                 p_status = pjob.get("status", "")
                                 p_utr = str(pjob.get("utr", "") or "")
                                 is_online_paid = (p_status in ("paid", "pending_kiosk_sync") or p_utr.startswith("RZP:")) and p_status != "pending_cash"
-                                local_status = "paid" if is_online_paid else p_status
+                                
+                                local_status = p_status
+                                printer_used = pjob.get("printer_used", "")
 
+                                if is_online_paid and cfg.get("auto_print", True):
+                                    # 1. Direct auto-print to printer immediately
+                                    ptype = pjob.get("print_type", "bw")
+                                    printer = cfg.get("default_color_printer") if ptype in ("color", "mixed") else cfg.get("default_bw_printer")
+                                    print_pdf_file(local_pdf, printer, int(pjob.get("copies", 1)))
+                                    local_status = "printed"
+                                    printer_used = printer or "Default"
+                                    
+                                    # 2. Acknowledge cloud immediately that it was printed
+                                    try:
+                                        ack_url = f"{cloud_url}/api/kiosk/ack_job/{p_id}?api_key={api_key}"
+                                        ack_req = urllib.request.Request(
+                                            ack_url,
+                                            data=json.dumps({"status": "printed"}).encode("utf-8"),
+                                            headers={"Content-Type": "application/json"}
+                                        )
+                                        urllib.request.urlopen(ack_req, timeout=5)
+                                    except Exception:
+                                        pass
+                                elif is_online_paid:
+                                    local_status = "paid"
+                                else:
+                                    local_status = "pending_cash"
+
+                                # 3. Save to local DB with final accurate status
                                 conn = sqlite3.connect(DB_FILE)
                                 c = conn.cursor()
                                 c.execute("""
@@ -972,31 +999,11 @@ def cloud_kiosk_sync_worker():
                                     pjob.get("filename"), str(local_pdf), pjob.get("original_type"),
                                     pjob.get("page_count"), pjob.get("print_type"), pjob.get("copies", 1),
                                     pjob.get("page_range", "all"), pjob.get("total_price", 0.0),
-                                    local_status, pjob.get("printer_used"), pjob.get("utr"),
+                                    local_status, printer_used, pjob.get("utr"),
                                     pjob.get("created_at"), pjob.get("color_pages")
                                 ))
                                 conn.commit()
                                 conn.close()
-                                
-                                # Auto print if enabled and paid
-                                if cfg.get("auto_print", True) and (local_status == "paid" or is_online_paid):
-                                    ptype = pjob.get("print_type", "bw")
-                                    printer = cfg.get("default_color_printer") if ptype in ("color", "mixed") else cfg.get("default_bw_printer")
-                                    print_pdf_file(local_pdf, printer, int(pjob.get("copies", 1)))
-                                    try:
-                                        conn = sqlite3.connect(DB_FILE)
-                                        c = conn.cursor()
-                                        c.execute("UPDATE jobs SET status = 'printed', printer_used = ? WHERE id = ?", (printer, p_id))
-                                        conn.commit()
-                                        conn.close()
-                                    except Exception:
-                                        pass
-                                    try:
-                                        ack_url = f"{cloud_url}/api/kiosk/ack_job/{p_id}?api_key={api_key}"
-                                        ack_req = urllib.request.Request(ack_url, data=json.dumps({"status": "printed"}).encode("utf-8"), headers={"Content-Type": "application/json"})
-                                        urllib.request.urlopen(ack_req, timeout=5)
-                                    except Exception:
-                                        pass
                 except Exception:
                     pass
         except Exception:
