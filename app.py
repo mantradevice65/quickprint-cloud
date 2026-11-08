@@ -1,5 +1,12 @@
 import os
 import sys
+
+if hasattr(sys.stdout, "reconfigure"):
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
 import gc
 import json
 import uuid
@@ -36,9 +43,19 @@ try:
 except Exception:
     pass
 
-BASE_DIR = Path(__file__).resolve().parent
+if getattr(sys, "frozen", False):
+    BASE_DIR = Path(sys.executable).resolve().parent
+else:
+    BASE_DIR = Path(__file__).resolve().parent
+
 template_dir = BASE_DIR / "templates"
+if not template_dir.exists() and (BASE_DIR / "_internal" / "templates").exists():
+    template_dir = BASE_DIR / "_internal" / "templates"
+
 static_dir = BASE_DIR / "static"
+if not static_dir.exists() and (BASE_DIR / "_internal" / "static").exists():
+    static_dir = BASE_DIR / "_internal" / "static"
+
 app = Flask(__name__, template_folder=str(template_dir), static_folder=str(static_dir))
 app.secret_key = "quickprint_super_admin_secret_key_2026"
 SUPER_ADMIN_PASSWORD = "Admin_1977"
