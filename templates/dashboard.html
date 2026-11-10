@@ -683,9 +683,22 @@
           <div style="font-size:13px; font-weight:800; color:var(--text);">🪧 Print Counter QR Poster</div>
           <div style="font-size:11px; color:var(--muted);">Print high-resolution A4 counter poster</div>
         </div>
-        <a href="/counter-poster" target="_blank" class="btn btn-primary" style="padding:8px 16px; font-size:12px; text-decoration:none;">
+        <button type="button" onclick="openCounterPoster()" class="btn btn-primary" style="padding:8px 16px; font-size:12px; cursor:pointer;">
           🖨️ Open Poster
-        </a>
+        </button>
+      </div>
+
+      <!-- 2.1 SALES & MARKETING -->
+      <div style="background:#fefce8; border:1px solid #fef08a; border-radius:12px; padding:12px 14px; margin-top:12px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+        <div>
+          <div style="font-size:13px; font-weight:800; color:#854d0e;">📢 Marketing Poster</div>
+          <div style="font-size:11px; color:#a16207;">Ameer Solapur (7760606262) • Share with other Xerox & CSC shops</div>
+        </div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <button type="button" onclick="openSalesPoster()" class="btn" style="background:#ca8a04; color:#ffffff; padding:8px 14px; font-size:12px; cursor:pointer; font-weight:700;">
+            📄 Open Poster
+          </button>
+        </div>
       </div>
 
       <!-- 3. RAZORPAY PAYMENT GATEWAY -->
@@ -742,32 +755,22 @@
       <div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:12px; padding:12px 14px; margin-top:12px;">
         <div style="display:flex; justify-content:space-between; align-items:center;">
           <div style="font-size:12px; font-weight:800; color:#1e40af; text-transform:uppercase; letter-spacing:0.5px;">
-            ☁️ Cloud Kiosk Connection (SaaS Setup)
+            ☁️ Cloud Kiosk Connection
           </div>
           <span id="cloudConnectionBadge" style="font-size:11px; font-weight:700; padding:3px 10px; border-radius:12px; {% if (config.cloud_api_key and config.is_activated) or config.cloud_sync_enabled %}background:#dcfce7; color:#15803d; border:1px solid #86efac;{% else %}background:#fee2e2; color:#dc2626; border:1px solid #fca5a5;{% endif %}">
             {% if (config.cloud_api_key and config.is_activated) or config.cloud_sync_enabled %}🟢 Connected{% else %}🔴 Offline{% endif %}
           </span>
         </div>
-        <div style="font-size:11px; color:#475569; margin-top:4px; margin-bottom:8px;">
-          Paste your unique <b>Kiosk Setup Key</b> from the Super Admin portal here.
-        </div>
-        <div style="display:grid; grid-template-columns:1fr; gap:8px;">
-          <div>
-            <label class="form-label" style="font-size:11px;">Kiosk Setup Key (Secret)</label>
-            <input type="text" class="form-input" id="cfgCloudApiKey" value="{{ config.cloud_api_key or '' }}" placeholder="qp_kiosk_..." style="font-family:monospace; font-weight:700; color:#1e3a8a;">
-          </div>
-          <div style="display:flex; gap:8px; margin-top:2px;">
-            <button type="button" class="btn btn-primary" onclick="resyncShopFromCloud()" style="padding:7px 12px; font-size:11px; font-weight:700; flex:1;">
-              🔄 Re-Sync Shop Profile from Cloud
-            </button>
-            <button type="button" class="btn btn-outline-white" onclick="resetKioskKey()" style="padding:7px 12px; font-size:11px; color:#ef4444; border-color:#fca5a5; background:#fff;" title="Unpair terminal">
-              Unlink Shop
-            </button>
-          </div>
-          <div>
-            <label class="form-label" style="font-size:11px;">Cloud Server URL</label>
-            <input type="text" class="form-input" id="cfgCloudServerUrl" value="{{ config.cloud_server_url or 'https://print.fruitsgenerator.co.in' }}" placeholder="https://print.fruitsgenerator.co.in">
-          </div>
+        <!-- Hidden Inputs for secure background sync and saving -->
+        <input type="hidden" id="cfgCloudApiKey" value="{{ config.cloud_api_key or '' }}">
+        <input type="hidden" id="cfgCloudServerUrl" value="{{ config.cloud_server_url or 'https://print.fruitsgenerator.co.in' }}">
+        <div style="display:flex; gap:8px; margin-top:10px;">
+          <button type="button" class="btn btn-primary" onclick="resyncShopFromCloud()" style="padding:7px 12px; font-size:11px; font-weight:700; flex:1;">
+            🔄 Re-Sync Shop Profile from Cloud
+          </button>
+          <button type="button" class="btn btn-outline-white" onclick="resetKioskKey()" style="padding:7px 12px; font-size:11px; color:#ef4444; border-color:#fca5a5; background:#fff;" title="Unpair terminal">
+            Unlink Shop
+          </button>
         </div>
       </div>
 
@@ -1516,6 +1519,21 @@
           alert('Terminal unlinked successfully.');
           location.reload();
         });
+    }
+
+    function openCounterPoster() {
+      const slug = (currentConfig && currentConfig.shop_slug) ? currentConfig.shop_slug.trim() : '';
+      const cloudUrl = ((currentConfig && currentConfig.cloud_server_url) || 'https://print.fruitsgenerator.co.in').replace(/\/+$/, '');
+      const counter = (currentConfig && currentConfig.counter_name) || 'Counter 1';
+      const cNum = counter.replace(/\D/g, '') || '1';
+      
+      const posterUrl = slug ? `${cloudUrl}/s/${slug}/poster/${cNum}` : '/counter-poster';
+      window.open(posterUrl, '_blank');
+    }
+
+    function openSalesPoster() {
+      const cloudUrl = ((currentConfig && currentConfig.cloud_server_url) || 'https://print.fruitsgenerator.co.in').replace(/\/+$/, '');
+      window.open(`${cloudUrl}/sales-poster`, '_blank');
     }
 
     // Auto poll every 2 seconds

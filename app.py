@@ -1141,11 +1141,6 @@ def view_shop_poster(shop_slug, counter_num=None):
 def view_sales_poster():
     return render_template("sales_poster_kannada.html")
 
-@app.route("/video")
-@app.route("/promo-video")
-def view_promo_video():
-    return render_template("promo_video_kannada.html")
-
 @app.route("/api/config", methods=["GET", "POST"])
 def api_get_config():
     if request.method == "POST":
