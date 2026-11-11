@@ -231,7 +231,14 @@ def sync_shops_from_registry():
                 restored += 1
                 print(f"[🛡️ AUTO-RESTORE] Restored Kiosk: {slug} ({s.get('shop_name')}) with {reg_jobs} orders, ₹{reg_rev} rev")
             else:
-                c.execute("UPDATE shops SET lifetime_jobs = MAX(COALESCE(lifetime_jobs,0), ?), lifetime_revenue = MAX(COALESCE(lifetime_revenue,0), ?) WHERE slug = ?", (reg_jobs, reg_rev, slug))
+                c.execute("""
+                    UPDATE shops 
+                    SET lifetime_jobs = MAX(COALESCE(lifetime_jobs,0), ?), 
+                        lifetime_revenue = MAX(COALESCE(lifetime_revenue,0), ?),
+                        num_counters = COALESCE(?, num_counters),
+                        is_demo = COALESCE(?, is_demo)
+                    WHERE slug = ?
+                """, (reg_jobs, reg_rev, s.get("num_counters"), s.get("is_demo", 0), slug))
         conn.commit()
         conn.close()
         if restored > 0:
@@ -306,9 +313,18 @@ def init_db():
             counter_num INTEGER DEFAULT 1,
             last_seen TEXT,
             ip_address TEXT,
+            created_at TEXT,
             UNIQUE(shop_slug, machine_id)
         )
     """)
+    try:
+        c.execute("ALTER TABLE kiosk_devices ADD COLUMN created_at TEXT")
+    except Exception:
+        pass
+    try:
+        c.execute("ALTER TABLE shops ADD COLUMN is_demo INTEGER DEFAULT 0")
+    except Exception:
+        pass
 
     # Seed default primary shop if missing
     c.execute("SELECT id FROM shops WHERE slug = 'karnataka-one'")
@@ -2702,11 +2718,45 @@ def kiosk_pending_jobs():
     except Exception:
         pass
 
-    # Hardware Machine ID & Strict Seat Enforcement (1 to 5 Systems Limit)
+    # Check if this is a Shared Demo / Trial Account (allows 2,000 systems with 48h clock, no counter clash)
+    is_demo_trial = bool(
+        shop.get("slug") == "demo-trial" or 
+        shop.get("is_demo") == 1 or 
+        "DEMO" in (shop.get("kiosk_api_key") or "").upper()
+    )
+
+    # Hardware Machine ID & Seat Enforcement
     if machine_id:
         c.execute("SELECT * FROM kiosk_devices WHERE shop_slug = ? AND machine_id = ?", (shop["slug"], machine_id))
         dev = c.fetchone()
-        max_allowed = int(shop.get("num_counters") or (5 if shop.get("slug") == "karnataka-one" else 2))
+        max_allowed = 2000 if is_demo_trial else int(shop.get("num_counters") or (5 if shop.get("slug") == "karnataka-one" else 2))
+
+        # Check Per-Machine 48-Hour Trial Expiry if Demo Key
+        if is_demo_trial and dev:
+            dev_started = None
+            try:
+                if "created_at" in dev.keys() and dev["created_at"]:
+                    dev_started = dev["created_at"]
+                elif dev["last_seen"]:
+                    dev_started = dev["last_seen"]
+            except Exception:
+                pass
+
+            if dev_started:
+                try:
+                    start_dt = datetime.strptime(dev_started, "%Y-%m-%d %H:%M:%S")
+                    hours_elapsed = (datetime.now() - start_dt).total_seconds() / 3600.0
+                    if hours_elapsed > 48.0:
+                        conn.close()
+                        return jsonify({
+                            "error": "⛔ 2-Day Free Trial Expired for this PC! Please enter your permanent License Key in Settings.",
+                            "trial_expired": True,
+                            "expired": True,
+                            "hours_used": round(hours_elapsed, 1),
+                            "pending_jobs": []
+                        }), 403
+                except Exception:
+                    pass
 
         if not dev:
             c.execute("SELECT COUNT(*) FROM kiosk_devices WHERE shop_slug = ?", (shop["slug"],))
@@ -2721,30 +2771,31 @@ def kiosk_pending_jobs():
                     "pending_jobs": []
                 }), 403
 
-            # Register new hardware seat
+            # Register new hardware seat with created_at timestamp
             now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             c.execute("""
-                INSERT INTO kiosk_devices (shop_slug, machine_id, counter_name, counter_num, last_seen, ip_address)
-                VALUES (?, ?, ?, ?, ?, ?)
-            """, (shop["slug"], machine_id, counter_name, counter_num, now_str, request.remote_addr))
+                INSERT INTO kiosk_devices (shop_slug, machine_id, counter_name, counter_num, last_seen, ip_address, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            """, (shop["slug"], machine_id, counter_name, counter_num, now_str, request.remote_addr, now_str))
             conn.commit()
 
-        # Active Counter 1-to-1 Protection (Zero Double Print)
-        active_cutoff = (datetime.now() - timedelta(seconds=35)).strftime("%Y-%m-%d %H:%M:%S")
-        c.execute("""
-            SELECT machine_id, counter_name FROM kiosk_devices
-            WHERE shop_slug = ? AND counter_num = ? AND machine_id != ? AND last_seen > ?
-        """, (shop["slug"], counter_num, machine_id, active_cutoff))
-        clash = c.fetchone()
-        if clash:
-            conn.close()
-            return jsonify({
-                "error": f"⚠️ {counter_name} is already ACTIVE on another PC! Please select Counter 2 or higher in Settings.",
-                "counter_busy": True,
-                "active_counter": counter_num,
-                "clash_machine": clash["machine_id"],
-                "pending_jobs": []
-            }), 409
+        # Active Counter 1-to-1 Protection (Zero Double Print) - Skipped for Demo, Enforced for Real Shops
+        if not is_demo_trial:
+            active_cutoff = (datetime.now() - timedelta(seconds=35)).strftime("%Y-%m-%d %H:%M:%S")
+            c.execute("""
+                SELECT machine_id, counter_name FROM kiosk_devices
+                WHERE shop_slug = ? AND counter_num = ? AND machine_id != ? AND last_seen > ?
+            """, (shop["slug"], counter_num, machine_id, active_cutoff))
+            clash = c.fetchone()
+            if clash:
+                conn.close()
+                return jsonify({
+                    "error": f"⚠️ {counter_name} is already ACTIVE on another PC! Please select Counter 2 or higher in Settings.",
+                    "counter_busy": True,
+                    "active_counter": counter_num,
+                    "clash_machine": clash["machine_id"],
+                    "pending_jobs": []
+                }), 409
 
         # Update heartbeat and counter
         now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
