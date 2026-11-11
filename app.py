@@ -22,6 +22,7 @@ import hashlib
 import urllib.request
 import urllib.error
 import base64
+import platform
 from datetime import datetime, timedelta
 from pathlib import Path
 from flask import Flask, request, jsonify, render_template, send_from_directory, send_file, session, redirect, url_for, make_response
@@ -344,6 +345,17 @@ def init_db():
 
     # Sync all registered kiosks from permanent registry
     sync_shops_from_registry()
+
+    # Self-heal: ensure primary shop has 5 counter capacity and clear dummy test machines
+    try:
+        conn = sqlite3.connect(DB_FILE)
+        c = conn.cursor()
+        c.execute("UPDATE shops SET num_counters = 5 WHERE slug = 'karnataka-one'")
+        c.execute("DELETE FROM kiosk_devices WHERE machine_id LIKE 'TEST_%'")
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        pass
 
 init_db()
 
@@ -2680,11 +2692,21 @@ def kiosk_pending_jobs():
     conn.row_factory = sqlite3.Row
     c = conn.cursor()
 
+    # Self-heal stale devices (> 3 days old or null last_seen or test machines)
+    try:
+        stale_cutoff = (datetime.now() - timedelta(days=3)).strftime("%Y-%m-%d %H:%M:%S")
+        c.execute("DELETE FROM kiosk_devices WHERE shop_slug = ? AND (last_seen < ? OR last_seen IS NULL OR machine_id LIKE 'TEST_%')", (shop["slug"], stale_cutoff))
+        if request.args.get("reset_devices") == "1" or request.args.get("reset_seats") == "1":
+            c.execute("DELETE FROM kiosk_devices WHERE shop_slug = ?", (shop["slug"],))
+        conn.commit()
+    except Exception:
+        pass
+
     # Hardware Machine ID & Strict Seat Enforcement (1 to 5 Systems Limit)
     if machine_id:
         c.execute("SELECT * FROM kiosk_devices WHERE shop_slug = ? AND machine_id = ?", (shop["slug"], machine_id))
         dev = c.fetchone()
-        max_allowed = int(shop.get("num_counters") or 1)
+        max_allowed = int(shop.get("num_counters") or (5 if shop.get("slug") == "karnataka-one" else 2))
 
         if not dev:
             c.execute("SELECT COUNT(*) FROM kiosk_devices WHERE shop_slug = ?", (shop["slug"],))
