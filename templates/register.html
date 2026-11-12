@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register Your Shop - QuickPrint Kiosk Software</title>
+  <link rel="icon" type="image/png" href="/static/logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --success: #16a34a;
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --text: #0f172a;
+      --muted: #64748b;
+      --border: #e2e8f0;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    body {
+      background: linear-gradient(180deg, #f1f5f9 0%, #f8fafc 100%);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 24px 16px;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 24px;
+      max-width: 520px;
+    }
+
+    .brand-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #0f172a;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+      margin-bottom: 12px;
+    }
+
+    .header h1 {
+      font-size: 26px;
+      font-weight: 900;
+      letter-spacing: -0.5px;
+      color: #0f172a;
+      margin-bottom: 8px;
+    }
+
+    .header p {
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      box-shadow: 0 20px 40px rgba(15, 23, 42, 0.08), 0 4px 12px rgba(15, 23, 42, 0.04);
+      width: 100%;
+      max-width: 500px;
+      padding: 32px 28px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+      text-align: left;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 13px;
+      font-weight: 800;
+      color: #334155;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 13px 16px;
+      border-radius: 12px;
+      border: 2px solid #cbd5e1;
+      background: #f8fafc;
+      font-size: 15px;
+      font-weight: 600;
+      color: #0f172a;
+      outline: none;
+      transition: all 0.2s;
+    }
+
+    .form-group input:focus {
+      border-color: var(--primary);
+      background: #ffffff;
+      box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+    }
+
+    .form-help {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 5px;
+    }
+
+    .btn-submit {
+      width: 100%;
+      padding: 15px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #2563eb, #1d4ed8);
+      color: #ffffff;
+      font-size: 16px;
+      font-weight: 800;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+      transition: all 0.2s;
+      margin-top: 8px;
+    }
+
+    .btn-submit:hover {
+      background: linear-gradient(135deg, #1d4ed8, #1e40af);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(37, 99, 235, 0.45);
+    }
+
+    .btn-submit:disabled {
+      background: #94a3b8;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .trust-badges {
+      margin-top: 24px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      font-size: 11.5px;
+      color: #475569;
+      font-weight: 700;
+      text-align: center;
+    }
+
+    /* Success Card */
+    .success-card {
+      display: none;
+      text-align: center;
+      padding: 16px 8px;
+    }
+
+    .success-icon {
+      font-size: 56px;
+      margin-bottom: 12px;
+      animation: popIn 0.4s ease-out;
+    }
+
+    @keyframes popIn {
+      0% { transform: scale(0.5); opacity: 0; }
+      70% { transform: scale(1.15); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    .success-title {
+      font-size: 22px;
+      font-weight: 900;
+      color: #16a34a;
+      margin-bottom: 10px;
+    }
+
+    .success-desc {
+      font-size: 14px;
+      color: #475569;
+      line-height: 1.6;
+      margin-bottom: 24px;
+    }
+
+    .whatsapp-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #16a34a;
+      color: #ffffff;
+      padding: 12px 24px;
+      border-radius: 12px;
+      font-weight: 800;
+      font-size: 15px;
+      text-decoration: none;
+      box-shadow: 0 4px 14px rgba(22, 163, 74, 0.35);
+      transition: all 0.2s;
+    }
+
+    .whatsapp-btn:hover {
+      background: #15803d;
+      transform: translateY(-1px);
+    }
+
+    .footer {
+      margin-top: auto;
+      padding: 24px 0 12px;
+      font-size: 12px;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    .error-msg {
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      color: #dc2626;
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="brand-pill">
+      <span>🖨️</span> QuickPrint Kiosk Software
+    </div>
+    <h1>Register Your Shop</h1>
+    <p>Fill in your shop details below to request your official software license key.</p>
+  </div>
+
+  <div class="card">
+    <div id="errorBox" class="error-msg"></div>
+
+    <form id="registrationForm" onsubmit="handleRegistration(event)">
+      <!-- 1. Shop Name -->
+      <div class="form-group">
+        <label for="shopName">Shop Name / Cyber Center</label>
+        <input type="text" id="shopName" placeholder="e.g. Royal Xerox & CSC Center" required autofocus>
+      </div>
+
+      <!-- 2. Owner Name -->
+      <div class="form-group">
+        <label for="ownerName">Owner Full Name</label>
+        <input type="text" id="ownerName" placeholder="e.g. Ramesh Kumar" required>
+      </div>
+
+      <!-- 3. WhatsApp Number -->
+      <div class="form-group">
+        <label for="phone">WhatsApp / Mobile Number</label>
+        <input type="tel" id="phone" placeholder="e.g. 9876543210" maxlength="10" pattern="[0-9]{10}" required>
+        <div class="form-help">Your Kiosk License Key will be sent to this WhatsApp number.</div>
+      </div>
+
+      <!-- 4. City / Address -->
+      <div class="form-group">
+        <label for="city">City / District / Taluk</label>
+        <input type="text" id="city" placeholder="e.g. Solapur / Hubli, Karnataka" required>
+      </div>
+
+      <button type="submit" id="submitBtn" class="btn-submit">
+        <span>⚡</span> Submit Shop Registration
+      </button>
+
+      <div class="trust-badges">
+        <div>🔒 Fast Activation</div>
+        <div>📱 Direct UPI Printing</div>
+        <div>📞 Help: 7760606262</div>
+      </div>
+    </form>
+
+    <!-- Success View -->
+    <div id="successView" class="success-card">
+      <div class="success-icon">🎉</div>
+      <h2 class="success-title">Request Submitted!</h2>
+      <p class="success-desc">
+        Thank you, <b id="resOwner" style="color:#0f172a;"></b>!<br>
+        Your registration for <b id="resShop" style="color:#0f172a;"></b> has been received by our Administrator. You will receive your Kiosk License Key on WhatsApp.
+      </p>
+
+      <a id="resWhatsappLink" href="https://wa.me/917760606262?text=Hello%20Ameer,%20I%20have%20submitted%20my%20QuickPrint%20Shop%20Registration." target="_blank" class="whatsapp-btn">
+        <span>💬</span> Chat with Administrator (7760606262)
+      </a>
+
+      <div style="margin-top:20px; font-size:12px; color:#64748b;">
+        Need instant activation? Click above to message Administrator directly.
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    QuickPrint Kiosk Software &bull; Official Licensing Desk: <b>7760606262</b>
+  </div>
+
+  <script>
+    async function handleRegistration(e) {
+      e.preventDefault();
+      const errBox = document.getElementById('errorBox');
+      const submitBtn = document.getElementById('submitBtn');
+      errBox.style.display = 'none';
+
+      const shopName = document.getElementById('shopName').value.trim();
+      const ownerName = document.getElementById('ownerName').value.trim();
+      const phone = document.getElementById('phone').value.trim();
+      const city = document.getElementById('city').value.trim();
+
+      if (!shopName || !ownerName || !phone || !city) {
+        errBox.innerText = 'Please fill in all 4 fields.';
+        errBox.style.display = 'block';
+        return;
+      }
+
+      if (phone.replace(/\D/g, '').length !== 10) {
+        errBox.innerText = 'Please enter a valid 10-digit mobile number.';
+        errBox.style.display = 'block';
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = 'Submitting...';
+
+      try {
+        const res = await fetch('/api/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            shop_name: shopName,
+            owner_name: ownerName,
+            phone: phone,
+            city: city
+          })
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          document.getElementById('registrationForm').style.display = 'none';
+          document.getElementById('resOwner').innerText = ownerName;
+          document.getElementById('resShop').innerText = shopName;
+
+          const waText = encodeURIComponent(`Hello Ameer! 👋\nI have submitted my QuickPrint shop registration:\n\n🏪 Shop: ${shopName}\n👤 Owner: ${ownerName}\n📞 Phone: ${phone}\n📍 City: ${city}\n\nPlease issue my Kiosk License Key!`);
+          document.getElementById('resWhatsappLink').href = `https://wa.me/917760606262?text=${waText}`;
+
+          document.getElementById('successView').style.display = 'block';
+        } else {
+          errBox.innerText = data.error || 'Failed to submit registration. Please try again.';
+          errBox.style.display = 'block';
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = '<span>⚡</span> Submit Shop Registration';
+        }
+      } catch (err) {
+        errBox.innerText = 'Connection error. Please check your internet and try again.';
+        errBox.style.display = 'block';
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<span>⚡</span> Submit Shop Registration';
+      }
+    }
+  </script>
+</body>
+</html>

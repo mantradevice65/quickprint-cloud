@@ -410,6 +410,40 @@
       </div>
     </div>
 
+    <!-- PENDING REGISTRATIONS SECTION -->
+    <div id="pendingRegistrationsCard" style="display:none; background:#ffffff; border:2px solid #3b82f6; border-radius:16px; padding:20px; margin-bottom:20px; box-shadow:0 10px 25px rgba(59,130,246,0.1);">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:10px;">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <span style="font-size:24px;">🔔</span>
+          <div>
+            <h3 style="font-size:16px; font-weight:800; color:#1e3a8a; margin:0;">New Shop Registration Requests (<span id="regCountBadge">0</span>)</h3>
+            <p style="font-size:12px; color:#64748b; margin:0;">Online registrations submitted from <a href="/register" target="_blank" style="color:#2563eb; font-weight:700;">print.fruitsgenerator.co.in/register</a></p>
+          </div>
+        </div>
+        <button onclick="loadRegistrationRequests()" class="action-btn" style="background:#eff6ff; color:#2563eb; border:1px solid #bfdbfe; font-size:12px; cursor:pointer;">
+          🔄 Refresh Requests
+        </button>
+      </div>
+
+      <div class="table-responsive">
+        <table style="width:100%;">
+          <thead>
+            <tr style="background:#f8fafc; font-size:12px; color:#475569;">
+              <th style="padding:10px 14px; text-align:left;">Date &amp; Time</th>
+              <th style="padding:10px 14px; text-align:left;">Shop Name</th>
+              <th style="padding:10px 14px; text-align:left;">Owner Name</th>
+              <th style="padding:10px 14px; text-align:left;">WhatsApp / Phone</th>
+              <th style="padding:10px 14px; text-align:left;">City / Address</th>
+              <th style="padding:10px 14px; text-align:right;">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="registrationRequestsBody">
+            <!-- populated by JS -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
     <!-- Action Bar -->
     <div class="action-bar" style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
       <input type="text" id="searchInput" class="search-input" placeholder="🔍 Search by shop name, owner, or phone..." oninput="filterShops()" style="flex: 1; min-width: 240px;">
@@ -819,6 +853,7 @@
 
           renderShops(allShops);
           updateSummaryStats(allShops);
+          loadRegistrationRequests();
         })
         .catch(err => {
           document.getElementById('shopsTableBody').innerHTML = `
@@ -1257,8 +1292,98 @@
       e.target.value = '';
     }
 
+    async function loadRegistrationRequests() {
+      try {
+        const res = await fetch('/api/super/registration_requests');
+        const data = await res.json();
+        if (!data.success) return;
+
+        const requests = data.requests || [];
+        const pending = requests.filter(r => r.status === 'pending');
+        const card = document.getElementById('pendingRegistrationsCard');
+        const badge = document.getElementById('regCountBadge');
+        const tbody = document.getElementById('registrationRequestsBody');
+
+        if (!card || !tbody) return;
+
+        if (pending.length > 0) {
+          card.style.display = 'block';
+          if (badge) badge.innerText = pending.length;
+
+          tbody.innerHTML = pending.map(r => `
+            <tr style="border-bottom:1px solid #e2e8f0; font-size:13px;">
+              <td style="padding:12px 14px; color:#64748b; font-size:12px;">${escapeHtml(r.created_at || 'Just now')}</td>
+              <td style="padding:12px 14px; font-weight:800; color:#0f172a;">${escapeHtml(r.shop_name)}</td>
+              <td style="padding:12px 14px; font-weight:700; color:#334155;">${escapeHtml(r.owner_name)}</td>
+              <td style="padding:12px 14px;">
+                <a href="https://wa.me/91${escapeHtml(r.phone)}" target="_blank" style="color:#16a34a; font-weight:800; text-decoration:none; display:inline-flex; align-items:center; gap:4px;">
+                  <span>💬</span> ${escapeHtml(r.phone)}
+                </a>
+              </td>
+              <td style="padding:12px 14px; color:#475569;">${escapeHtml(r.city || '-')}</td>
+              <td style="padding:12px 14px; text-align:right;">
+                <div style="display:inline-flex; gap:6px;">
+                  <button onclick="approveRequest(${r.id}, '${escapeHtml(r.shop_name)}')" class="action-btn" style="background:#16a34a; color:#fff; border:none; padding:7px 14px; font-size:12px; font-weight:800; border-radius:8px; cursor:pointer; box-shadow:0 2px 6px rgba(22,163,74,0.3);">
+                    ✅ Approve &amp; Issue Key
+                  </button>
+                  <button onclick="rejectRequest(${r.id})" class="action-btn" style="background:#fee2e2; color:#dc2626; border:1px solid #fecaca; padding:7px 12px; font-size:12px; font-weight:700; border-radius:8px; cursor:pointer;">
+                    ❌ Reject
+                  </button>
+                </div>
+              </td>
+            </tr>
+          `).join('');
+        } else {
+          card.style.display = 'none';
+        }
+      } catch (err) {
+        console.error("Error loading registration requests:", err);
+      }
+    }
+
+    async function approveRequest(reqId, shopName) {
+      const planMonths = confirm(`Approve license for "${shopName}"?\n\nClick OK for 3 Months (Standard), or Cancel to choose 6 Months.`) ? 3 : 6;
+      try {
+        const res = await fetch(`/api/super/registration_requests/${reqId}/approve`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ months: planMonths })
+        });
+        const data = await res.json();
+        if (data.success) {
+          alert(`Shop approved successfully!\n\nShop Kiosk API Key: ${data.kiosk_api_key}\nValidity: ${planMonths} Months\n\nOpening WhatsApp to send key to shopkeeper...`);
+          if (data.whatsapp_url) {
+            window.open(data.whatsapp_url, '_blank');
+          }
+          loadShops();
+          loadRegistrationRequests();
+        } else {
+          alert('Error approving request: ' + (data.error || 'Failed'));
+        }
+      } catch (e) {
+        alert('Network error approving shop: ' + e);
+      }
+    }
+
+    async function rejectRequest(reqId) {
+      if (!confirm('Are you sure you want to dismiss/reject this registration request?')) return;
+      try {
+        const res = await fetch(`/api/super/registration_requests/${reqId}/reject`, { method: 'POST' });
+        const data = await res.json();
+        if (data.success) {
+          loadRegistrationRequests();
+        }
+      } catch (e) {
+        alert('Error rejecting request: ' + e);
+      }
+    }
+
+    // Auto-poll registration requests every 15s
+    setInterval(loadRegistrationRequests, 15000);
+
     // Initial Load
     loadShops();
+    loadRegistrationRequests();
   </script>
   {% endif %}
 

@@ -21,6 +21,8 @@ import hmac
 import hashlib
 import urllib.request
 import urllib.error
+import urllib.parse
+import re
 import base64
 import platform
 from datetime import datetime, timedelta
@@ -325,6 +327,21 @@ def init_db():
         c.execute("ALTER TABLE shops ADD COLUMN is_demo INTEGER DEFAULT 0")
     except Exception:
         pass
+
+    # Shopkeeper Registration Requests Table
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS registration_requests (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            shop_name TEXT NOT NULL,
+            owner_name TEXT NOT NULL,
+            phone TEXT NOT NULL,
+            city TEXT,
+            status TEXT DEFAULT 'pending',
+            kiosk_api_key TEXT,
+            notes TEXT,
+            created_at TEXT
+        )
+    """)
 
     # Seed default primary shop if missing
     c.execute("SELECT id FROM shops WHERE slug = 'karnataka-one'")
@@ -2538,6 +2555,150 @@ def api_super_backup_shops():
     response = jsonify(registry_data)
     response.headers["Content-Disposition"] = f"attachment; filename=QuickPrint_Kiosks_Backup_{timestamp}.json"
     return response
+
+# ==================== Shopkeeper Registration & Onboarding ====================
+
+@app.route("/register")
+def register_page():
+    return render_template("register.html")
+
+@app.route("/api/register", methods=["POST"])
+def api_submit_registration():
+    data = request.get_json(silent=True) or {}
+    shop_name = (data.get("shop_name") or "").strip()
+    owner_name = (data.get("owner_name") or "").strip()
+    phone = (data.get("phone") or "").strip()
+    city = (data.get("city") or "").strip()
+
+    if not shop_name:
+        return jsonify({"success": False, "error": "Shop Name is required"}), 400
+    if not owner_name:
+        return jsonify({"success": False, "error": "Owner Name is required"}), 400
+    if not phone or len(re.sub(r'\D', '', phone)) < 10:
+        return jsonify({"success": False, "error": "Valid 10-digit Mobile / WhatsApp Number is required"}), 400
+
+    clean_phone = re.sub(r'\D', '', phone)[-10:]
+    now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+    c.execute("""
+        INSERT INTO registration_requests (shop_name, owner_name, phone, city, status, created_at)
+        VALUES (?, ?, ?, ?, 'pending', ?)
+    """, (shop_name, owner_name, clean_phone, city, now_str))
+    req_id = c.lastrowid
+    conn.commit()
+    conn.close()
+
+    return jsonify({
+        "success": True,
+        "message": "Registration submitted successfully! Our Administrator will review your shop and issue your Kiosk License Key on WhatsApp.",
+        "request_id": req_id
+    })
+
+@app.route("/api/super/registration_requests", methods=["GET"])
+@require_super_admin
+def api_super_get_registration_requests():
+    conn = sqlite3.connect(DB_FILE)
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    c.execute("SELECT * FROM registration_requests ORDER BY id DESC LIMIT 100")
+    requests_list = [dict(r) for r in c.fetchall()]
+    conn.close()
+    return jsonify({"success": True, "requests": requests_list})
+
+@app.route("/api/super/registration_requests/<int:req_id>/approve", methods=["POST"])
+@require_super_admin
+def api_super_approve_registration(req_id):
+    data = request.get_json(silent=True) or {}
+    months = int(data.get("months", 3))
+    plan_type = f"{months}_months"
+
+    conn = sqlite3.connect(DB_FILE)
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    c.execute("SELECT * FROM registration_requests WHERE id = ?", (req_id,))
+    req_row = c.fetchone()
+    if not req_row:
+        conn.close()
+        return jsonify({"success": False, "error": "Registration request not found"}), 404
+
+    # Generate slug from shop_name
+    raw_slug = re.sub(r'[^a-z0-9]+', '-', req_row["shop_name"].lower()).strip('-')
+    if not raw_slug:
+        raw_slug = f"shop-{uuid.uuid4().hex[:6]}"
+    slug = raw_slug
+    # Ensure slug uniqueness
+    counter = 1
+    while True:
+        c.execute("SELECT id FROM shops WHERE slug = ?", (slug,))
+        if not c.fetchone():
+            break
+        counter += 1
+        slug = f"{raw_slug}-{counter}"
+
+    kiosk_key = f"qp_kiosk_{uuid.uuid4().hex[:12]}"
+    now = datetime.now()
+    exp_date = (now + timedelta(days=months * 30)).strftime("%Y-%m-%d")
+    now_str = now.strftime("%Y-%m-%d %H:%M:%S")
+
+    c.execute("""
+        INSERT INTO shops (
+            slug, shop_name, owner_name, phone, upi_id, upi_name,
+            rate_bw, rate_color, enable_cash_payment, counter_name,
+            kiosk_api_key, plan_type, subscription_expiry, is_active, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?)
+    """, (
+        slug,
+        req_row["shop_name"],
+        req_row["owner_name"],
+        req_row["phone"],
+        "",
+        req_row["shop_name"],
+        5.0,
+        10.0,
+        1,
+        "Counter 1",
+        kiosk_key,
+        plan_type,
+        exp_date,
+        now_str
+    ))
+
+    c.execute("UPDATE registration_requests SET status = 'approved', kiosk_api_key = ? WHERE id = ?", (kiosk_key, req_id))
+    conn.commit()
+    conn.close()
+
+    save_shops_registry()
+
+    # Pre-formatted WhatsApp message for Admin to send with 1 click
+    whatsapp_text = (
+        f"Hello {req_row['owner_name']}! 👋\n\n"
+        f"Your QuickPrint Kiosk Software registration for *{req_row['shop_name']}* has been APPROVED! ✅\n\n"
+        f"🔑 *Your Shop Kiosk API Key:*\n`{kiosk_key}`\n\n"
+        f"🌐 *Customer Print Portal:*\nhttps://print.fruitsgenerator.co.in/s/{slug}\n\n"
+        f"📅 *License Validity:* {months} Months (Expires: {exp_date})\n\n"
+        f"To activate, open QuickPrint on your computer and enter your Kiosk API Key.\n"
+        f"Need help? Call/WhatsApp: 7760606262"
+    )
+
+    return jsonify({
+        "success": True,
+        "kiosk_api_key": kiosk_key,
+        "shop_slug": slug,
+        "phone": req_row["phone"],
+        "whatsapp_url": f"https://wa.me/91{req_row['phone']}?text={urllib.parse.quote(whatsapp_text)}"
+    })
+
+@app.route("/api/super/registration_requests/<int:req_id>/reject", methods=["POST"])
+@require_super_admin
+def api_super_reject_registration(req_id):
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+    c.execute("UPDATE registration_requests SET status = 'rejected' WHERE id = ?", (req_id,))
+    conn.commit()
+    conn.close()
+    return jsonify({"success": True})
 
 # ==================== Kiosk Sync & Activation API (For Shop PC) ====================
 
