@@ -488,15 +488,16 @@
           <div class="form-group">
             <label class="form-label">License Plan</label>
             <select id="addPlanType" class="form-select" onchange="adjustValidityByPlan()">
-              <option value="yearly" selected>1 Year Subscription (365 Days)</option>
+              <option value="3months" selected>3 Months Subscription (90 Days)</option>
+              <option value="6months">6 Months Subscription (180 Days)</option>
+              <option value="yearly">1 Year Subscription (365 Days)</option>
               <option value="monthly">Monthly Subscription (30 Days)</option>
-              <option value="trial">7-Day Free Trial</option>
               <option value="lifetime">Lifetime License</option>
             </select>
           </div>
           <div class="form-group">
             <label class="form-label">Validity (Days)</label>
-            <input type="number" id="addValidityDays" class="form-input" value="365" required>
+            <input type="number" id="addValidityDays" class="form-input" value="90" required>
           </div>
         </div>
 
@@ -697,11 +698,10 @@
       <div class="form-group">
         <label class="form-label">Add Validity Period</label>
         <select id="renewDurationSelect" class="form-select">
-          <option value="365" selected>+ 1 Year (365 Days)</option>
-          <option value="30">+ 1 Month (30 Days)</option>
-          <option value="90">+ 3 Months (90 Days)</option>
+          <option value="90" selected>+ 3 Months (90 Days)</option>
           <option value="180">+ 6 Months (180 Days)</option>
-          <option value="7">+ 7 Days Trial</option>
+          <option value="365">+ 1 Year (365 Days)</option>
+          <option value="30">+ 1 Month (30 Days)</option>
           <option value="lifetime">Set as Lifetime License</option>
         </select>
       </div>
@@ -993,9 +993,10 @@
     function adjustValidityByPlan() {
       const plan = document.getElementById('addPlanType').value;
       const valInput = document.getElementById('addValidityDays');
-      if (plan === 'yearly') valInput.value = 365;
+      if (plan === '3months') valInput.value = 90;
+      else if (plan === '6months') valInput.value = 180;
+      else if (plan === 'yearly') valInput.value = 365;
       else if (plan === 'monthly') valInput.value = 30;
-      else if (plan === 'trial') valInput.value = 7;
       else if (plan === 'lifetime') valInput.value = 36500;
     }
 

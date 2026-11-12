@@ -394,12 +394,7 @@ def get_shop_by_api_key(api_key):
     conn = sqlite3.connect(DB_FILE)
     conn.row_factory = sqlite3.Row
     c = conn.cursor()
-    c.execute("""
-        SELECT * FROM shops 
-        WHERE kiosk_api_key = ? 
-           OR (slug = 'demo-trial' AND ? IN ('DEMO-15DAYS-FREE-TRIAL', 'DEMO-2DAYS-FREE-TRIAL', 'DEMO-FREE-TRIAL'))
-        LIMIT 1
-    """, (api_key, api_key))
+    c.execute("SELECT * FROM shops WHERE kiosk_api_key = ? LIMIT 1", (api_key,))
     row = c.fetchone()
     conn.close()
     if row:
@@ -2565,12 +2560,7 @@ def api_kiosk_activate():
     conn = sqlite3.connect(DB_FILE)
     conn.row_factory = sqlite3.Row
     c = conn.cursor()
-    c.execute("""
-        SELECT * FROM shops 
-        WHERE kiosk_api_key = ? 
-           OR (slug = 'demo-trial' AND ? IN ('DEMO-15DAYS-FREE-TRIAL', 'DEMO-2DAYS-FREE-TRIAL', 'DEMO-FREE-TRIAL'))
-        LIMIT 1
-    """, (api_key, api_key))
+    c.execute("SELECT * FROM shops WHERE kiosk_api_key = ? LIMIT 1", (api_key,))
     shop = c.fetchone()
     conn.close()
 
@@ -2703,7 +2693,12 @@ def kiosk_pending_jobs():
         try:
             exp_date = datetime.strptime(exp_str, "%Y-%m-%d").date()
             if datetime.now().date() > exp_date:
-                return jsonify({"error": "Shop license expired", "expired": True, "pending_jobs": []}), 403
+                return jsonify({
+                    "error": "⛔ Shop license expired! To renew your 3-Month or 6-Month subscription, please contact Administrator: 7760606262",
+                    "expired": True,
+                    "support_phone": "7760606262",
+                    "pending_jobs": []
+                }), 403
         except Exception:
             pass
 
@@ -2728,46 +2723,11 @@ def kiosk_pending_jobs():
     except Exception:
         pass
 
-    # Check if this is a Shared Demo / Trial Account (allows 2,000 systems with 48h clock, no counter clash)
-    is_demo_trial = bool(
-        shop.get("slug") == "demo-trial" or 
-        shop.get("is_demo") == 1 or 
-        "DEMO" in (shop.get("kiosk_api_key") or "").upper()
-    )
-
     # Hardware Machine ID & Seat Enforcement
     if machine_id:
         c.execute("SELECT * FROM kiosk_devices WHERE shop_slug = ? AND machine_id = ?", (shop["slug"], machine_id))
         dev = c.fetchone()
-        max_allowed = 2000 if is_demo_trial else int(shop.get("num_counters") or (5 if shop.get("slug") == "karnataka-one" else 2))
-
-        # Check Per-Machine 48-Hour Trial Expiry if Demo Key
-        if is_demo_trial and dev:
-            dev_started = None
-            try:
-                if "created_at" in dev.keys() and dev["created_at"]:
-                    dev_started = dev["created_at"]
-                elif dev["last_seen"]:
-                    dev_started = dev["last_seen"]
-            except Exception:
-                pass
-
-            if dev_started:
-                try:
-                    start_dt = datetime.strptime(dev_started, "%Y-%m-%d %H:%M:%S")
-                    hours_elapsed = (datetime.now() - start_dt).total_seconds() / 3600.0
-                    if hours_elapsed > 360.0:
-                        conn.close()
-                        return jsonify({
-                            "error": "⛔ 15-Day Free Trial Expired for this PC! Please enter your permanent License Key in Settings.",
-                            "trial_expired": True,
-                            "expired": True,
-                            "hours_used": round(hours_elapsed, 1),
-                            "days_used": round(hours_elapsed / 24.0, 1),
-                            "pending_jobs": []
-                        }), 403
-                except Exception:
-                    pass
+        max_allowed = int(shop.get("num_counters") or (5 if shop.get("slug") == "karnataka-one" else 2))
 
         if not dev:
             c.execute("SELECT COUNT(*) FROM kiosk_devices WHERE shop_slug = ?", (shop["slug"],))
@@ -2775,10 +2735,11 @@ def kiosk_pending_jobs():
             if dev_count >= max_allowed:
                 conn.close()
                 return jsonify({
-                    "error": f"⛔ License Limit Reached! Max {max_allowed} System(s) Allowed. Please upgrade in Super Admin.",
+                    "error": f"⛔ License Limit Reached! Max {max_allowed} System(s) Allowed. To upgrade or add more counters, contact Administrator: 7760606262",
                     "license_limit_reached": True,
                     "max_allowed": max_allowed,
                     "registered_count": dev_count,
+                    "support_phone": "7760606262",
                     "pending_jobs": []
                 }), 403
 
@@ -2790,23 +2751,23 @@ def kiosk_pending_jobs():
             """, (shop["slug"], machine_id, counter_name, counter_num, now_str, request.remote_addr, now_str))
             conn.commit()
 
-        # Active Counter 1-to-1 Protection (Zero Double Print) - Skipped for Demo, Enforced for Real Shops
-        if not is_demo_trial:
-            active_cutoff = (datetime.now() - timedelta(seconds=35)).strftime("%Y-%m-%d %H:%M:%S")
-            c.execute("""
-                SELECT machine_id, counter_name FROM kiosk_devices
-                WHERE shop_slug = ? AND counter_num = ? AND machine_id != ? AND last_seen > ?
-            """, (shop["slug"], counter_num, machine_id, active_cutoff))
-            clash = c.fetchone()
-            if clash:
-                conn.close()
-                return jsonify({
-                    "error": f"⚠️ {counter_name} is already ACTIVE on another PC! Please select Counter 2 or higher in Settings.",
-                    "counter_busy": True,
-                    "active_counter": counter_num,
-                    "clash_machine": clash["machine_id"],
-                    "pending_jobs": []
-                }), 409
+        # Active Counter 1-to-1 Protection (Zero Double Print)
+        active_cutoff = (datetime.now() - timedelta(seconds=35)).strftime("%Y-%m-%d %H:%M:%S")
+        c.execute("""
+            SELECT machine_id, counter_name FROM kiosk_devices
+            WHERE shop_slug = ? AND counter_num = ? AND machine_id != ? AND last_seen > ?
+        """, (shop["slug"], counter_num, machine_id, active_cutoff))
+        clash = c.fetchone()
+        if clash:
+            conn.close()
+            return jsonify({
+                "error": f"⚠️ {counter_name} is already ACTIVE on another PC! Please select Counter 2 or higher in Settings, or contact: 7760606262",
+                "counter_busy": True,
+                "active_counter": counter_num,
+                "clash_machine": clash["machine_id"],
+                "support_phone": "7760606262",
+                "pending_jobs": []
+            }), 409
 
         # Update heartbeat and counter
         now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
