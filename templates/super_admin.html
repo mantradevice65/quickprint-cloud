@@ -74,6 +74,116 @@
     }
     .nav-btn:hover { background: #e2e8f0; color: #0f172a; }
 
+    /* Three Dots Dropdown Menu */
+    .menu-container {
+      position: relative;
+    }
+    .three-dots-btn {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      border: 1.5px solid #cbd5e1;
+      background: #f8fafc;
+      color: #0f172a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      position: relative;
+      transition: all 0.2s;
+      outline: none;
+    }
+    .three-dots-btn:hover {
+      background: #f1f5f9;
+      border-color: #94a3b8;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+    .menu-badge {
+      position: absolute;
+      top: -5px;
+      right: -5px;
+      background: #ef4444;
+      color: #ffffff;
+      font-size: 10px;
+      font-weight: 900;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 6px rgba(239, 68, 68, 0.4);
+    }
+    .dropdown-menu {
+      position: absolute;
+      top: calc(100% + 8px);
+      right: 0;
+      width: 240px;
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: 0 14px 35px rgba(15, 23, 42, 0.12), 0 4px 12px rgba(15, 23, 42, 0.06);
+      padding: 8px;
+      z-index: 1000;
+      animation: fadeIn 0.15s ease-out;
+    }
+    .menu-header {
+      font-size: 11px;
+      font-weight: 800;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      padding: 6px 12px 4px;
+    }
+    .menu-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      color: #1e293b;
+      font-size: 13.5px;
+      font-weight: 700;
+      text-decoration: none;
+      transition: all 0.15s;
+      cursor: pointer;
+    }
+    .menu-item:hover {
+      background: #f1f5f9;
+      color: var(--primary);
+    }
+    .menu-item.active {
+      background: #eff6ff;
+      color: var(--primary);
+    }
+    .menu-icon {
+      font-size: 16px;
+    }
+    .menu-pill {
+      margin-left: auto;
+      font-size: 11px;
+      font-weight: 800;
+      background: #f1f5f9;
+      color: #475569;
+      padding: 2px 8px;
+      border-radius: 10px;
+    }
+    .menu-pill.pill-alert {
+      background: #fee2e2;
+      color: #dc2626;
+    }
+    .menu-divider {
+      height: 1px;
+      background: var(--border);
+      margin: 6px 0;
+    }
+    .menu-logout {
+      color: #dc2626 !important;
+    }
+    .menu-logout:hover {
+      background: #fee2e2 !important;
+    }
+
     /* Layout Container */
     .container {
       max-width: 1280px;
@@ -375,116 +485,236 @@
   {% else %}
   <!-- SUPER ADMIN DASHBOARD -->
   <header class="navbar">
-    <a href="/super-admin" class="brand">
+    <a href="javascript:void(0)" onclick="switchView('dashboard')" class="brand">
       <span>⚡ QuickPrint</span>
       <span class="brand-badge">SaaS Manager</span>
     </a>
+
+    <!-- Top Right Controls & 3-Dots Dropdown Menu -->
     <div style="display: flex; gap: 10px; align-items: center;">
-      <a href="/" target="_blank" class="nav-btn">🌐 View Customer Kiosk</a>
-      <button onclick="handleLogout()" class="nav-btn" style="color: #f87171;">Logout</button>
+      <!-- Active View Indicator / Quick Pill -->
+      <span id="activeViewIndicator" style="font-size: 12px; font-weight: 800; color: #2563eb; background: #eff6ff; border: 1px solid #bfdbfe; padding: 5px 12px; border-radius: 8px;">
+        📊 Dashboard
+      </span>
+
+      <div class="menu-container">
+        <button id="threeDotsBtn" onclick="toggleMenu(event)" class="three-dots-btn" title="Admin Menu" aria-label="Open Menu">
+          <span style="font-size: 22px; font-weight: 900; line-height: 1;">⋮</span>
+          <span id="menuNotificationBadge" class="menu-badge" style="display: none;">0</span>
+        </button>
+
+        <div id="dropdownMenu" class="dropdown-menu" style="display: none;">
+          <div class="menu-header">QuickPrint Admin</div>
+          
+          <a href="javascript:void(0)" onclick="switchView('dashboard')" class="menu-item active" id="menuItemDashboard">
+            <span class="menu-icon">📊</span>
+            <span>Dashboard</span>
+          </a>
+
+          <a href="javascript:void(0)" onclick="switchView('registered')" class="menu-item" id="menuItemRegistered">
+            <span class="menu-icon">🏪</span>
+            <span>Registered Centers</span>
+            <span class="menu-pill" id="menuCountShops">0</span>
+          </a>
+
+          <a href="javascript:void(0)" onclick="switchView('requests')" class="menu-item" id="menuItemRequests">
+            <span class="menu-icon">🔔</span>
+            <span>New Requests</span>
+            <span class="menu-pill pill-alert" id="menuCountRequests" style="display: none;">0</span>
+          </a>
+
+          <div class="menu-divider"></div>
+
+          <a href="/" target="_blank" class="menu-item">
+            <span class="menu-icon">🌐</span>
+            <span>Customer Kiosk</span>
+          </a>
+
+          <div class="menu-divider"></div>
+
+          <a href="javascript:void(0)" onclick="handleLogout()" class="menu-item menu-logout">
+            <span class="menu-icon">🚪</span>
+            <span>Logout</span>
+          </a>
+        </div>
+      </div>
     </div>
   </header>
 
   <div class="container">
-    <!-- Stat Cards -->
-    <div class="stats-grid">
-      <div class="stat-card">
-        <div class="stat-title">Active Kiosks</div>
-        <div class="stat-val" id="statActiveKiosks">0</div>
-        <div class="stat-icon">🏪</div>
+
+    <!-- ================= VIEW 1: DASHBOARD ================= -->
+    <div id="viewDashboard" class="admin-view">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+        <div>
+          <h2 style="font-size: 24px; font-weight: 900; color: #0f172a; margin: 0;">SaaS Overview Dashboard</h2>
+          <p style="font-size: 13px; color: #64748b; margin: 4px 0 0 0;">Live metrics and quick controls for your QuickPrint network</p>
+        </div>
+        <div style="display: flex; gap: 8px;">
+          <button onclick="switchView('registered')" class="action-btn" style="background: #eff6ff; color: #2563eb; border: 1.5px solid #bfdbfe; font-weight: 800; cursor: pointer;">
+            🏪 Registered Centers (<span id="dashShopsCountBtn">0</span>)
+          </button>
+          <button onclick="switchView('requests')" class="action-btn" style="background: #fef2f2; color: #dc2626; border: 1.5px solid #fecaca; font-weight: 800; cursor: pointer;">
+            🔔 New Requests (<span id="dashRequestsCountBtn">0</span>)
+          </button>
+        </div>
       </div>
-      <div class="stat-card">
-        <div class="stat-title">Total Print Orders</div>
-        <div class="stat-val" id="statTotalPrints">0</div>
-        <div class="stat-icon">🖨️</div>
+
+      <!-- Stat Cards -->
+      <div class="stats-grid">
+        <div class="stat-card" onclick="switchView('registered')" style="cursor: pointer;" title="Click to view all registered kiosks">
+          <div class="stat-title">Active Kiosks</div>
+          <div class="stat-val" id="statActiveKiosks">0</div>
+          <div class="stat-icon">🏪</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-title">Total Print Orders</div>
+          <div class="stat-val" id="statTotalPrints">0</div>
+          <div class="stat-icon">🖨️</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-title">Total Processed Revenue</div>
+          <div class="stat-val" id="statTotalRevenue">₹0</div>
+          <div class="stat-icon">💰</div>
+        </div>
+        <div class="stat-card" onclick="switchView('registered')" style="cursor: pointer;" title="Click to view expiring kiosks">
+          <div class="stat-title">Expiring Soon (&lt; 15 Days)</div>
+          <div class="stat-val" style="color: #f59e0b;" id="statExpiringSoon">0</div>
+          <div class="stat-icon">⏳</div>
+        </div>
       </div>
-      <div class="stat-card">
-        <div class="stat-title">Total Processed Revenue</div>
-        <div class="stat-val" id="statTotalRevenue">₹0</div>
-        <div class="stat-icon">💰</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-title">Expiring Soon (&lt; 15 Days)</div>
-        <div class="stat-val" style="color: #f59e0b;" id="statExpiringSoon">0</div>
-        <div class="stat-icon">⏳</div>
+
+      <!-- Quick Action Hub (2 Cards) -->
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; margin-top: 24px;">
+        <!-- Card 1: Registered Centers -->
+        <div style="background: #ffffff; border: 1px solid var(--border); border-radius: 16px; padding: 22px; box-shadow: 0 4px 14px rgba(0,0,0,0.03); display: flex; flex-direction: column; justify-content: space-between;">
+          <div>
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+              <span style="font-size: 26px;">🏪</span>
+              <h3 style="font-size: 18px; font-weight: 800; color: #0f172a; margin: 0;">Registered Centers</h3>
+            </div>
+            <p style="font-size: 13px; color: #64748b; line-height: 1.5; margin-bottom: 16px;">
+              View and manage all active shop terminals (<b id="dashShopsCountText">0</b> centers), update printing rates, renew licenses, or reset device machine locks.
+            </p>
+          </div>
+          <button onclick="switchView('registered')" class="btn-primary" style="width: 100%; justify-content: center;">
+            <span>🏪</span> Open Registered Centers
+          </button>
+        </div>
+
+        <!-- Card 2: New Requests -->
+        <div style="background: #ffffff; border: 1px solid var(--border); border-radius: 16px; padding: 22px; box-shadow: 0 4px 14px rgba(0,0,0,0.03); display: flex; flex-direction: column; justify-content: space-between;">
+          <div>
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+              <span style="font-size: 26px;">🔔</span>
+              <h3 style="font-size: 18px; font-weight: 800; color: #0f172a; margin: 0;">New Requests (<span id="dashRequestsCountText">0</span>)</h3>
+            </div>
+            <p style="font-size: 13px; color: #64748b; line-height: 1.5; margin-bottom: 16px;">
+              Review online registrations submitted by shopkeepers from the registration portal. Approve with 1-Month Free Trial and dispatch license key via WhatsApp.
+            </p>
+          </div>
+          <button onclick="switchView('requests')" class="action-btn" style="width: 100%; justify-content: center; background: #16a34a; color: #ffffff; border: none; font-weight: 800; padding: 10px; box-shadow: 0 2px 8px rgba(22,163,74,0.3);">
+            <span>🔔</span> Review New Requests
+          </button>
+        </div>
       </div>
     </div>
 
-    <!-- PENDING REGISTRATIONS SECTION -->
-    <div id="pendingRegistrationsCard" style="display:none; background:#ffffff; border:2px solid #3b82f6; border-radius:16px; padding:20px; margin-bottom:20px; box-shadow:0 10px 25px rgba(59,130,246,0.1);">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:10px;">
-        <div style="display:flex; align-items:center; gap:10px;">
-          <span style="font-size:24px;">🔔</span>
+    <!-- ================= VIEW 2: REGISTERED CENTERS ================= -->
+    <div id="viewRegistered" class="admin-view" style="display: none;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <button onclick="switchView('dashboard')" class="action-btn" title="Back to Dashboard" style="cursor: pointer; font-weight: 800;">
+            ← Dashboard
+          </button>
           <div>
-            <h3 style="font-size:16px; font-weight:800; color:#1e3a8a; margin:0;">New Shop Registration Requests (<span id="regCountBadge">0</span>)</h3>
-            <p style="font-size:12px; color:#64748b; margin:0;">Online registrations submitted from <a href="/register" target="_blank" style="color:#2563eb; font-weight:700;">print.fruitsgenerator.co.in/register</a></p>
+            <h2 style="font-size: 22px; font-weight: 900; color: #0f172a; margin: 0;">Registered Centers (<span id="regCentersTitleCount">0</span>)</h2>
+            <p style="font-size: 12px; color: #64748b; margin: 2px 0 0 0;">Manage your deployed shop terminals, hardware bindings, and pricing</p>
           </div>
         </div>
-        <button onclick="loadRegistrationRequests()" class="action-btn" style="background:#eff6ff; color:#2563eb; border:1px solid #bfdbfe; font-size:12px; cursor:pointer;">
+      </div>
+
+      <!-- Action Bar -->
+      <div class="action-bar" style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+        <input type="text" id="searchInput" class="search-input" placeholder="🔍 Search by shop name, owner, or phone..." oninput="filterShops()" style="flex: 1; min-width: 240px;">
+        <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+          <a href="/api/super/shops/backup" class="action-btn" title="Download JSON backup of all registered kiosks" style="text-decoration:none; display:inline-flex; align-items:center; gap:6px; background:#f0f9ff; color:#0284c7; border:1px solid #bae6fd; font-weight:700;">
+            <span>📥</span> Backup Kiosks (.json)
+          </a>
+          <button type="button" class="action-btn" onclick="triggerRestoreJson()" title="Upload backup file to restore kiosks" style="display:inline-flex; align-items:center; gap:6px; background:#ecfdf5; color:#059669; border:1px solid #a7f3d0; font-weight:700;">
+            <span>📤</span> Restore Backup
+          </button>
+          <input type="file" id="restoreJsonInput" accept=".json" style="display:none;" onchange="handleRestoreJsonFile(event)">
+          <button class="btn-primary" onclick="openAddShopModal()">
+            <span>➕</span> Add New Print Kiosk
+          </button>
+        </div>
+      </div>
+
+      <!-- Shops Table -->
+      <div class="table-card">
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>Shop / Kiosk</th>
+                <th>Owner &amp; Contact</th>
+                <th>Rates &amp; Modes</th>
+                <th>License Plan &amp; Expiry</th>
+                <th>Orders / Revenue</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="shopsTableBody">
+              <tr>
+                <td colspan="6" style="text-align: center; padding: 32px; color: var(--muted);">
+                  Loading kiosks...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= VIEW 3: NEW REQUESTS ================= -->
+    <div id="viewRequests" class="admin-view" style="display: none;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <button onclick="switchView('dashboard')" class="action-btn" title="Back to Dashboard" style="cursor: pointer; font-weight: 800;">
+            ← Dashboard
+          </button>
+          <div>
+            <h2 style="font-size: 22px; font-weight: 900; color: #1e3a8a; margin: 0;">New Shop Registration Requests (<span id="regCountBadgeView">0</span>)</h2>
+            <p style="font-size: 12px; color: #64748b; margin: 2px 0 0 0;">Online registrations submitted from <a href="/register" target="_blank" style="color: #2563eb; font-weight: 700;">print.fruitsgenerator.co.in/register</a></p>
+          </div>
+        </div>
+        <button onclick="loadRegistrationRequests()" class="action-btn" style="background: #eff6ff; color: #2563eb; border: 1.5px solid #bfdbfe; font-size: 13px; font-weight: 800; cursor: pointer;">
           🔄 Refresh Requests
         </button>
       </div>
 
-      <div class="table-responsive">
-        <table style="width:100%;">
-          <thead>
-            <tr style="background:#f8fafc; font-size:12px; color:#475569;">
-              <th style="padding:10px 14px; text-align:left;">Date &amp; Time</th>
-              <th style="padding:10px 14px; text-align:left;">Shop Name</th>
-              <th style="padding:10px 14px; text-align:left;">Owner Name</th>
-              <th style="padding:10px 14px; text-align:left;">WhatsApp / Phone</th>
-              <th style="padding:10px 14px; text-align:left;">City / Address</th>
-              <th style="padding:10px 14px; text-align:right;">Actions</th>
-            </tr>
-          </thead>
-          <tbody id="registrationRequestsBody">
-            <!-- populated by JS -->
-          </tbody>
-        </table>
+      <div class="table-card" style="border: 2px solid #3b82f6; box-shadow: 0 10px 25px rgba(59,130,246,0.08);">
+        <div class="table-responsive">
+          <table style="width: 100%;">
+            <thead>
+              <tr style="background: #f8fafc; font-size: 12px; color: #475569;">
+                <th style="padding: 10px 14px; text-align: left;">Date &amp; Time</th>
+                <th style="padding: 10px 14px; text-align: left;">Shop Name</th>
+                <th style="padding: 10px 14px; text-align: left;">Owner Name</th>
+                <th style="padding: 10px 14px; text-align: left;">WhatsApp / Phone</th>
+                <th style="padding: 10px 14px; text-align: left;">City / Address</th>
+                <th style="padding: 10px 14px; text-align: right;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="registrationRequestsBody">
+              <!-- populated by JS -->
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
 
-    <!-- Action Bar -->
-    <div class="action-bar" style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
-      <input type="text" id="searchInput" class="search-input" placeholder="🔍 Search by shop name, owner, or phone..." oninput="filterShops()" style="flex: 1; min-width: 240px;">
-      <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-        <a href="/api/super/shops/backup" class="action-btn" title="Download JSON backup of all registered kiosks" style="text-decoration:none; display:inline-flex; align-items:center; gap:6px; background:#f0f9ff; color:#0284c7; border:1px solid #bae6fd; font-weight:700;">
-          <span>📥</span> Backup Kiosks (.json)
-        </a>
-        <button type="button" class="action-btn" onclick="triggerRestoreJson()" title="Upload backup file to restore kiosks" style="display:inline-flex; align-items:center; gap:6px; background:#ecfdf5; color:#059669; border:1px solid #a7f3d0; font-weight:700;">
-          <span>📤</span> Restore Backup
-        </button>
-        <input type="file" id="restoreJsonInput" accept=".json" style="display:none;" onchange="handleRestoreJsonFile(event)">
-        <button class="btn-primary" onclick="openAddShopModal()">
-          <span>➕</span> Add New Print Kiosk
-        </button>
-      </div>
-    </div>
-
-    <!-- Shops Table -->
-    <div class="table-card">
-      <div class="table-responsive">
-        <table>
-          <thead>
-            <tr>
-              <th>Shop / Kiosk</th>
-              <th>Owner &amp; Contact</th>
-              <th>Rates &amp; Modes</th>
-              <th>License Plan &amp; Expiry</th>
-              <th>Orders / Revenue</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody id="shopsTableBody">
-            <tr>
-              <td colspan="6" style="text-align: center; padding: 32px; color: var(--muted);">
-                Loading kiosks...
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
   </div>
 
   <!-- ADD SHOP MODAL -->
@@ -862,6 +1092,59 @@
         });
     }
 
+    function toggleMenu(e) {
+      if (e) e.stopPropagation();
+      const menu = document.getElementById('dropdownMenu');
+      if (!menu) return;
+      menu.style.display = (menu.style.display === 'none' || menu.style.display === '') ? 'block' : 'none';
+    }
+
+    function closeMenu() {
+      const menu = document.getElementById('dropdownMenu');
+      if (menu) menu.style.display = 'none';
+    }
+
+    document.addEventListener('click', function(e) {
+      const container = document.querySelector('.menu-container');
+      if (container && !container.contains(e.target)) {
+        closeMenu();
+      }
+    });
+
+    function switchView(viewName) {
+      const views = ['dashboard', 'registered', 'requests'];
+      const viewTitles = {
+        'dashboard': '📊 Dashboard',
+        'registered': '🏪 Registered Centers',
+        'requests': '🔔 New Requests'
+      };
+
+      views.forEach(v => {
+        const el = document.getElementById('view' + v.charAt(0).toUpperCase() + v.slice(1));
+        const mi = document.getElementById('menuItem' + v.charAt(0).toUpperCase() + v.slice(1));
+        if (el) el.style.display = (v === viewName) ? 'block' : 'none';
+        if (mi) {
+          if (v === viewName) mi.classList.add('active');
+          else mi.classList.remove('active');
+        }
+      });
+
+      const indicator = document.getElementById('activeViewIndicator');
+      if (indicator && viewTitles[viewName]) {
+        indicator.innerText = viewTitles[viewName];
+      }
+
+      closeMenu();
+
+      if (viewName === 'requests') {
+        loadRegistrationRequests();
+      } else if (viewName === 'registered') {
+        loadShops();
+      }
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
     function updateSummaryStats(shops) {
       let active = 0;
       let totalPrints = 0;
@@ -879,6 +1162,15 @@
       document.getElementById('statTotalPrints').innerText = totalPrints;
       document.getElementById('statTotalRevenue').innerText = '₹' + Math.round(totalRev);
       document.getElementById('statExpiringSoon').innerText = expiring;
+
+      const countEl = document.getElementById('regCentersTitleCount');
+      if (countEl) countEl.innerText = shops.length;
+      const menuShops = document.getElementById('menuCountShops');
+      if (menuShops) menuShops.innerText = shops.length;
+      const dashBtn = document.getElementById('dashShopsCountBtn');
+      if (dashBtn) dashBtn.innerText = shops.length;
+      const dashText = document.getElementById('dashShopsCountText');
+      if (dashText) dashText.innerText = shops.length;
     }
 
     function renderShops(shops) {
@@ -1300,45 +1592,72 @@
 
         const requests = data.requests || [];
         const pending = requests.filter(r => r.status === 'pending');
-        const card = document.getElementById('pendingRegistrationsCard');
-        const badge = document.getElementById('regCountBadge');
+        const badgeView = document.getElementById('regCountBadgeView');
+        const menuBadge = document.getElementById('menuNotificationBadge');
+        const menuCountRequests = document.getElementById('menuCountRequests');
         const tbody = document.getElementById('registrationRequestsBody');
+        const dashPendingBtn = document.getElementById('dashRequestsCountBtn');
+        const dashPendingText = document.getElementById('dashRequestsCountText');
 
-        if (!card || !tbody) return;
+        const pCount = pending.length;
+        if (menuBadge) {
+          if (pCount > 0) {
+            menuBadge.innerText = pCount;
+            menuBadge.style.display = 'flex';
+          } else {
+            menuBadge.style.display = 'none';
+          }
+        }
+        if (menuCountRequests) {
+          if (pCount > 0) {
+            menuCountRequests.innerText = pCount;
+            menuCountRequests.style.display = 'inline-block';
+          } else {
+            menuCountRequests.style.display = 'none';
+          }
+        }
+        if (badgeView) badgeView.innerText = pCount;
+        if (dashPendingBtn) dashPendingBtn.innerText = pCount;
+        if (dashPendingText) dashPendingText.innerText = pCount;
 
-        if (pending.length > 0) {
-          card.style.display = 'block';
-          if (badge) badge.innerText = pending.length;
-
-          tbody.innerHTML = pending.map(r => `
-            <tr style="border-bottom:1px solid #e2e8f0; font-size:13px;">
-              <td style="padding:12px 14px; color:#64748b; font-size:12px;">${escapeHtml(r.created_at || 'Just now')}</td>
-              <td style="padding:12px 14px; font-weight:800; color:#0f172a;">${escapeHtml(r.shop_name)}</td>
-              <td style="padding:12px 14px; font-weight:700; color:#334155;">${escapeHtml(r.owner_name)}</td>
-              <td style="padding:12px 14px;">
-                <a href="https://wa.me/91${escapeHtml(r.phone)}" target="_blank" style="color:#16a34a; font-weight:800; text-decoration:none; display:inline-flex; align-items:center; gap:4px;">
-                  <span>💬</span> ${escapeHtml(r.phone)}
-                </a>
-              </td>
-              <td style="padding:12px 14px; color:#475569;">
-                <div><b>${escapeHtml(r.shop_address || r.city || '-')}</b></div>
-                <div style="font-size:11px; color:#64748b;">${escapeHtml(r.taluk || '')}${r.taluk && r.district ? ', ' : ''}${escapeHtml(r.district || '')}</div>
-                <span style="display:inline-block; margin-top:3px; padding:2px 8px; border-radius:6px; font-size:11px; font-weight:800; background:#dbeafe; color:#1d4ed8;">1 Month Plan</span>
-              </td>
-              <td style="padding:12px 14px; text-align:right;">
-                <div style="display:inline-flex; gap:6px;">
-                  <button onclick="approveRequest(${r.id}, '${escapeHtml(r.shop_name)}')" class="action-btn" style="background:#16a34a; color:#fff; border:none; padding:7px 14px; font-size:12px; font-weight:800; border-radius:8px; cursor:pointer; box-shadow:0 2px 6px rgba(22,163,74,0.3);">
-                    ✅ Approve &amp; Issue Key
-                  </button>
-                  <button onclick="rejectRequest(${r.id})" class="action-btn" style="background:#fee2e2; color:#dc2626; border:1px solid #fecaca; padding:7px 12px; font-size:12px; font-weight:700; border-radius:8px; cursor:pointer;">
-                    ❌ Reject
-                  </button>
-                </div>
-              </td>
-            </tr>
-          `).join('');
-        } else {
-          card.style.display = 'none';
+        if (tbody) {
+          if (pCount > 0) {
+            tbody.innerHTML = pending.map(r => `
+              <tr style="border-bottom:1px solid #e2e8f0; font-size:13px;">
+                <td style="padding:12px 14px; color:#64748b; font-size:12px;">${escapeHtml(r.created_at || 'Just now')}</td>
+                <td style="padding:12px 14px; font-weight:800; color:#0f172a;">${escapeHtml(r.shop_name)}</td>
+                <td style="padding:12px 14px; font-weight:700; color:#334155;">${escapeHtml(r.owner_name)}</td>
+                <td style="padding:12px 14px;">
+                  <a href="https://wa.me/91${escapeHtml(r.phone)}" target="_blank" style="color:#16a34a; font-weight:800; text-decoration:none; display:inline-flex; align-items:center; gap:4px;">
+                    <span>💬</span> ${escapeHtml(r.phone)}
+                  </a>
+                </td>
+                <td style="padding:12px 14px; color:#475569;">
+                  <div><b>${escapeHtml(r.shop_address || r.city || '-')}</b></div>
+                  <div style="font-size:11px; color:#64748b;">${escapeHtml(r.taluk || '')}${r.taluk && r.district ? ', ' : ''}${escapeHtml(r.district || '')}</div>
+                  <span style="display:inline-block; margin-top:3px; padding:2px 8px; border-radius:6px; font-size:11px; font-weight:800; background:#dbeafe; color:#1d4ed8;">1 Month Plan</span>
+                </td>
+                <td style="padding:12px 14px; text-align:right;">
+                  <div style="display:inline-flex; gap:6px;">
+                    <button onclick="approveRequest(${r.id}, '${escapeHtml(r.shop_name)}')" class="action-btn" style="background:#16a34a; color:#fff; border:none; padding:7px 14px; font-size:12px; font-weight:800; border-radius:8px; cursor:pointer; box-shadow:0 2px 6px rgba(22,163,74,0.3);">
+                      ✅ Approve &amp; Issue Key
+                    </button>
+                    <button onclick="rejectRequest(${r.id})" class="action-btn" style="background:#fee2e2; color:#dc2626; border:1px solid #fecaca; padding:7px 12px; font-size:12px; font-weight:700; border-radius:8px; cursor:pointer;">
+                      ❌ Reject
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            `).join('');
+          } else {
+            tbody.innerHTML = `
+              <tr>
+                <td colspan="6" style="text-align:center; padding:36px; color:#64748b; font-size:14px; font-weight:600;">
+                  🎉 No pending registration requests right now! All shops are processed.
+                </td>
+              </tr>
+            `;
+          }
         }
       } catch (err) {
         console.error("Error loading registration requests:", err);
@@ -1390,6 +1709,12 @@
     // Initial Load
     loadShops();
     loadRegistrationRequests();
+
+    // Check URL hash on initial load
+    const initialHash = window.location.hash.replace('#', '');
+    if (['dashboard', 'registered', 'requests'].includes(initialHash)) {
+      switchView(initialHash);
+    }
   </script>
   {% endif %}
 
