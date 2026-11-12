@@ -394,7 +394,12 @@ def get_shop_by_api_key(api_key):
     conn = sqlite3.connect(DB_FILE)
     conn.row_factory = sqlite3.Row
     c = conn.cursor()
-    c.execute("SELECT * FROM shops WHERE kiosk_api_key = ? LIMIT 1", (api_key,))
+    c.execute("""
+        SELECT * FROM shops 
+        WHERE kiosk_api_key = ? 
+           OR (slug = 'demo-trial' AND ? IN ('DEMO-15DAYS-FREE-TRIAL', 'DEMO-2DAYS-FREE-TRIAL', 'DEMO-FREE-TRIAL'))
+        LIMIT 1
+    """, (api_key, api_key))
     row = c.fetchone()
     conn.close()
     if row:
@@ -2560,7 +2565,12 @@ def api_kiosk_activate():
     conn = sqlite3.connect(DB_FILE)
     conn.row_factory = sqlite3.Row
     c = conn.cursor()
-    c.execute("SELECT * FROM shops WHERE kiosk_api_key = ? LIMIT 1", (api_key,))
+    c.execute("""
+        SELECT * FROM shops 
+        WHERE kiosk_api_key = ? 
+           OR (slug = 'demo-trial' AND ? IN ('DEMO-15DAYS-FREE-TRIAL', 'DEMO-2DAYS-FREE-TRIAL', 'DEMO-FREE-TRIAL'))
+        LIMIT 1
+    """, (api_key, api_key))
     shop = c.fetchone()
     conn.close()
 
@@ -2746,13 +2756,14 @@ def kiosk_pending_jobs():
                 try:
                     start_dt = datetime.strptime(dev_started, "%Y-%m-%d %H:%M:%S")
                     hours_elapsed = (datetime.now() - start_dt).total_seconds() / 3600.0
-                    if hours_elapsed > 48.0:
+                    if hours_elapsed > 360.0:
                         conn.close()
                         return jsonify({
-                            "error": "⛔ 2-Day Free Trial Expired for this PC! Please enter your permanent License Key in Settings.",
+                            "error": "⛔ 15-Day Free Trial Expired for this PC! Please enter your permanent License Key in Settings.",
                             "trial_expired": True,
                             "expired": True,
                             "hours_used": round(hours_elapsed, 1),
+                            "days_used": round(hours_elapsed / 24.0, 1),
                             "pending_jobs": []
                         }), 403
                 except Exception:

@@ -50,7 +50,7 @@
   {
     "id": 3,
     "slug": "demo-trial",
-    "shop_name": "QuickPrint (2-Day Free Trial)",
+    "shop_name": "QuickPrint (15-Day Free Trial)",
     "owner_name": "Demo User",
     "phone": "9999999999",
     "upi_id": "k1afzalpur@ybl",
@@ -63,7 +63,7 @@
     "enable_cash_payment": 1,
     "counter_name": "Demo Counter",
     "num_counters": 2000,
-    "kiosk_api_key": "DEMO-2DAYS-FREE-TRIAL",
+    "kiosk_api_key": "DEMO-15DAYS-FREE-TRIAL",
     "plan_type": "trial",
     "subscription_expiry": "2099-12-31",
     "is_active": 1,
