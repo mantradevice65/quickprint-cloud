@@ -97,7 +97,8 @@
       letter-spacing: 0.4px;
     }
 
-    .form-group input {
+    .form-group input,
+    .form-group select {
       width: 100%;
       padding: 13px 16px;
       border-radius: 12px;
@@ -110,7 +111,8 @@
       transition: all 0.2s;
     }
 
-    .form-group input:focus {
+    .form-group input:focus,
+    .form-group select:focus {
       border-color: var(--primary);
       background: #ffffff;
       box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
@@ -273,22 +275,10 @@
         <div class="form-help">Your Kiosk License Key will be sent to this WhatsApp number.</div>
       </div>
 
-      <!-- 4. Shop Address -->
-      <div class="form-group">
-        <label for="shopAddress">Shop Address</label>
-        <input type="text" id="shopAddress" placeholder="Shop Address" required>
-      </div>
-
-      <!-- 5. Taluka -->
-      <div class="form-group">
-        <label for="taluk">Taluka</label>
-        <input type="text" id="taluk" placeholder="Taluka" required>
-      </div>
-
-      <!-- 6. District -->
+      <!-- 4. District -->
       <div class="form-group">
         <label for="district">District</label>
-        <select id="district" required style="width: 100%; padding: 13px 16px; border-radius: 12px; border: 2px solid #cbd5e1; background: #f8fafc; font-size: 15px; font-weight: 600; color: #0f172a; outline: none; transition: all 0.2s;">
+        <select id="district" onchange="handleDistrictChange()" required>
           <option value="" disabled selected>District</option>
           <option value="Bagalkote">Bagalkote</option>
           <option value="Ballari">Ballari (Bellary)</option>
@@ -326,6 +316,20 @@
         </select>
       </div>
 
+      <!-- 5. Taluka -->
+      <div class="form-group">
+        <label for="taluk">Taluka</label>
+        <select id="taluk" required>
+          <option value="" disabled selected>Taluka</option>
+        </select>
+      </div>
+
+      <!-- 6. Shop Address -->
+      <div class="form-group">
+        <label for="shopAddress">Shop Address</label>
+        <input type="text" id="shopAddress" placeholder="Shop Address" required>
+      </div>
+
       <button type="submit" id="submitBtn" class="btn-submit">
         <span>⚡</span> Submit Shop Registration
       </button>
@@ -361,6 +365,65 @@
   </div>
 
   <script>
+    const DISTRICT_TALUKAS = {
+      "Bagalkote": ["Badami", "Bagalkote", "Bilgi", "Guledgudda", "Hunagund", "Ilkal", "Jamkhandi", "Mudhol", "Rabkavi Banhatti"],
+      "Ballari": ["Ballari", "Kampli", "Kurugodu", "Sanduru", "Siruguppa"],
+      "Belagavi": ["Athani", "Bailhongal", "Belagavi", "Chikkodi", "Gokak", "Hukkeri", "Kagawad", "Khanapur", "Kittur", "Mudalagi", "Nippani", "Ramdurg", "Raybag", "Saundatti (Savadatti)"],
+      "Bengaluru Rural": ["Devanahalli", "Doddaballapura", "Hosakote", "Nelamangala"],
+      "Bengaluru Urban": ["Anekal", "Bengaluru North", "Bengaluru South", "Bengaluru East", "Yelahanka"],
+      "Bidar": ["Aurad", "Basavakalyan", "Bhalki", "Bidar", "Chitguppa", "Hulsoor", "Humnabad", "Kamalnagar"],
+      "Chamarajanagara": ["Chamarajanagara", "Gundlupet", "Hanur", "Kollegal", "Yelandur"],
+      "Chikkaballapura": ["Bagepalli", "Chikkaballapura", "Chintamani", "Gauribidanur", "Gudibanda", "Sidlaghatta"],
+      "Chikkamagaluru": ["Ajjampura", "Chikkamagaluru", "Kadur", "Koppa", "Mudigere", "Narasimharajapura", "Sringeri", "Tarikere"],
+      "Chitradurga": ["Challakere", "Chitradurga", "Hiriyur", "Holalkere", "Hosadurga", "Molakalmuru"],
+      "Dakshina Kannada": ["Bantwal", "Belthangady", "Kadaba", "Mangaluru", "Moodabidri", "Puttur", "Sullia"],
+      "Davanagere": ["Channagiri", "Davanagere", "Harihara", "Honnali", "Jagalur", "Nyamathi"],
+      "Dharwad": ["Alnavar", "Annigeri", "Dharwad", "Hubballi (Rural)", "Hubballi (Urban)", "Kalghatgi", "Kundgol", "Navalgund"],
+      "Gadag": ["Gadag", "Gajendragad", "Lakshmeshwar", "Mundargi", "Nargund", "Ron", "Shirahatti"],
+      "Hassan": ["Alur", "Arkalgud", "Arsikere", "Belur", "Channarayapatna", "Hassan", "Holenarasipura", "Sakleshpur"],
+      "Haveri": ["Byadgi", "Hangal", "Haveri", "Hirekerur", "Ranebennur", "Rattihalli", "Savanur", "Shiggaon"],
+      "Kalaburagi": ["Afzalpur", "Aland", "Chincholi", "Chittapur", "Jevargi", "Kalagi", "Kalaburagi", "Kamalapur", "Sedam", "Shahabad", "Yedrami"],
+      "Kodagu": ["Kushalnagar", "Madikeri", "Ponnampet", "Somwarpet", "Virajpet"],
+      "Kolar": ["Bangarapet", "KGF", "Kolar", "Malur", "Mulbagal", "Srinivaspur"],
+      "Koppal": ["Gangavathi", "Kanakagiri", "Karatagi", "Koppal", "Kukanoor", "Kushtagi", "Yelburga"],
+      "Mandya": ["KR Pet", "Maddur", "Malavalli", "Mandya", "Nagamangala", "Pandavapura", "Srirangapatna"],
+      "Mysuru": ["HD Kote", "Hunsur", "KR Nagar", "Mysuru", "Nanjangud", "Piriyapatna", "Saligrama", "Saragur", "T Narasipura"],
+      "Raichur": ["Devadurga", "Lingsugur", "Manvi", "Maski", "Raichur", "Sindhanur", "Sirwar"],
+      "Ramanagara": ["Channapatna", "Harohalli", "Kanakapura", "Magadi", "Ramanagara"],
+      "Shivamogga": ["Bhadravathi", "Hosanagara", "Sagara", "Shikaripura", "Shivamogga", "Soraba", "Thirthahalli"],
+      "Tumakuru": ["Chikkanayakanahalli", "Gubbi", "Koratagere", "Kunigal", "Madhugiri", "Pavagada", "Sira", "Tiptur", "Tumakuru", "Turuvekere"],
+      "Udupi": ["Brahmavara", "Byndoor", "Hebri", "Karkala", "Kaup", "Kundapura", "Udupi"],
+      "Uttara Kannada": ["Ankola", "Bhatkal", "Dandeli", "Haliyal", "Honnavar", "Joida", "Karwar", "Kumta", "Mundgod", "Siddapur", "Sirsi", "Yellapur"],
+      "Vijayapura": ["Babaleshwar", "Basavana Bagewadi", "Chadchan", "Devar Hippargi", "Indi", "Kolhar", "Muddebihal", "Nidagundi", "Sindagi", "Talikoti", "Tikota", "Vijayapura"],
+      "Vijayanagara": ["Hagaribommanahalli", "Harapanahalli", "Hoovina Hadagali", "Hosapete", "Kotturu", "Kudligi"],
+      "Yadgir": ["Gurmitkal", "Hunsagi", "Shahapur", "Shorapur", "Vadagera", "Yadgir"],
+      "Solapur": ["Akkalkot", "Barshi", "Karmala", "Madha", "Malshiras", "Mangalwedha", "Mohol", "Pandharpur", "Sangola", "Solapur North", "Solapur South"],
+      "Other": ["Other Taluka"]
+    };
+
+    function handleDistrictChange() {
+      const distSelect = document.getElementById('district');
+      const talukSelect = document.getElementById('taluk');
+      const selectedDist = distSelect.value;
+
+      talukSelect.innerHTML = '<option value="" disabled selected>Taluka</option>';
+
+      const talukas = DISTRICT_TALUKAS[selectedDist] || [];
+      talukas.forEach(t => {
+        const opt = document.createElement('option');
+        opt.value = t;
+        opt.textContent = t;
+        talukSelect.appendChild(opt);
+      });
+
+      if (selectedDist && selectedDist !== 'Other') {
+        const otherOpt = document.createElement('option');
+        otherOpt.value = 'Other Taluka';
+        otherOpt.textContent = 'Other Taluka';
+        talukSelect.appendChild(otherOpt);
+      }
+    }
+
     async function handleRegistration(e) {
       e.preventDefault();
       const errBox = document.getElementById('errorBox');
@@ -374,8 +437,8 @@
       const taluk = document.getElementById('taluk').value.trim();
       const district = document.getElementById('district').value;
 
-      if (!shopName || !ownerName || !phone || !shopAddress || !taluk || !district) {
-        errBox.innerText = 'Please fill in all details.';
+      if (!shopName || !ownerName || !phone || !district || !taluk || !shopAddress) {
+        errBox.innerText = 'Please select District, Taluka, and fill in all details.';
         errBox.style.display = 'block';
         return;
       }
