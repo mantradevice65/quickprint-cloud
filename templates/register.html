@@ -257,26 +257,73 @@
       <!-- 1. Shop Name -->
       <div class="form-group">
         <label for="shopName">Shop Name / Cyber Center</label>
-        <input type="text" id="shopName" placeholder="e.g. Royal Xerox & CSC Center" required autofocus>
+        <input type="text" id="shopName" placeholder="Shop Name / Cyber Center" required autofocus>
       </div>
 
       <!-- 2. Owner Name -->
       <div class="form-group">
         <label for="ownerName">Owner Full Name</label>
-        <input type="text" id="ownerName" placeholder="e.g. Ramesh Kumar" required>
+        <input type="text" id="ownerName" placeholder="Owner Full Name" required>
       </div>
 
       <!-- 3. WhatsApp Number -->
       <div class="form-group">
         <label for="phone">WhatsApp / Mobile Number</label>
-        <input type="tel" id="phone" placeholder="e.g. 9876543210" maxlength="10" pattern="[0-9]{10}" required>
+        <input type="tel" id="phone" placeholder="WhatsApp / Mobile Number" maxlength="10" pattern="[0-9]{10}" required>
         <div class="form-help">Your Kiosk License Key will be sent to this WhatsApp number.</div>
       </div>
 
-      <!-- 4. City / Address -->
+      <!-- 4. Shop Address -->
       <div class="form-group">
-        <label for="city">City / District / Taluk</label>
-        <input type="text" id="city" placeholder="e.g. Solapur / Hubli, Karnataka" required>
+        <label for="shopAddress">Shop Address</label>
+        <input type="text" id="shopAddress" placeholder="Shop Address" required>
+      </div>
+
+      <!-- 5. Taluka -->
+      <div class="form-group">
+        <label for="taluk">Taluka</label>
+        <input type="text" id="taluk" placeholder="Taluka" required>
+      </div>
+
+      <!-- 6. District -->
+      <div class="form-group">
+        <label for="district">District</label>
+        <select id="district" required style="width: 100%; padding: 13px 16px; border-radius: 12px; border: 2px solid #cbd5e1; background: #f8fafc; font-size: 15px; font-weight: 600; color: #0f172a; outline: none; transition: all 0.2s;">
+          <option value="" disabled selected>District</option>
+          <option value="Bagalkote">Bagalkote</option>
+          <option value="Ballari">Ballari (Bellary)</option>
+          <option value="Belagavi">Belagavi (Belgaum)</option>
+          <option value="Bengaluru Rural">Bengaluru Rural</option>
+          <option value="Bengaluru Urban">Bengaluru Urban</option>
+          <option value="Bidar">Bidar</option>
+          <option value="Chamarajanagara">Chamarajanagara</option>
+          <option value="Chikkaballapura">Chikkaballapura</option>
+          <option value="Chikkamagaluru">Chikkamagaluru</option>
+          <option value="Chitradurga">Chitradurga</option>
+          <option value="Dakshina Kannada">Dakshina Kannada</option>
+          <option value="Davanagere">Davanagere</option>
+          <option value="Dharwad">Dharwad</option>
+          <option value="Gadag">Gadag</option>
+          <option value="Hassan">Hassan</option>
+          <option value="Haveri">Haveri</option>
+          <option value="Kalaburagi">Kalaburagi (Gulbarga)</option>
+          <option value="Kodagu">Kodagu</option>
+          <option value="Kolar">Kolar</option>
+          <option value="Koppal">Koppal</option>
+          <option value="Mandya">Mandya</option>
+          <option value="Mysuru">Mysuru (Mysore)</option>
+          <option value="Raichur">Raichur</option>
+          <option value="Ramanagara">Ramanagara</option>
+          <option value="Shivamogga">Shivamogga (Shimoga)</option>
+          <option value="Tumakuru">Tumakuru (Tumkur)</option>
+          <option value="Udupi">Udupi</option>
+          <option value="Uttara Kannada">Uttara Kannada</option>
+          <option value="Vijayapura">Vijayapura (Bijapur)</option>
+          <option value="Vijayanagara">Vijayanagara</option>
+          <option value="Yadgir">Yadgir</option>
+          <option value="Solapur">Solapur</option>
+          <option value="Other">Other District</option>
+        </select>
       </div>
 
       <button type="submit" id="submitBtn" class="btn-submit">
@@ -323,10 +370,12 @@
       const shopName = document.getElementById('shopName').value.trim();
       const ownerName = document.getElementById('ownerName').value.trim();
       const phone = document.getElementById('phone').value.trim();
-      const city = document.getElementById('city').value.trim();
+      const shopAddress = document.getElementById('shopAddress').value.trim();
+      const taluk = document.getElementById('taluk').value.trim();
+      const district = document.getElementById('district').value;
 
-      if (!shopName || !ownerName || !phone || !city) {
-        errBox.innerText = 'Please fill in all 4 fields.';
+      if (!shopName || !ownerName || !phone || !shopAddress || !taluk || !district) {
+        errBox.innerText = 'Please fill in all details.';
         errBox.style.display = 'block';
         return;
       }
@@ -348,7 +397,10 @@
             shop_name: shopName,
             owner_name: ownerName,
             phone: phone,
-            city: city
+            shop_address: shopAddress,
+            taluk: taluk,
+            district: district,
+            plan_type: "1_month"
           })
         });
 
@@ -358,7 +410,8 @@
           document.getElementById('resOwner').innerText = ownerName;
           document.getElementById('resShop').innerText = shopName;
 
-          const waText = encodeURIComponent(`Hello Ameer! 👋\nI have submitted my QuickPrint shop registration:\n\n🏪 Shop: ${shopName}\n👤 Owner: ${ownerName}\n📞 Phone: ${phone}\n📍 City: ${city}\n\nPlease issue my Kiosk License Key!`);
+          const fullLoc = `${shopAddress}, ${taluk}, ${district}`;
+          const waText = encodeURIComponent(`Hello Ameer! 👋\nI have registered for QuickPrint (1 Month Free License):\n\n🏪 Shop: ${shopName}\n👤 Owner: ${ownerName}\n📞 Phone: ${phone}\n📍 Address: ${fullLoc}\n\nPlease issue my 1-Month Kiosk License Key!`);
           document.getElementById('resWhatsappLink').href = `https://wa.me/917760606262?text=${waText}`;
 
           document.getElementById('successView').style.display = 'block';

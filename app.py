@@ -343,6 +343,13 @@ def init_db():
         )
     """)
 
+    # Ensure registration_requests has new columns
+    for col, col_type in [("shop_address", "TEXT"), ("taluk", "TEXT"), ("district", "TEXT"), ("plan_type", "TEXT")]:
+        try:
+            c.execute(f"ALTER TABLE registration_requests ADD COLUMN {col} {col_type}")
+        except Exception:
+            pass
+
     # Seed default primary shop if missing
     c.execute("SELECT id FROM shops WHERE slug = 'karnataka-one'")
     if not c.fetchone():
@@ -2568,7 +2575,13 @@ def api_submit_registration():
     shop_name = (data.get("shop_name") or "").strip()
     owner_name = (data.get("owner_name") or "").strip()
     phone = (data.get("phone") or "").strip()
-    city = (data.get("city") or "").strip()
+    shop_address = (data.get("shop_address") or "").strip()
+    taluk = (data.get("taluk") or "").strip()
+    district = (data.get("district") or "").strip()
+    plan_type = (data.get("plan_type") or "1_month").strip()
+    
+    # Combined address string for backward compatibility
+    city = f"{shop_address}, {taluk}, {district}".strip(", ")
 
     if not shop_name:
         return jsonify({"success": False, "error": "Shop Name is required"}), 400
@@ -2576,6 +2589,12 @@ def api_submit_registration():
         return jsonify({"success": False, "error": "Owner Name is required"}), 400
     if not phone or len(re.sub(r'\D', '', phone)) < 10:
         return jsonify({"success": False, "error": "Valid 10-digit Mobile / WhatsApp Number is required"}), 400
+    if not shop_address:
+        return jsonify({"success": False, "error": "Shop Address is required"}), 400
+    if not taluk:
+        return jsonify({"success": False, "error": "Taluka is required"}), 400
+    if not district:
+        return jsonify({"success": False, "error": "District is required"}), 400
 
     clean_phone = re.sub(r'\D', '', phone)[-10:]
     now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -2583,9 +2602,9 @@ def api_submit_registration():
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
     c.execute("""
-        INSERT INTO registration_requests (shop_name, owner_name, phone, city, status, created_at)
-        VALUES (?, ?, ?, ?, 'pending', ?)
-    """, (shop_name, owner_name, clean_phone, city, now_str))
+        INSERT INTO registration_requests (shop_name, owner_name, phone, city, shop_address, taluk, district, plan_type, status, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?)
+    """, (shop_name, owner_name, clean_phone, city, shop_address, taluk, district, plan_type, now_str))
     req_id = c.lastrowid
     conn.commit()
     conn.close()
@@ -2611,8 +2630,8 @@ def api_super_get_registration_requests():
 @require_super_admin
 def api_super_approve_registration(req_id):
     data = request.get_json(silent=True) or {}
-    months = int(data.get("months", 3))
-    plan_type = f"{months}_months"
+    months = int(data.get("months", 1))
+    plan_type = f"{months}_month" if months == 1 else f"{months}_months"
 
     conn = sqlite3.connect(DB_FILE)
     conn.row_factory = sqlite3.Row
@@ -2671,13 +2690,15 @@ def api_super_approve_registration(req_id):
 
     save_shops_registry()
 
+    validity_label = "1 Month Free Trial" if months == 1 else f"{months} Months"
+
     # Pre-formatted WhatsApp message for Admin to send with 1 click
     whatsapp_text = (
         f"Hello {req_row['owner_name']}! 👋\n\n"
         f"Your QuickPrint Kiosk Software registration for *{req_row['shop_name']}* has been APPROVED! ✅\n\n"
         f"🔑 *Your Shop Kiosk API Key:*\n`{kiosk_key}`\n\n"
         f"🌐 *Customer Print Portal:*\nhttps://print.fruitsgenerator.co.in/s/{slug}\n\n"
-        f"📅 *License Validity:* {months} Months (Expires: {exp_date})\n\n"
+        f"📅 *License Validity:* {validity_label} (Expires: {exp_date})\n\n"
         f"To activate, open QuickPrint on your computer and enter your Kiosk API Key.\n"
         f"Need help? Call/WhatsApp: 7760606262"
     )

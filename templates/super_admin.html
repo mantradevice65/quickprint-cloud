@@ -1320,7 +1320,11 @@
                   <span>💬</span> ${escapeHtml(r.phone)}
                 </a>
               </td>
-              <td style="padding:12px 14px; color:#475569;">${escapeHtml(r.city || '-')}</td>
+              <td style="padding:12px 14px; color:#475569;">
+                <div><b>${escapeHtml(r.shop_address || r.city || '-')}</b></div>
+                <div style="font-size:11px; color:#64748b;">${escapeHtml(r.taluk || '')}${r.taluk && r.district ? ', ' : ''}${escapeHtml(r.district || '')}</div>
+                <span style="display:inline-block; margin-top:3px; padding:2px 8px; border-radius:6px; font-size:11px; font-weight:800; background:#dbeafe; color:#1d4ed8;">1 Month Plan</span>
+              </td>
               <td style="padding:12px 14px; text-align:right;">
                 <div style="display:inline-flex; gap:6px;">
                   <button onclick="approveRequest(${r.id}, '${escapeHtml(r.shop_name)}')" class="action-btn" style="background:#16a34a; color:#fff; border:none; padding:7px 14px; font-size:12px; font-weight:800; border-radius:8px; cursor:pointer; box-shadow:0 2px 6px rgba(22,163,74,0.3);">
@@ -1342,7 +1346,9 @@
     }
 
     async function approveRequest(reqId, shopName) {
-      const planMonths = confirm(`Approve license for "${shopName}"?\n\nClick OK for 3 Months (Standard), or Cancel to choose 6 Months.`) ? 3 : 6;
+      const chosen = prompt(`Approve license for "${shopName}"?\n\nEnter validity in months (Default: 1 Month):`, '1');
+      if (chosen === null) return;
+      const planMonths = parseInt(chosen, 10) || 1;
       try {
         const res = await fetch(`/api/super/registration_requests/${reqId}/approve`, {
           method: 'POST',
@@ -1351,7 +1357,7 @@
         });
         const data = await res.json();
         if (data.success) {
-          alert(`Shop approved successfully!\n\nShop Kiosk API Key: ${data.kiosk_api_key}\nValidity: ${planMonths} Months\n\nOpening WhatsApp to send key to shopkeeper...`);
+          alert(`Shop approved successfully!\n\nShop Kiosk API Key: ${data.kiosk_api_key}\nValidity: ${planMonths} Month(s)\n\nOpening WhatsApp to send key to shopkeeper...`);
           if (data.whatsapp_url) {
             window.open(data.whatsapp_url, '_blank');
           }
