@@ -1056,6 +1056,29 @@
   </div>
 
   <script>
+    // Ensure old unwanted test shops (khan-xerox, karnataka-csc-center) are scrubbed from browser vaults
+    (function scrubOldVaults() {
+      try {
+        const SCRUB_KEY = 'qp_vault_scrub_v2';
+        if (!localStorage.getItem(SCRUB_KEY)) {
+          let vShops = JSON.parse(localStorage.getItem('qp_super_admin_shops_vault') || '[]');
+          vShops = vShops.filter(s => s.slug !== 'khan-xerox' && s.slug !== 'karnataka-csc-center');
+          localStorage.setItem('qp_super_admin_shops_vault', JSON.stringify(vShops));
+
+          let vReqs = JSON.parse(localStorage.getItem('qp_super_admin_requests_vault') || '[]');
+          vReqs = vReqs.filter(r => (r.phone !== '9876543210' && r.phone !== '9480500706'));
+          localStorage.setItem('qp_super_admin_requests_vault', JSON.stringify(vReqs));
+
+          let deleted = JSON.parse(localStorage.getItem('qp_super_admin_deleted_slugs') || '[]');
+          if (!deleted.includes('khan-xerox')) deleted.push('khan-xerox');
+          if (!deleted.includes('karnataka-csc-center')) deleted.push('karnataka-csc-center');
+          localStorage.setItem('qp_super_admin_deleted_slugs', JSON.stringify(deleted));
+
+          localStorage.setItem(SCRUB_KEY, 'done');
+        }
+      } catch (e) {}
+    })();
+
     let allShops = [];
     let activeRenewSlug = null;
 
