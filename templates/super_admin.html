@@ -1256,6 +1256,11 @@
             <td>
               <div style="display:flex; flex-wrap:wrap; gap:6px;">
                 ${posterBtnsHtml}
+                ${s.phone ? `
+                  <button type="button" class="action-btn" onclick="sendShopPosterWhatsapp('${s.slug}', '${escapeHtml(s.phone)}', '${escapeHtml(s.shop_name)}', '${escapeHtml(s.owner_name || '')}')" style="background:#dcfce7; color:#15803d; border:1px solid #86efac; font-weight:800;" title="Send Counter QR Poster directly to Shopkeeper on WhatsApp">
+                    📲 Send Poster
+                  </button>
+                ` : ''}
                 <button type="button" class="action-btn" onclick="openEditShopModal('${s.slug}')" title="Edit Kiosk & Razorpay Keys" style="color:#60a5fa; font-weight:700;">
                   ✏️ Edit
                 </button>
@@ -1664,6 +1669,18 @@
       }
     }
 
+    function sendShopPosterWhatsapp(slug, phone, shopName, ownerName) {
+      const cleanPhone = (phone || '').replace(/\D/g, '').slice(-10);
+      if (!cleanPhone || cleanPhone.length < 10) {
+        alert('No valid WhatsApp mobile number found for this shop.');
+        return;
+      }
+      const posterUrl = `https://print.fruitsgenerator.co.in/s/${slug}/poster`;
+      const portalUrl = `https://print.fruitsgenerator.co.in/s/${slug}`;
+      const msg = `Hello ${ownerName || shopName}! 👋\n\nHere is your official QuickPrint Counter QR Code Poster for *${shopName}*:\n\n📄 *Download / Print Counter QR Poster:*\n${posterUrl}\n\n🌐 *Customer Print Portal:*\n${portalUrl}\n\n📌 *Instructions:* Open the link above on your phone or PC, print this poster in color, and stick it on your shop counter so customers can scan and print directly!\n\nNeed help? Call/WhatsApp: 7760606262`;
+      window.open(`https://wa.me/91${cleanPhone}?text=${encodeURIComponent(msg)}`, '_blank');
+    }
+
     async function approveRequest(reqId, shopName) {
       const chosen = prompt(`Approve license for "${shopName}"?\n\nEnter validity in months (Default: 1 Month):`, '1');
       if (chosen === null) return;
@@ -1676,7 +1693,7 @@
         });
         const data = await res.json();
         if (data.success) {
-          alert(`Shop approved successfully!\n\nShop Kiosk API Key: ${data.kiosk_api_key}\nValidity: ${planMonths} Month(s)\n\nOpening WhatsApp to send key to shopkeeper...`);
+          alert(`Shop approved successfully!\n\nShop Kiosk API Key: ${data.kiosk_api_key}\nValidity: ${planMonths} Month(s)\nCounter Poster: https://print.fruitsgenerator.co.in/s/${data.shop_slug}/poster\n\nOpening WhatsApp with License Key & Counter QR Poster Link...`);
           if (data.whatsapp_url) {
             window.open(data.whatsapp_url, '_blank');
           }

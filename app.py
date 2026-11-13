@@ -2697,9 +2697,11 @@ def api_super_approve_registration(req_id):
         f"Hello {req_row['owner_name']}! 👋\n\n"
         f"Your QuickPrint Kiosk Software registration for *{req_row['shop_name']}* has been APPROVED! ✅\n\n"
         f"🔑 *Your Shop Kiosk API Key:*\n`{kiosk_key}`\n\n"
+        f"📄 *Shop Counter QR Code Poster (Print & Stick on Counter):*\nhttps://print.fruitsgenerator.co.in/s/{slug}/poster\n\n"
         f"🌐 *Customer Print Portal:*\nhttps://print.fruitsgenerator.co.in/s/{slug}\n\n"
         f"📅 *License Validity:* {validity_label} (Expires: {exp_date})\n\n"
         f"To activate, open QuickPrint on your computer and enter your Kiosk API Key.\n"
+        f"Print the Counter QR Poster in color and display it on your Xerox counter so customers can scan and print directly!\n\n"
         f"Need help? Call/WhatsApp: 7760606262"
     )
 
@@ -2707,6 +2709,7 @@ def api_super_approve_registration(req_id):
         "success": True,
         "kiosk_api_key": kiosk_key,
         "shop_slug": slug,
+        "poster_url": f"https://print.fruitsgenerator.co.in/s/{slug}/poster",
         "phone": req_row["phone"],
         "whatsapp_url": f"https://wa.me/91{req_row['phone']}?text={urllib.parse.quote(whatsapp_text)}"
     })
