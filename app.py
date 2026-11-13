@@ -3196,6 +3196,16 @@ def kiosk_pending_jobs():
             c.execute("SELECT COUNT(*) FROM kiosk_devices WHERE shop_slug = ?", (shop["slug"],))
             dev_count = c.fetchone()[0]
             if dev_count >= max_allowed:
+                # Self-heal inactive device (> 15 minutes) if shop changed PC
+                inactive_cutoff = (datetime.now() - timedelta(minutes=15)).strftime("%Y-%m-%d %H:%M:%S")
+                c.execute("SELECT id FROM kiosk_devices WHERE shop_slug = ? AND last_seen < ? ORDER BY last_seen ASC LIMIT 1", (shop["slug"], inactive_cutoff))
+                inactive_seat = c.fetchone()
+                if inactive_seat:
+                    c.execute("DELETE FROM kiosk_devices WHERE id = ?", (inactive_seat[0],))
+                    conn.commit()
+                    dev_count -= 1
+
+            if dev_count >= max_allowed:
                 conn.close()
                 return jsonify({
                     "error": f"⛔ License Limit Reached! Max {max_allowed} System(s) Allowed. To upgrade or add more counters, contact Administrator: 7760606262",
@@ -3214,25 +3224,7 @@ def kiosk_pending_jobs():
             """, (shop["slug"], machine_id, counter_name, counter_num, now_str, request.remote_addr, now_str))
             conn.commit()
 
-        # Active Counter 1-to-1 Protection (Zero Double Print)
-        active_cutoff = (datetime.now() - timedelta(seconds=35)).strftime("%Y-%m-%d %H:%M:%S")
-        c.execute("""
-            SELECT machine_id, counter_name FROM kiosk_devices
-            WHERE shop_slug = ? AND counter_num = ? AND machine_id != ? AND last_seen > ?
-        """, (shop["slug"], counter_num, machine_id, active_cutoff))
-        clash = c.fetchone()
-        if clash:
-            conn.close()
-            return jsonify({
-                "error": f"⚠️ {counter_name} is already ACTIVE on another PC! Please select Counter 2 or higher in Settings, or contact: 7760606262",
-                "counter_busy": True,
-                "active_counter": counter_num,
-                "clash_machine": clash["machine_id"],
-                "support_phone": "7760606262",
-                "pending_jobs": []
-            }), 409
-
-        # Update heartbeat and counter
+        # Update heartbeat and counter seamlessly without artificial 409 conflicts
         now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         c.execute("""
             UPDATE kiosk_devices
