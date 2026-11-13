@@ -680,17 +680,47 @@ def process_uploaded_document(raw_path, final_pdf_path, thumbnail_path, ext):
             print("Error processing PDF:", e)
         return page_count, is_locked, False, bw_count, color_count, color_pages
 
-    # Image formats
+    # Image formats: Perfectly fit onto standard A4 canvas (2480x3508 at 300 DPI)
     if ext in ["png", "jpg", "jpeg", "webp", "bmp", "tiff", "tif", "heic", "heif"]:
         is_image = True
         try:
             im = Image.open(str(raw_path))
+            try:
+                im = ImageOps.exif_transpose(im)
+            except Exception:
+                pass
             if im.mode != "RGB":
                 im = im.convert("RGB")
-            # Preserve 100% pristine camera & document quality at 300 DPI
-            im.save(str(final_pdf_path), "PDF", resolution=300.0, quality=100)
             
-            thumb_im = im.copy()
+            # Select A4 Landscape or Portrait based on image aspect ratio
+            if im.width > im.height:
+                a4_w, a4_h = 3508, 2480  # A4 Landscape
+            else:
+                a4_w, a4_h = 2480, 3508  # A4 Portrait
+
+            # 10mm printable margins (approx 80-100 pixels at 300 DPI)
+            margin = 80
+            avail_w = a4_w - (2 * margin)
+            avail_h = a4_h - (2 * margin)
+
+            # Proportional scale without distortion or clipping
+            scale = min(avail_w / max(1, im.width), avail_h / max(1, im.height))
+            target_w = max(1, int(im.width * scale))
+            target_h = max(1, int(im.height * scale))
+
+            resample_filter = getattr(Image, "Resampling", Image).LANCZOS
+            resized_im = im.resize((target_w, target_h), resample=resample_filter)
+
+            # Create standard white A4 canvas and center image
+            a4_page = Image.new("RGB", (a4_w, a4_h), (255, 255, 255))
+            paste_x = (a4_w - target_w) // 2
+            paste_y = (a4_h - target_h) // 2
+            a4_page.paste(resized_im, (paste_x, paste_y))
+
+            # Save as standard A4 PDF (595.2 x 841.9 pt) at 300 DPI
+            a4_page.save(str(final_pdf_path), "PDF", resolution=300.0, quality=100)
+            
+            thumb_im = a4_page.copy()
             thumb_im.thumbnail((800, 800))
             thumb_im.save(str(thumbnail_path), "PNG")
             
