@@ -650,6 +650,32 @@ def analyze_pdf_color(pdf_path):
         print("[-] Fast color detection fallback:", e)
         return False, 1, 0, []
 
+def make_pdf_grayscale(pdf_path):
+    """
+    True Grayscale Monochrome Enforcement:
+    Converts all pages of a PDF into 8-bit DeviceGray monochrome (CS_GRAY).
+    Physically strips all RGB & CMYK color channels so color printers CANNOT print color.
+    """
+    try:
+        pdf_path = Path(pdf_path)
+        if not pdf_path.exists():
+            return False
+        doc = fitz.open(str(pdf_path))
+        new_doc = fitz.open()
+        for page in doc:
+            pix = page.get_pixmap(dpi=300, colorspace=fitz.csGRAY)
+            new_page = new_doc.new_page(width=page.rect.width, height=page.rect.height)
+            new_page.insert_image(page.rect, stream=pix.tobytes("png"))
+        temp_path = pdf_path.parent / f"{pdf_path.stem}_temp_gray.pdf"
+        new_doc.save(str(temp_path), garbage=4, deflate=True)
+        new_doc.close()
+        doc.close()
+        shutil.move(str(temp_path), str(pdf_path))
+        return True
+    except Exception as e:
+        print("[-] Error converting PDF to grayscale:", e)
+        return False
+
 def process_uploaded_document(raw_path, final_pdf_path, thumbnail_path, ext):
     """Converts uploaded file into a standard printable PDF and generates thumbnail with high performance."""
     page_count = 1
@@ -2051,6 +2077,9 @@ def submit_order():
     """, (customer_name, print_type, copies, page_range, total_price, order_status, utr, shop_slug, job_id))
     conn.commit()
     conn.close()
+
+    if print_type == "bw" and pdf_path:
+        make_pdf_grayscale(pdf_path)
     
     tracking_id = f"QP-{job_id.replace('JOB-', '')}"
     return jsonify({
@@ -2096,11 +2125,11 @@ def submit_batch_order():
     for item in items:
         job_id = item.get("job_id")
         page_range = item.get("page_range", "all")
-        c.execute("SELECT page_count FROM jobs WHERE id = ?", (job_id,))
+        c.execute("SELECT page_count, pdf_path FROM jobs WHERE id = ?", (job_id,))
         row = c.fetchone()
         if not row:
             continue
-        p_cnt = row[0]
+        p_cnt, item_pdf_path = row
         sel_pages = parse_page_selection(page_range, p_cnt)
         item_cost = round(len(sel_pages) * rate * copies, 2)
         total_price += item_cost
@@ -2110,6 +2139,9 @@ def submit_batch_order():
             SET batch_id = ?, customer_name = ?, print_type = ?, copies = ?, page_range = ?, total_price = ?, status = ?, utr = ?, shop_slug = ?
             WHERE id = ?
         """, (batch_id, customer_name, print_type, copies, page_range, item_cost, batch_status, utr, shop_slug, job_id))
+
+        if print_type == "bw" and item_pdf_path:
+            make_pdf_grayscale(item_pdf_path)
         
     conn.commit()
     conn.close()
@@ -2251,6 +2283,8 @@ def api_razorpay_verify_payment():
                 SET batch_id = ?, customer_name = ?, print_type = ?, copies = ?, page_range = ?, total_price = ?, status = 'paid', utr = ?, shop_slug = ?
                 WHERE id = ?
             """, (batch_id, customer_name, print_type, copies, page_range, cost, utr_string, shop_slug, job_id))
+            if print_type == "bw" and pdf_path:
+                make_pdf_grayscale(pdf_path)
     else:
         target_job_id = data.get("job_id")
         page_range = str(data.get("page_range", "all")).strip() or "all"
@@ -2266,6 +2300,8 @@ def api_razorpay_verify_payment():
                 SET customer_name = ?, print_type = ?, copies = ?, page_range = ?, total_price = ?, status = 'paid', utr = ?, shop_slug = ?
                 WHERE id = ?
             """, (customer_name, print_type, copies, page_range, cost, utr_string, shop_slug, target_job_id))
+            if print_type == "bw" and pdf_path:
+                make_pdf_grayscale(pdf_path)
             
     conn.commit()
     conn.close()
