@@ -248,6 +248,73 @@ def sync_shops_from_registry():
     except Exception as ex:
         print("[-] Error syncing from shops_registry.json:", ex)
 
+REGISTRATIONS_REGISTRY_FILE = BASE_DIR / "registrations_registry.json"
+
+def save_registrations_registry():
+    """
+    Permanent Registration Requests Persistence:
+    Dumps all rows in registration_requests table into registrations_registry.json.
+    Ensures that new shop registrations submitted online are NEVER lost when Render redeploys.
+    """
+    try:
+        conn = sqlite3.connect(DB_FILE)
+        conn.row_factory = sqlite3.Row
+        c = conn.cursor()
+        c.execute("SELECT * FROM registration_requests ORDER BY id ASC")
+        data = [dict(r) for r in c.fetchall()]
+        conn.close()
+        with open(REGISTRATIONS_REGISTRY_FILE, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2)
+        print(f"[🛡️ REGISTRY] Synced {len(data)} registration requests to {REGISTRATIONS_REGISTRY_FILE.name}")
+    except Exception as e:
+        print("[-] Error saving registrations_registry.json:", e)
+
+def sync_registrations_from_registry():
+    """
+    Auto-Restoration Engine for Registration Requests:
+    On server boot, restores all registration requests from registrations_registry.json into SQLite.
+    """
+    if not REGISTRATIONS_REGISTRY_FILE.exists():
+        return
+    try:
+        with open(REGISTRATIONS_REGISTRY_FILE, "r", encoding="utf-8") as f:
+            reqs = json.load(f)
+        if not reqs:
+            return
+        conn = sqlite3.connect(DB_FILE)
+        c = conn.cursor()
+        restored = 0
+        for r in reqs:
+            phone = (r.get("phone") or "").strip()
+            shop_name = (r.get("shop_name") or "").strip()
+            c.execute("SELECT id FROM registration_requests WHERE phone = ? AND shop_name = ?", (phone, shop_name))
+            if not c.fetchone():
+                c.execute("""
+                    INSERT INTO registration_requests (
+                        shop_name, owner_name, phone, city, shop_address, taluk, district, plan_type, status, kiosk_api_key, notes, created_at
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (
+                    shop_name,
+                    r.get("owner_name", ""),
+                    phone,
+                    r.get("city", ""),
+                    r.get("shop_address", ""),
+                    r.get("taluk", ""),
+                    r.get("district", ""),
+                    r.get("plan_type", "1_month"),
+                    r.get("status", r.get("status", "pending")),
+                    r.get("kiosk_api_key", ""),
+                    r.get("notes", ""),
+                    r.get("created_at") or datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                ))
+                restored += 1
+        conn.commit()
+        conn.close()
+        if restored > 0:
+            print(f"[🛡️ AUTO-RESTORE] Successfully restored {restored} registration requests from {REGISTRATIONS_REGISTRY_FILE.name}")
+    except Exception as ex:
+        print("[-] Error syncing from registrations_registry.json:", ex)
+
 def init_db():
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
@@ -385,6 +452,7 @@ def init_db():
 
     # Sync all registered kiosks from permanent registry
     sync_shops_from_registry()
+    sync_registrations_from_registry()
 
     # Self-heal: ensure primary shop has 5 counter capacity and clear dummy test machines
     try:
@@ -2609,6 +2677,8 @@ def api_submit_registration():
     conn.commit()
     conn.close()
 
+    save_registrations_registry()
+
     return jsonify({
         "success": True,
         "message": "Registration submitted successfully! Our Administrator will review your shop and issue your Kiosk License Key on WhatsApp.",
@@ -2625,6 +2695,146 @@ def api_super_get_registration_requests():
     requests_list = [dict(r) for r in c.fetchall()]
     conn.close()
     return jsonify({"success": True, "requests": requests_list})
+
+@app.route("/api/super/registrations/sync_vault", methods=["POST"])
+@require_super_admin
+def api_super_sync_registrations_vault():
+    """
+    Self-Healing Browser Vault Sync:
+    Receives registration requests cached in Admin's browser localStorage and restores any missing entries.
+    """
+    data = request.get_json(silent=True) or {}
+    vault_requests = data.get("requests") or []
+    if not vault_requests:
+        return jsonify({"success": True, "restored": 0})
+
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+    restored = 0
+    for r in vault_requests:
+        phone = (r.get("phone") or "").strip()
+        shop_name = (r.get("shop_name") or "").strip()
+        if not phone or not shop_name:
+            continue
+        c.execute("SELECT id FROM registration_requests WHERE phone = ? AND shop_name = ?", (phone, shop_name))
+        if not c.fetchone():
+            c.execute("""
+                INSERT INTO registration_requests (
+                    shop_name, owner_name, phone, city, shop_address, taluk, district, plan_type, status, kiosk_api_key, notes, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                shop_name,
+                r.get("owner_name", ""),
+                phone,
+                r.get("city", ""),
+                r.get("shop_address", ""),
+                r.get("taluk", ""),
+                r.get("district", ""),
+                r.get("plan_type", "1_month"),
+                r.get("status", "pending"),
+                r.get("kiosk_api_key", ""),
+                r.get("notes", ""),
+                r.get("created_at") or datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            ))
+            restored += 1
+    conn.commit()
+    conn.close()
+
+    if restored > 0:
+        save_registrations_registry()
+
+    return jsonify({"success": True, "restored": restored})
+
+@app.route("/api/super/shops/quick_add", methods=["POST"])
+@require_super_admin
+def api_super_quick_add_shop():
+    """
+    1-Click Shopkeeper Restore / Onboarding:
+    Instantly creates and activates a shopkeeper with a 1-Month Free License, Kiosk Key, and WhatsApp Poster link.
+    """
+    data = request.get_json(silent=True) or {}
+    shop_name = (data.get("shop_name") or "").strip()
+    owner_name = (data.get("owner_name") or "").strip()
+    phone = (data.get("phone") or "").strip()
+    months = int(data.get("months") or 1)
+    plan_type = f"{months}_month" if months == 1 else f"{months}_months"
+
+    if not shop_name:
+        return jsonify({"success": False, "error": "Shop Name is required"}), 400
+    if not owner_name:
+        return jsonify({"success": False, "error": "Owner Name is required"}), 400
+    if not phone or len(re.sub(r'\D', '', phone)) < 10:
+        return jsonify({"success": False, "error": "Valid 10-digit Phone number is required"}), 400
+
+    clean_phone = re.sub(r'\D', '', phone)[-10:]
+
+    conn = sqlite3.connect(DB_FILE)
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+
+    # Generate unique slug
+    raw_slug = re.sub(r'[^a-z0-9]+', '-', shop_name.lower()).strip('-')
+    if not raw_slug:
+        raw_slug = f"shop-{uuid.uuid4().hex[:6]}"
+    slug = raw_slug
+    counter = 1
+    while True:
+        c.execute("SELECT id FROM shops WHERE slug = ?", (slug,))
+        if not c.fetchone():
+            break
+        counter += 1
+        slug = f"{raw_slug}-{counter}"
+
+    kiosk_key = f"qp_kiosk_{uuid.uuid4().hex[:12]}"
+    now = datetime.now()
+    exp_date = (now + timedelta(days=months * 30)).strftime("%Y-%m-%d")
+    now_str = now.strftime("%Y-%m-%d %H:%M:%S")
+
+    c.execute("""
+        INSERT INTO shops (
+            slug, shop_name, owner_name, phone, upi_id, upi_name,
+            rate_bw, rate_color, enable_cash_payment, counter_name, num_counters,
+            kiosk_api_key, plan_type, subscription_expiry, is_active, created_at
+        ) VALUES (?, ?, ?, ?, '', ?, 5.0, 10.0, 1, 'Counter 1', 1, ?, ?, ?, 1, ?)
+    """, (
+        slug, shop_name, owner_name, clean_phone, shop_name, kiosk_key, plan_type, exp_date, now_str
+    ))
+
+    # Also record in registration_requests for persistent history
+    c.execute("""
+        INSERT INTO registration_requests (
+            shop_name, owner_name, phone, city, shop_address, taluk, district, plan_type, status, kiosk_api_key, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'approved', ?, ?)
+    """, (shop_name, owner_name, clean_phone, "", "", "", "", plan_type, kiosk_key, now_str))
+
+    conn.commit()
+    conn.close()
+
+    save_shops_registry()
+    save_registrations_registry()
+
+    validity_label = "1 Month Free Trial" if months == 1 else f"{months} Months"
+
+    whatsapp_text = (
+        f"Hello {owner_name}! 👋\n\n"
+        f"Your QuickPrint Kiosk Software registration for *{shop_name}* has been APPROVED! ✅\n\n"
+        f"🔑 *Your Shop Kiosk API Key:*\n`{kiosk_key}`\n\n"
+        f"📄 *Shop Counter QR Code Poster (Print & Stick on Counter):*\nhttps://print.fruitsgenerator.co.in/s/{slug}/poster\n\n"
+        f"🌐 *Customer Print Portal:*\nhttps://print.fruitsgenerator.co.in/s/{slug}\n\n"
+        f"📅 *License Validity:* {validity_label} (Expires: {exp_date})\n\n"
+        f"To activate, open QuickPrint on your computer and enter your Kiosk API Key.\n"
+        f"Print the Counter QR Poster in color and display it on your Xerox counter so customers can scan and print directly!\n\n"
+        f"Need help? Call/WhatsApp: 7760606262"
+    )
+
+    return jsonify({
+        "success": True,
+        "kiosk_api_key": kiosk_key,
+        "shop_slug": slug,
+        "poster_url": f"https://print.fruitsgenerator.co.in/s/{slug}/poster",
+        "phone": clean_phone,
+        "whatsapp_url": f"https://wa.me/91{clean_phone}?text={urllib.parse.quote(whatsapp_text)}"
+    })
 
 @app.route("/api/super/registration_requests/<int:req_id>/approve", methods=["POST"])
 @require_super_admin
@@ -2689,6 +2899,7 @@ def api_super_approve_registration(req_id):
     conn.close()
 
     save_shops_registry()
+    save_registrations_registry()
 
     validity_label = "1 Month Free Trial" if months == 1 else f"{months} Months"
 
@@ -2722,6 +2933,7 @@ def api_super_reject_registration(req_id):
     c.execute("UPDATE registration_requests SET status = 'rejected' WHERE id = ?", (req_id,))
     conn.commit()
     conn.close()
+    save_registrations_registry()
     return jsonify({"success": True})
 
 # ==================== Kiosk Sync & Activation API (For Shop PC) ====================

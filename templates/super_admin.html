@@ -638,6 +638,9 @@
       <div class="action-bar" style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
         <input type="text" id="searchInput" class="search-input" placeholder="🔍 Search by shop name, owner, or phone..." oninput="filterShops()" style="flex: 1; min-width: 240px;">
         <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+          <button type="button" class="action-btn" onclick="openQuickAddShopModal()" style="background:#16a34a; color:#ffffff; border:none; font-weight:800; display:inline-flex; align-items:center; gap:6px; box-shadow:0 2px 6px rgba(22,163,74,0.3); cursor:pointer;">
+            <span>⚡</span> Quick Add / Restore Shop
+          </button>
           <a href="/api/super/shops/backup" class="action-btn" title="Download JSON backup of all registered kiosks" style="text-decoration:none; display:inline-flex; align-items:center; gap:6px; background:#f0f9ff; color:#0284c7; border:1px solid #bae6fd; font-weight:700;">
             <span>📥</span> Backup Kiosks (.json)
           </a>
@@ -1001,6 +1004,54 @@
         <div style="font-size:11px; color:#64748b; font-weight:700; text-transform:uppercase;">Customer Portal URL</div>
         <div id="displayCustomerUrl" style="font-family:monospace; font-size:13px; color:#059669; font-weight:700; margin-top:4px; word-break:break-all;">-</div>
       </div>
+    </div>
+  </div>
+
+  <!-- QUICK ADD / RESTORE SHOP MODAL -->
+  <div class="modal-backdrop" id="quickAddShopModal" style="display: none;">
+    <div class="modal" style="max-width: 500px;">
+      <div class="modal-title">
+        <span>⚡ Quick Add / Restore Shopkeeper</span>
+        <button onclick="closeModal('quickAddShopModal')" style="background:none; border:none; color:var(--muted); font-size:20px; cursor:pointer;">&times;</button>
+      </div>
+
+      <p style="font-size: 13px; color: var(--muted); margin-bottom: 16px;">
+        Instantly restore or register any Xerox / CSC center. Generates a Kiosk License Key, 1-Month Free Plan, Counter QR Poster link, and opens WhatsApp ready to send!
+      </p>
+
+      <form id="quickAddShopForm" onsubmit="handleQuickAddShopSubmit(event)">
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label class="form-label" style="font-weight: 700; font-size: 12px;">Shop Name *</label>
+          <input type="text" id="quickShopName" class="form-input" placeholder="e.g. Khan Xerox & Cyber Center" required>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label class="form-label" style="font-weight: 700; font-size: 12px;">Owner Name *</label>
+          <input type="text" id="quickOwnerName" class="form-input" placeholder="e.g. Ameen Khan" required>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label class="form-label" style="font-weight: 700; font-size: 12px;">WhatsApp Mobile Number * (10 Digits)</label>
+          <input type="tel" id="quickPhone" class="form-input" placeholder="e.g. 9876543210" pattern="[0-9]{10}" maxlength="10" required>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label class="form-label" style="font-weight: 700; font-size: 12px;">License Plan Duration</label>
+          <select id="quickPlanMonths" class="form-input" style="background:#fff;">
+            <option value="1" selected>🎁 1 Month Free Trial (Recommended for new shops)</option>
+            <option value="3">3 Months License</option>
+            <option value="6">6 Months License</option>
+            <option value="12">1 Year (12 Months) License</option>
+          </select>
+        </div>
+
+        <div style="display: flex; gap: 10px; justify-content: flex-end;">
+          <button type="button" class="action-btn" onclick="closeModal('quickAddShopModal')">Cancel</button>
+          <button type="submit" id="quickAddSubmitBtn" class="btn-primary" style="background:#16a34a; border-color:#16a34a; box-shadow:0 2px 8px rgba(22,163,74,0.3);">
+            <span>🚀</span> Create &amp; Send on WhatsApp
+          </button>
+        </div>
+      </form>
     </div>
   </div>
 
@@ -1589,6 +1640,16 @@
       e.target.value = '';
     }
 
+    const VAULT_REQ_KEY = 'qp_super_admin_requests_vault';
+    function getVaultRequests() {
+      try { return JSON.parse(localStorage.getItem(VAULT_REQ_KEY) || '[]'); } catch (e) { return []; }
+    }
+    function saveVaultRequests(reqs) {
+      try { localStorage.setItem(VAULT_REQ_KEY, JSON.stringify(reqs)); } catch (e) {}
+    }
+
+    let isReqAutoHealing = false;
+
     async function loadRegistrationRequests() {
       try {
         const res = await fetch('/api/super/registration_requests');
@@ -1596,6 +1657,32 @@
         if (!data.success) return;
 
         const requests = data.requests || [];
+
+        // Dual-Lock Vault: Cache received requests into localStorage
+        if (requests.length > 0) {
+          const vault = getVaultRequests();
+          const map = new Map();
+          vault.forEach(r => { if (r.phone && r.shop_name) map.set(`${r.phone}_${r.shop_name}`, r); });
+          requests.forEach(r => { if (r.phone && r.shop_name) map.set(`${r.phone}_${r.shop_name}`, r); });
+          saveVaultRequests(Array.from(map.values()));
+        } else {
+          // If server returns empty, check if vault has cached requests to restore
+          const vault = getVaultRequests();
+          if (vault.length > 0 && !isReqAutoHealing) {
+            isReqAutoHealing = true;
+            fetch('/api/super/registrations/sync_vault', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ requests: vault })
+            }).then(r => r.json()).then(res => {
+              isReqAutoHealing = false;
+              if (res.success && res.restored > 0) {
+                console.log(`[🛡️ VAULT HEAL] Restored ${res.restored} registration requests to server.`);
+                loadRegistrationRequests();
+              }
+            }).catch(() => { isReqAutoHealing = false; });
+          }
+        }
         const pending = requests.filter(r => r.status === 'pending');
         const badgeView = document.getElementById('regCountBadgeView');
         const menuBadge = document.getElementById('menuNotificationBadge');
@@ -1717,6 +1804,56 @@
         }
       } catch (e) {
         alert('Error rejecting request: ' + e);
+      }
+    }
+
+    function openQuickAddShopModal() {
+      document.getElementById('quickShopName').value = '';
+      document.getElementById('quickOwnerName').value = '';
+      document.getElementById('quickPhone').value = '';
+      document.getElementById('quickPlanMonths').value = '1';
+      openModal('quickAddShopModal');
+    }
+
+    async function handleQuickAddShopSubmit(e) {
+      e.preventDefault();
+      const shopName = document.getElementById('quickShopName').value.trim();
+      const ownerName = document.getElementById('quickOwnerName').value.trim();
+      const phone = document.getElementById('quickPhone').value.trim();
+      const months = parseInt(document.getElementById('quickPlanMonths').value, 10) || 1;
+      const btn = document.getElementById('quickAddSubmitBtn');
+
+      if (!shopName || !ownerName || phone.length < 10) {
+        alert('Please fill all required fields correctly (10-digit WhatsApp number).');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerText = 'Creating & Generating Poster...';
+
+      try {
+        const res = await fetch('/api/super/shops/quick_add', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ shop_name: shopName, owner_name: ownerName, phone: phone, months: months })
+        });
+        const data = await res.json();
+        if (data.success) {
+          closeModal('quickAddShopModal');
+          alert(`🎉 Shop Created Successfully!\n\nShop Name: ${shopName}\nKiosk Key: ${data.kiosk_api_key}\nPoster URL: ${data.poster_url}\n\nOpening WhatsApp to send License Key & Counter QR Poster...`);
+          if (data.whatsapp_url) {
+            window.open(data.whatsapp_url, '_blank');
+          }
+          loadShops();
+          loadRegistrationRequests();
+        } else {
+          alert('Error creating shop: ' + (data.error || 'Failed'));
+        }
+      } catch (err) {
+        alert('Network error: ' + err);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<span>🚀</span> Create &amp; Send on WhatsApp';
       }
     }
 
