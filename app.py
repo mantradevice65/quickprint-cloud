@@ -665,7 +665,7 @@ def make_pdf_grayscale(pdf_path):
         for page in doc:
             pix = page.get_pixmap(dpi=300, colorspace=fitz.csGRAY)
             new_page = new_doc.new_page(width=page.rect.width, height=page.rect.height)
-            new_page.insert_image(page.rect, stream=pix.tobytes("png"))
+            new_page.insert_image(page.rect, pixmap=pix)
         temp_path = pdf_path.parent / f"{pdf_path.stem}_temp_gray.pdf"
         new_doc.save(str(temp_path), garbage=4, deflate=True)
         new_doc.close()
